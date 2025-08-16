@@ -18,13 +18,13 @@
 
 ## Μέρος 2: Υλοποίηση Dummy Frontend (HTML & JavaScript)
 
--   [ ] **Βήμα 1: Δημιουργία Βασικής Σελίδας HTML**
--   [ ] **Βήμα 2: Υλοποίηση Λογικής με JavaScript**
-    -   [ ] `startGame()`
-    -   [ ] `getGameState()`
-    -   [ ] Functions για τις δοκιμασίες
--   [ ] **Βήμα 3: CORS Configuration**
+-   [x] **Βήμα 1: Δημιουργία Βασικής Σελίδας HTML**
+-   [x] **Βήμα 2: Υλοποίηση Λογικής με JavaScript**
+    -   [x] `startGame()`
+    -   [x] `getGameState()`
+    -   [x] Functions για τις δοκιμασίες
+-   [x] **Βήμα 3: CORS Configuration**
 
 ## Μέρος 3: Δοκιμές
 
--   [ ] End-to-End Testing
+-   [x] End-to-End Testing

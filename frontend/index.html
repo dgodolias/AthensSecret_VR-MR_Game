@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Το Μυστικό της Αθήνας - Test Frontend</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+        }
+        .game-state {
+            background: #ecf0f1;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .trial-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 2px solid #3498db;
+            border-radius: 8px;
+        }
+        button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #2980b9;
+        }
+        button:disabled {
+            background: #95a5a6;
+            cursor: not-allowed;
+        }
+        .result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .success {
+            background: #d5f4e6;
+            color: #27ae60;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        input[type="text"] {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏛️ Το Μυστικό της Αθήνας</h1>
+        <p><strong>Test Frontend για το API</strong></p>
+
+        <!-- Start Game Section -->
+        <div class="trial-section">
+            <h3>Έναρξη Παιχνιδιού</h3>
+            <input type="text" id="username" placeholder="Εισάγετε όνομα χρήστη" value="TestPlayer">
+            <button onclick="startGame()">🎮 Ξεκίνα Παιχνίδι</button>
+        </div>
+
+        <!-- Game State Display -->
+        <div class="game-state" id="gameState" style="display: none;">
+            <h3>📊 Κατάσταση Παιχνιδιού</h3>
+            <p><strong>Session ID:</strong> <span id="sessionId">-</span></p>
+            <p><strong>Παίκτης:</strong> <span id="playerName">-</span></p>
+            <p><strong>Ενέργεια Σοφίας:</strong> <span id="wisdomEnergy">-</span></p>
+            <p><strong>Βαθμολογία:</strong> <span id="score">-</span></p>
+            <p><strong>Τρέχουσα Δοκιμασία:</strong> <span id="currentTrial">-</span></p>
+            <button onclick="getGameState()">🔄 Ανανέωση</button>
+        </div>
+
+        <!-- Trial 1: Patience -->
+        <div class="trial-section" id="patienceSection" style="display: none;">
+            <h3>🪞 Δοκιμασία Υπομονής</h3>
+            <p>Επιλέξτε την αντανάκλασή σας:</p>
+            <button onclick="submitPatienceChoice(1)">Καθρέφτης 1</button>
+            <button onclick="submitPatienceChoice(2)">Καθρέφτης 2</button>
+            <button onclick="submitPatienceChoice(3)">Περιμένω (Υπομονή)</button>
+        </div>
+
+        <!-- Trial 2: Resource -->
+        <div class="trial-section" id="resourceSection" style="display: none;">
+            <h3>🌿 Δοκιμασία Διαχείρισης Πόρων</h3>
+            <p>Τι θα κάνετε με την ελιά;</p>
+            <button onclick="submitResourceChoice(true)">🌱 Φυτεύω την ελιά (Επένδυση)</button>
+            <button onclick="submitResourceChoice(false)">⚡ Παίρνω άμεσο κέρδος</button>
+        </div>
+
+        <!-- Trial 3: Risk -->
+        <div class="trial-section" id="riskSection" style="display: none;">
+            <h3>🛤️ Δοκιμασία Ρίσκου</h3>
+            <p>Ποιο μονοπάτι θα επιλέξετε;</p>
+            <button onclick="submitRiskChoice(true)">🛡️ Ασφαλές Μονοπάτι</button>
+            <button onclick="submitRiskChoice(false)">⚡ Αβέβαιο Μονοπάτι (Ρίσκο)</button>
+        </div>
+
+        <!-- End Game -->
+        <div class="trial-section" id="endSection" style="display: none;">
+            <h3>🏆 Τέλος Παιχνιδιού</h3>
+            <p>Συγχαρητήρια! Ολοκληρώσατε όλες τις δοκιμασίες.</p>
+            <button onclick="endGame()">🔚 Τερματισμός Παιχνιδιού</button>
+        </div>
+
+        <!-- Results Display -->
+        <div id="results"></div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
