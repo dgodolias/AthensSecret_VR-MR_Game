@@ -14,7 +14,7 @@
     -   [x] `TrialsController` (`/patience`, `/resource`, `/risk`)
 -   [x] **Βήμα 4: Δημιουργία και Εφαρμογή της Βάσης Δεδομένων (Migrations)**
     -   [x] Δημιουργία αρχικής migration
-    -   [ ] Εφαρμογή migration στη βάση
+    -   [x] Εφαρμογή migration στη βάση
 
 ## Μέρος 2: Υλοποίηση Dummy Frontend (HTML & JavaScript)
 
