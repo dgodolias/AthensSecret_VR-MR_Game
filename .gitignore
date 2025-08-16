@@ -67,6 +67,12 @@ _ReSharper*/
 appsettings.Development.json
 appsettings.Production.json
 secrets.json
+launchSettings.json
+
+# Entity Framework
+**/Migrations/
+*.Designer.cs
+*ModelSnapshot*.cs
 
 # ==========================================================================================
 # Unity
