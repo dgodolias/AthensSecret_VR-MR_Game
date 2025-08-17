@@ -95,6 +95,40 @@ public class GameController : ControllerBase
 
         return Ok(new { Message = "Game ended successfully", Score = gameSession.Score });
     }
+
+    [HttpGet("player/{username}/sessions")]
+    public async Task<IActionResult> GetPlayerSessions(string username)
+    {
+        var player = await _context.Players
+            .Include(p => p.GameSessions)
+            .FirstOrDefaultAsync(p => p.Username == username);
+
+        if (player == null)
+        {
+            return NotFound("Player not found");
+        }
+
+        var sessions = player.GameSessions
+            .OrderByDescending(gs => gs.StartTime)
+            .Select(gs => new
+            {
+                SessionId = gs.Id,
+                WisdomEnergy = gs.WisdomEnergy,
+                Score = gs.Score,
+                StartTime = gs.StartTime,
+                EndTime = gs.EndTime,
+                IsActive = gs.IsActive,
+                CurrentTrial = gs.CurrentTrial
+            })
+            .ToList();
+
+        return Ok(new
+        {
+            Username = player.Username,
+            TotalSessions = sessions.Count,
+            Sessions = sessions
+        });
+    }
 }
 
 public class StartGameRequest

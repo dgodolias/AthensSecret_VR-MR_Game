@@ -1,3 +1,61 @@
+// Fetch and display stats for a given session ID
+async function fetchPlayerSessions(username) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/game/player/${encodeURIComponent(username)}/sessions`);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        displayPlayerDashboard(data);
+
+    } catch (error) {
+        displayResult(`Σφάλμα ανάκτησης στατιστικών: ${error.message}`, 'error');
+        console.error('Error fetching player sessions:', error);
+    }
+}
+
+// Display player dashboard with all sessions
+function displayPlayerDashboard(data) {
+    const dashboardDiv = document.getElementById('playerDashboard');
+    const statsDiv = document.getElementById('playerStats');
+    const sessionsDiv = document.getElementById('sessionsList');
+
+    // Player stats
+    const totalScore = data.sessions.reduce((sum, session) => sum + session.score, 0);
+    const avgScore = data.totalSessions > 0 ? Math.round(totalScore / data.totalSessions) : 0;
+    const completedSessions = data.sessions.filter(s => !s.isActive).length;
+
+    statsDiv.innerHTML = `
+        <div class="info">
+            <h4>📊 Στατιστικά για ${data.username}</h4>
+            <p><strong>Συνολικά Sessions:</strong> ${data.totalSessions}</p>
+            <p><strong>Ολοκληρωμένα:</strong> ${completedSessions}</p>
+            <p><strong>Συνολική Βαθμολογία:</strong> ${totalScore}</p>
+            <p><strong>Μέση Βαθμολογία:</strong> ${avgScore}</p>
+        </div>
+    `;
+
+    // Sessions list
+    let sessionsHtml = '<h4>🎮 Ιστορικό Παιχνιδιών</h4>';
+    data.sessions.forEach(session => {
+        const cardClass = session.isActive ? 'session-active' : 'session-completed';
+        const statusText = session.isActive ? 'Ενεργό' : 'Ολοκληρωμένο';
+        const endTimeText = session.endTime ? new Date(session.endTime).toLocaleString() : '-';
+        
+        sessionsHtml += `
+            <div class="session-card ${cardClass}">
+                <p><strong>Session ID:</strong> ${session.sessionId} <span style="float:right;"><strong>Status:</strong> ${statusText}</span></p>
+                <p><strong>Βαθμολογία:</strong> ${session.score} | <strong>Ενέργεια:</strong> ${session.wisdomEnergy} | <strong>Δοκιμασία:</strong> ${session.currentTrial}</p>
+                <p><strong>Έναρξη:</strong> ${new Date(session.startTime).toLocaleString()} | <strong>Λήξη:</strong> ${endTimeText}</p>
+            </div>
+        `;
+    });
+
+    sessionsDiv.innerHTML = sessionsHtml;
+    dashboardDiv.style.display = 'block';
+}
 // Base API URL - αλλάξτε αν το backend τρέχει σε διαφορετικό port
 const API_BASE_URL = 'http://localhost:5182/api';
 
@@ -254,7 +312,10 @@ async function endGame() {
         
         displayResult(`Παιχνίδι τερματίστηκε! Τελική βαθμολογία: ${data.score}`, 'success');
 
-        // Reset game state
+        // Show player dashboard with all sessions
+        await fetchPlayerSessions(gameState.playerName);
+
+        // Reset game state after showing dashboard
         gameState.sessionId = null;
         gameState.playerName = null;
 

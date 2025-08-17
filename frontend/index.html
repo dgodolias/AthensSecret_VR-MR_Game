@@ -73,12 +73,34 @@
             border-radius: 4px;
             margin: 5px;
         }
+        .session-card {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 10px;
+            margin: 10px 0;
+        }
+        .session-active {
+            border-color: #28a745;
+            background: #d4edda;
+        }
+        .session-completed {
+            border-color: #6c757d;
+            background: #f8f9fa;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>🏛️ Το Μυστικό της Αθήνας</h1>
         <p><strong>Test Frontend για το API</strong></p>
+
+        <!-- Player Dashboard -->
+        <div class="trial-section" id="playerDashboard" style="display: none;">
+            <h3>🏆 Player Dashboard</h3>
+            <div id="playerStats"></div>
+            <div id="sessionsList"></div>
+        </div>
 
         <!-- Start Game Section -->
         <div class="trial-section">
