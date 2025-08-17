@@ -18,9 +18,11 @@ async function fetchPlayerSessions(username) {
 
 // Display player dashboard with all sessions
 function displayPlayerDashboard(data) {
+    currentPlayerData = data; // Store for filtering
     const dashboardDiv = document.getElementById('playerDashboard');
     const statsDiv = document.getElementById('playerStats');
-    const sessionsDiv = document.getElementById('sessionsList');
+    const chartsDiv = document.getElementById('chartsContainer');
+    const dropdownDiv = document.getElementById('sessionDropdown');
 
     // Player stats
     const totalScore = data.sessions.reduce((sum, session) => sum + session.score, 0);
@@ -37,24 +39,279 @@ function displayPlayerDashboard(data) {
         </div>
     `;
 
-    // Sessions list
-    let sessionsHtml = '<h4>🎮 Ιστορικό Παιχνιδιών</h4>';
-    data.sessions.forEach(session => {
-        const cardClass = session.isActive ? 'session-active' : 'session-completed';
-        const statusText = session.isActive ? 'Ενεργό' : 'Ολοκληρωμένο';
-        const endTimeText = session.endTime ? new Date(session.endTime).toLocaleString() : '-';
-        
-        sessionsHtml += `
-            <div class="session-card ${cardClass}">
-                <p><strong>Session ID:</strong> ${session.sessionId} <span style="float:right;"><strong>Status:</strong> ${statusText}</span></p>
-                <p><strong>Βαθμολογία:</strong> ${session.score} | <strong>Ενέργεια:</strong> ${session.wisdomEnergy} | <strong>Δοκιμασία:</strong> ${session.currentTrial}</p>
-                <p><strong>Έναρξη:</strong> ${new Date(session.startTime).toLocaleString()} | <strong>Λήξη:</strong> ${endTimeText}</p>
-            </div>
-        `;
-    });
+    // Populate dropdown
+    populateSessionDropdown(data.sessions);
 
-    sessionsDiv.innerHTML = sessionsHtml;
+    // Generate charts for all sessions initially
+    generateCharts(data.sessions, chartsDiv);
+
+    // Show current session details by default
+    const currentSession = data.sessions.find(s => s.isActive) || data.sessions[0];
+    if (currentSession) {
+        showSessionDetails(currentSession);
+        dropdownDiv.value = currentSession.sessionId;
+    }
+
     dashboardDiv.style.display = 'block';
+}
+
+// Populate session dropdown
+function populateSessionDropdown(sessions) {
+    const dropdown = document.getElementById('sessionDropdown');
+    
+    // Clear existing options except "All"
+    dropdown.innerHTML = '<option value="all">Όλα τα Sessions</option>';
+    
+    // Add session options
+    sessions.forEach(session => {
+        const option = document.createElement('option');
+        option.value = session.sessionId;
+        const statusText = session.isActive ? '(Ενεργό)' : '(Ολοκληρωμένο)';
+        option.textContent = `Session ${session.sessionId} - Score: ${session.score} ${statusText}`;
+        dropdown.appendChild(option);
+    });
+}
+
+// Filter session data based on dropdown selection
+function filterSessionData() {
+    const dropdown = document.getElementById('sessionDropdown');
+    const selectedValue = dropdown.value;
+    
+    if (!currentPlayerData) return;
+    
+    if (selectedValue === 'all') {
+        // Show all sessions data
+        generateCharts(currentPlayerData.sessions, document.getElementById('chartsContainer'));
+        document.getElementById('currentSessionDetails').innerHTML = '<p><em>Εμφάνιση δεδομένων όλων των sessions</em></p>';
+    } else {
+        // Show specific session
+        const sessionId = parseInt(selectedValue);
+        const selectedSession = currentPlayerData.sessions.find(s => s.sessionId === sessionId);
+        
+        if (selectedSession) {
+            generateCharts([selectedSession], document.getElementById('chartsContainer'));
+            showSessionDetails(selectedSession);
+        }
+    }
+}
+
+// Show details for a specific session
+function showSessionDetails(session) {
+    const detailsDiv = document.getElementById('currentSessionDetails');
+    const statusText = session.isActive ? 'Ενεργό' : 'Ολοκληρωμένο';
+    const endTimeText = session.endTime ? new Date(session.endTime).toLocaleString() : '-';
+    
+    detailsDiv.innerHTML = `
+        <div class="session-detail-card">
+            <h4>🎯 Λεπτομέρειες Session ${session.sessionId}</h4>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div>
+                    <p><strong>Status:</strong> ${statusText}</p>
+                    <p><strong>Βαθμολογία:</strong> ${session.score}</p>
+                    <p><strong>Ενέργεια:</strong> ${session.wisdomEnergy}</p>
+                </div>
+                <div>
+                    <p><strong>Τρέχουσα Δοκιμασία:</strong> ${session.currentTrial}</p>
+                    <p><strong>Έναρξη:</strong> ${new Date(session.startTime).toLocaleString()}</p>
+                    <p><strong>Λήξη:</strong> ${endTimeText}</p>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+// Generate charts using Chart.js
+function generateCharts(sessions, container) {
+    if (!window.Chart || sessions.length === 0) {
+        container.innerHTML = '<p>Δεν υπάρχουν δεδομένα για charts.</p>';
+        return;
+    }
+
+    // Destroy existing charts
+    Object.values(chartInstances).forEach(chart => {
+        if (chart) chart.destroy();
+    });
+    chartInstances = {};
+
+    const completedSessions = sessions.filter(s => !s.isActive);
+    
+    // Create charts HTML structure
+    container.innerHTML = `
+        <h4>📈 ${sessions.length === 1 ? `Στατιστικά Session ${sessions[0].sessionId}` : 'Συνολικά Στατιστικά'}</h4>
+        <div class="charts-grid">
+            <div class="chart-container">
+                <h5>Εξέλιξη Βαθμολογίας</h5>
+                <canvas id="scoresChart" width="400" height="200"></canvas>
+            </div>
+            <div class="chart-container">
+                <h5>Κατανομή Ενέργειας</h5>
+                <canvas id="energyChart" width="400" height="200"></canvas>
+            </div>
+            <div class="chart-container">
+                <h5>Score vs Energy</h5>
+                <canvas id="comparisonChart" width="400" height="200"></canvas>
+            </div>
+            <div class="chart-container">
+                <h5>Κατανομή Βαθμολογιών</h5>
+                <canvas id="scoreDistChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+    `;
+
+    setTimeout(() => {
+        // 1. Scores Timeline
+        if (completedSessions.length > 0) {
+            const ctx1 = document.getElementById('scoresChart');
+            if (ctx1) {
+                chartInstances.scores = new Chart(ctx1, {
+                    type: 'line',
+                    data: {
+                        labels: completedSessions.map(s => `Session ${s.sessionId}`),
+                        datasets: [{
+                            label: 'Βαθμολογία',
+                            data: completedSessions.map(s => s.score),
+                            borderColor: 'rgb(75, 192, 192)',
+                            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                            tension: 0.1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'Εξέλιξη Βαθμολογίας'
+                            }
+                        },
+                        scales: {
+                            x: {
+                                ticks: {
+                                    maxRotation: 45,
+                                    minRotation: 45
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        // 2. Energy Distribution
+        const energyRanges = { 'Χαμηλή (0-50)': 0, 'Μεσαία (51-100)': 0, 'Υψηλή (101+)': 0 };
+        completedSessions.forEach(session => {
+            if (session.wisdomEnergy <= 50) energyRanges['Χαμηλή (0-50)']++;
+            else if (session.wisdomEnergy <= 100) energyRanges['Μεσαία (51-100)']++;
+            else energyRanges['Υψηλή (101+)']++;
+        });
+
+        const ctx2 = document.getElementById('energyChart');
+        if (ctx2) {
+            chartInstances.energy = new Chart(ctx2, {
+                type: 'pie',
+                data: {
+                    labels: Object.keys(energyRanges),
+                    datasets: [{
+                        data: Object.values(energyRanges),
+                        backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Κατανομή Ενέργειας'
+                        },
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+
+        // 3. Score vs Energy Comparison
+        const ctx3 = document.getElementById('comparisonChart');
+        if (ctx3) {
+            chartInstances.comparison = new Chart(ctx3, {
+                type: 'bar',
+                data: {
+                    labels: completedSessions.map(s => `Session ${s.sessionId}`),
+                    datasets: [{
+                        label: 'Βαθμολογία',
+                        data: completedSessions.map(s => s.score),
+                        backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1
+                    }, {
+                        label: 'Ενέργεια',
+                        data: completedSessions.map(s => s.wisdomEnergy),
+                        backgroundColor: 'rgba(255, 99, 132, 0.5)',
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Σύγκριση Score vs Energy'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        },
+                        x: {
+                            ticks: {
+                                maxRotation: 45,
+                                minRotation: 45
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 4. Score Distribution
+        const scoreRanges = { 'Χαμηλό (0-100)': 0, 'Μεσαίο (101-200)': 0, 'Υψηλό (201+)': 0 };
+        completedSessions.forEach(session => {
+            if (session.score <= 100) scoreRanges['Χαμηλό (0-100)']++;
+            else if (session.score <= 200) scoreRanges['Μεσαίο (101-200)']++;
+            else scoreRanges['Υψηλό (201+)']++;
+        });
+
+        const ctx4 = document.getElementById('scoreDistChart');
+        if (ctx4) {
+            chartInstances.scoreDist = new Chart(ctx4, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(scoreRanges),
+                    datasets: [{
+                        data: Object.values(scoreRanges),
+                        backgroundColor: ['#FF6B6B', '#4ECDC4', '#45B7D1']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Κατανομή Βαθμολογιών'
+                        },
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+    }, 100);
 }
 // Base API URL - αλλάξτε αν το backend τρέχει σε διαφορετικό port
 const API_BASE_URL = 'http://localhost:5182/api';
@@ -64,6 +321,10 @@ let gameState = {
     sessionId: null,
     playerName: null
 };
+
+// Global player data for filtering
+let currentPlayerData = null;
+let chartInstances = {};
 
 // Utility function to display results
 function displayResult(message, type = 'info') {
