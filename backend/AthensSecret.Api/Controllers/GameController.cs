@@ -1,12 +1,15 @@
 using AthensSecret.Api.Data;
 using AthensSecret.Api.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace AthensSecret.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize] // Require authentication for all endpoints in this controller
 public class GameController : ControllerBase
 {
     private readonly ApiDbContext _context;
@@ -17,15 +20,20 @@ public class GameController : ControllerBase
     }
 
     [HttpPost("start")]
-    public async Task<IActionResult> StartGame([FromBody] StartGameRequest request)
+    public async Task<IActionResult> StartGame()
     {
-        // Check if player exists, create if not
-        var player = await _context.Players.FirstOrDefaultAsync(p => p.Username == request.Username);
+        // Get player ID from JWT token
+        var playerIdClaim = User.FindFirst("PlayerId")?.Value;
+        if (string.IsNullOrEmpty(playerIdClaim) || !int.TryParse(playerIdClaim, out int playerId))
+        {
+            return Unauthorized(new { message = "Invalid token" });
+        }
+
+        // Get player from database
+        var player = await _context.Players.FindAsync(playerId);
         if (player == null)
         {
-            player = new Player { Username = request.Username };
-            _context.Players.Add(player);
-            await _context.SaveChangesAsync();
+            return NotFound(new { message = "Player not found" });
         }
 
         // Create new game session

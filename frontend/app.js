@@ -1,7 +1,192 @@
+// Global variables
+let currentSessionId = null;
+let currentPlayerData = null;
+let chartInstances = {};
+let authToken = localStorage.getItem('authToken');
+let currentUser = localStorage.getItem('currentUser');
+
+// API Base URL
+// API Configuration
+const API_BASE_URL = 'http://localhost:5182/api';
+
+// Helper function for authenticated API requests
+async function authenticatedFetch(url, options = {}) {
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+        throw new Error('No authentication token found');
+    }
+    
+    return fetch(url, {
+        ...options,
+        headers: {
+            ...options.headers,
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        }
+    });
+}
+
+// Check authentication on page load
+document.addEventListener('DOMContentLoaded', function() {
+    if (authToken && currentUser) {
+        showAuthenticatedView();
+    }
+});
+
+// Authentication Functions
+function switchTab(tab) {
+    // Switch tab styling
+    document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
+    
+    document.querySelector(`[onclick="switchTab('${tab}')"]`).classList.add('active');
+    document.getElementById(tab + 'Form').classList.add('active');
+}
+
+async function register() {
+    const username = document.getElementById('registerUsername').value.trim();
+    const password = document.getElementById('registerPassword').value;
+    
+    if (!username || !password) {
+        showResult('Παρακαλώ συμπληρώστε όλα τα πεδία', 'error');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`${API_BASE_URL}/auth/register`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ username, password })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            // Store authentication data
+            authToken = data.token;
+            currentUser = data.username;
+            localStorage.setItem('authToken', authToken);
+            localStorage.setItem('currentUser', currentUser);
+            localStorage.setItem('playerId', data.playerId);
+            
+            showResult(`Επιτυχής εγγραφή! Καλώς ήρθες, ${data.username}!`, 'success');
+            showAuthenticatedView();
+        } else {
+            showResult(data.message || 'Σφάλμα εγγραφής', 'error');
+        }
+    } catch (error) {
+        showResult('Σφάλμα σύνδεσης με τον server', 'error');
+        console.error('Registration error:', error);
+    }
+}
+
+async function login() {
+    const username = document.getElementById('loginUsername').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    
+    if (!username || !password) {
+        showResult('Παρακαλώ συμπληρώστε όλα τα πεδία', 'error');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`${API_BASE_URL}/auth/login`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ username, password })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            // Store authentication data
+            authToken = data.token;
+            currentUser = data.username;
+            localStorage.setItem('authToken', authToken);
+            localStorage.setItem('currentUser', currentUser);
+            localStorage.setItem('playerId', data.playerId);
+            
+            showResult(`Επιτυχής είσοδος! Καλώς ήρθες πίσω, ${data.username}!`, 'success');
+            showAuthenticatedView();
+        } else {
+            showResult(data.message || 'Λάθος στοιχεία', 'error');
+        }
+    } catch (error) {
+        showResult('Σφάλμα σύνδεσης με τον server', 'error');
+        console.error('Login error:', error);
+    }
+}
+
+async function logout() {
+    try {
+        await fetch(`${API_BASE_URL}/auth/logout`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
+    } catch (error) {
+        console.error('Logout error:', error);
+    }
+    
+    // Clear stored data
+    authToken = null;
+    currentUser = null;
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('currentUser');
+    localStorage.removeItem('playerId');
+    
+    showResult('Επιτυχής έξοδος!', 'success');
+    showUnauthenticatedView();
+}
+
+function showAuthenticatedView() {
+    document.getElementById('authSection').style.display = 'none';
+    document.getElementById('userInfo').style.display = 'block';
+    document.getElementById('gameSection').style.display = 'block';
+    document.getElementById('loggedInUser').textContent = currentUser;
+    
+    // Auto-load player dashboard
+    loadPlayerSessions();
+}
+
+function showUnauthenticatedView() {
+    document.getElementById('authSection').style.display = 'block';
+    document.getElementById('userInfo').style.display = 'none';
+    document.getElementById('gameSection').style.display = 'none';
+    document.getElementById('playerDashboard').style.display = 'none';
+    document.getElementById('gameState').style.display = 'none';
+}
+
+// Show result messages
+function showResult(message, type = 'info') {
+    displayResult(message, type);
+}
+
+// Load player sessions (used after login)
+async function loadPlayerSessions() {
+    if (!authToken || !currentUser) return;
+    
+    try {
+        const response = await authenticatedFetch(`${API_BASE_URL}/game/player/${encodeURIComponent(currentUser)}/sessions`);
+        
+        if (response.ok) {
+            const data = await response.json();
+            displayPlayerDashboard(data);
+        }
+    } catch (error) {
+        console.error('Error loading player sessions:', error);
+    }
+}
+
 // Fetch and display stats for a given session ID
 async function fetchPlayerSessions(username) {
     try {
-        const response = await fetch(`${API_BASE_URL}/game/player/${encodeURIComponent(username)}/sessions`);
+        const response = await authenticatedFetch(`${API_BASE_URL}/game/player/${encodeURIComponent(username)}/sessions`);
         
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -313,18 +498,12 @@ function generateCharts(sessions, container) {
         }
     }, 100);
 }
-// Base API URL - αλλάξτε αν το backend τρέχει σε διαφορετικό port
-const API_BASE_URL = 'http://localhost:5182/api';
 
 // Global game state
 let gameState = {
     sessionId: null,
     playerName: null
 };
-
-// Global player data for filtering
-let currentPlayerData = null;
-let chartInstances = {};
 
 // Utility function to display results
 function displayResult(message, type = 'info') {
@@ -338,31 +517,31 @@ function displayResult(message, type = 'info') {
 
 // Start a new game
 async function startGame() {
-    const username = document.getElementById('username').value.trim();
-    if (!username) {
-        displayResult('Παρακαλώ εισάγετε όνομα χρήστη!', 'error');
+    if (!authToken) {
+        showResult('Παρακαλώ κάντε login πρώτα!', 'error');
         return;
     }
 
     try {
-        const response = await fetch(`${API_BASE_URL}/game/start`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ Username: username })
+        const response = await authenticatedFetch(`${API_BASE_URL}/game/start`, {
+            method: 'POST'
         });
 
         if (!response.ok) {
+            if (response.status === 401) {
+                showResult('Η συνεδρία σας έχει λήξει. Παρακαλώ κάντε login ξανά.', 'error');
+                logout();
+                return;
+            }
             throw new Error(`HTTP error! status: ${response.status}`);
         }
 
         const data = await response.json();
         
         gameState.sessionId = data.sessionId;
-        gameState.playerName = data.username;
+        gameState.playerName = currentUser;
 
-        displayResult(`Παιχνίδι ξεκίνησε για τον παίκτη: ${username}`, 'success');
+        showResult(`Παιχνίδι ξεκίνησε! Session ID: ${data.sessionId}`, 'success');
         
         updateGameStateDisplay(data);
         showCurrentTrialSection(data.currentTrial);
@@ -381,7 +560,7 @@ async function getGameState() {
     }
 
     try {
-        const response = await fetch(`${API_BASE_URL}/game/${gameState.sessionId}/state`);
+        const response = await authenticatedFetch(`${API_BASE_URL}/game/${gameState.sessionId}/state`);
         
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -441,11 +620,8 @@ async function submitPatienceChoice(choice) {
     }
 
     try {
-        const response = await fetch(`${API_BASE_URL}/trials/patience`, {
+        const response = await authenticatedFetch(`${API_BASE_URL}/trials/patience`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
             body: JSON.stringify({
                 SessionId: gameState.sessionId,
                 Choice: choice
@@ -481,11 +657,8 @@ async function submitResourceChoice(plantOlive) {
     }
 
     try {
-        const response = await fetch(`${API_BASE_URL}/trials/resource`, {
+        const response = await authenticatedFetch(`${API_BASE_URL}/trials/resource`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
             body: JSON.stringify({
                 SessionId: gameState.sessionId,
                 PlantOlive: plantOlive
@@ -519,11 +692,8 @@ async function submitRiskChoice(chooseSafePath) {
     }
 
     try {
-        const response = await fetch(`${API_BASE_URL}/trials/risk`, {
+        const response = await authenticatedFetch(`${API_BASE_URL}/trials/risk`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
             body: JSON.stringify({
                 SessionId: gameState.sessionId,
                 ChooseSafePath: chooseSafePath
@@ -558,11 +728,8 @@ async function endGame() {
     }
 
     try {
-        const response = await fetch(`${API_BASE_URL}/game/${gameState.sessionId}/end`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            }
+        const response = await authenticatedFetch(`${API_BASE_URL}/game/${gameState.sessionId}/end`, {
+            method: 'POST'
         });
 
         if (!response.ok) {
@@ -574,7 +741,7 @@ async function endGame() {
         displayResult(`Παιχνίδι τερματίστηκε! Τελική βαθμολογία: ${data.score}`, 'success');
 
         // Show player dashboard with all sessions
-        await fetchPlayerSessions(gameState.playerName);
+        await loadPlayerSessions();
 
         // Reset game state after showing dashboard
         gameState.sessionId = null;

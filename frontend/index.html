@@ -67,11 +67,40 @@
             background: #d1ecf1;
             color: #0c5460;
         }
-        input[type="text"] {
+        input[type="text"], input[type="password"] {
             padding: 8px;
             border: 1px solid #ddd;
             border-radius: 4px;
             margin: 5px;
+        }
+        .auth-section {
+            background: #e8f4fd;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border: 1px solid #3498db;
+        }
+        .auth-tabs {
+            display: flex;
+            margin-bottom: 15px;
+        }
+        .auth-tab {
+            padding: 10px 20px;
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            cursor: pointer;
+            border-radius: 4px 4px 0 0;
+            margin-right: 2px;
+        }
+        .auth-tab.active {
+            background: #3498db;
+            color: white;
+        }
+        .auth-form {
+            display: none;
+        }
+        .auth-form.active {
+            display: block;
         }
         .session-card {
             background: #f8f9fa;
@@ -151,6 +180,35 @@
         <h1>🏛️ Το Μυστικό της Αθήνας</h1>
         <p><strong>Test Frontend για το API</strong></p>
 
+        <!-- Authentication Section -->
+        <div class="auth-section" id="authSection">
+            <h3>🔐 Είσοδος/Εγγραφή</h3>
+            <div class="auth-tabs">
+                <div class="auth-tab active" onclick="switchTab('login')">Είσοδος</div>
+                <div class="auth-tab" onclick="switchTab('register')">Εγγραφή</div>
+            </div>
+            
+            <!-- Login Form -->
+            <div class="auth-form active" id="loginForm">
+                <input type="text" id="loginUsername" placeholder="Όνομα χρήστη">
+                <input type="password" id="loginPassword" placeholder="Κωδικός">
+                <button onclick="login()">🔑 Είσοδος</button>
+            </div>
+            
+            <!-- Register Form -->
+            <div class="auth-form" id="registerForm">
+                <input type="text" id="registerUsername" placeholder="Όνομα χρήστη">
+                <input type="password" id="registerPassword" placeholder="Κωδικός">
+                <button onclick="register()">📝 Εγγραφή</button>
+            </div>
+        </div>
+
+        <!-- User Info (when logged in) -->
+        <div class="trial-section" id="userInfo" style="display: none;">
+            <h3>👤 Καλώς ήρθες, <span id="loggedInUser"></span>!</h3>
+            <button onclick="logout()">🚪 Έξοδος</button>
+        </div>
+
         <!-- Player Dashboard -->
         <div class="trial-section" id="playerDashboard" style="display: none;">
             <h3>🏆 Player Dashboard</h3>
@@ -165,10 +223,9 @@
             <div id="currentSessionDetails"></div>
         </div>
 
-        <!-- Start Game Section -->
-        <div class="trial-section">
+        <!-- Start Game Section (only when logged in) -->
+        <div class="trial-section" id="gameSection" style="display: none;">
             <h3>Έναρξη Παιχνιδιού</h3>
-            <input type="text" id="username" placeholder="Εισάγετε όνομα χρήστη" value="TestPlayer">
             <button onclick="startGame()">🎮 Ξεκίνα Παιχνίδι</button>
         </div>
 
