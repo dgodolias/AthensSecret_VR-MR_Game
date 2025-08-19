@@ -173,6 +173,57 @@
             padding: 15px;
             margin: 15px 0;
         }
+        /* Patience Trial Styles */
+        .patience-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        .patience-btn {
+            padding: 15px 30px;
+            font-size: 18px;
+            font-weight: bold;
+            border: 3px solid #34495e;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 150px;
+        }
+        .patience-btn.blurred {
+            opacity: 0.8;
+            cursor: pointer;
+            background: #bdc3c7;
+            color: #2c3e50;
+            transition: filter 0.5s ease, opacity 0.5s ease;
+        }
+        .patience-btn.clear {
+            filter: none;
+            opacity: 1;
+            cursor: pointer;
+        }
+        .patience-btn.correct {
+            background: #2ecc71;
+            color: white;
+            border-color: #27ae60;
+        }
+        .patience-btn.incorrect {
+            background: #e74c3c;
+            color: white;
+            border-color: #c0392b;
+        }
+        .patience-timer {
+            text-align: center;
+            font-size: 16px;
+            color: #7f8c8d;
+            margin: 10px 0;
+        }
+        .hint {
+            opacity: 0;
+            color: #7f8c8d;
+            font-weight: normal;
+            transition: opacity 0.5s ease;
+        }
     </style>
 </head>
 <body>
@@ -226,6 +277,12 @@
         <!-- Start Game Section (only when logged in) -->
         <div class="trial-section" id="gameSection" style="display: none;">
             <h3>Έναρξη Παιχνιδιού</h3>
+            
+            <!-- Game Timer -->
+            <div id="gameTimer" style="display: none; text-align: center; margin: 15px 0; font-size: 1.5em; font-weight: bold; color: #2c3e50;">
+                ⏱️ Χρόνος: <span id="timerDisplay">00:00</span>
+            </div>
+            
             <button onclick="startGame()">🎮 Ξεκίνα Παιχνίδι</button>
         </div>
 
@@ -242,11 +299,29 @@
 
         <!-- Trial 1: Patience -->
         <div class="trial-section" id="patienceSection" style="display: none;">
-            <h3>🪞 Δοκιμασία Υπομονής</h3>
-            <p>Επιλέξτε την αντανάκλασή σας:</p>
-            <button onclick="submitPatienceChoice(1)">Καθρέφτης 1</button>
-            <button onclick="submitPatienceChoice(2)">Καθρέφτης 2</button>
-            <button onclick="submitPatienceChoice(3)">Περιμένω (Υπομονή)</button>
+            <h3>🪞 Σημείο 1: Η αντανάκλαση της Αθηνάς (Δοκιμασία Υπομονής)</h3>
+            
+            <p><strong>Περιγραφή:</strong> Ο παίκτης πρέπει να επιλέξει τη σωστή αντανάκλαση του αγάλματος. 
+            Μπροστά του έχει 3 καθρέφτες που μέσα φαίνονται 3 διαφορετικές μορφές. Οι καθρέφτες είναι θολοί 
+            και με το χρόνο καθαρίζουν έναν έναν ώστε να αποκαλυφθεί τελικά το σωστό.</p>
+
+            <div class="patience-timer" id="patienceTimer">
+                Χρόνος αναμονής: <span id="patienceTimeLeft">60</span> δευτερόλεπτα
+            </div>
+
+            <div class="patience-buttons">
+                <button id="patienceBtn1" class="patience-btn blurred" onclick="submitPatienceChoice(1)">
+                    Καθρέφτης 1 <span class="hint" id="hint1">(❌)</span>
+                </button>
+                <button id="patienceBtn2" class="patience-btn blurred" onclick="submitPatienceChoice(2)">
+                    Καθρέφτης 2 <span class="hint" id="hint2">(❌)</span>
+                </button>
+                <button id="patienceBtn3" class="patience-btn blurred" onclick="submitPatienceChoice(3)">
+                    Καθρέφτης 3 <span class="hint" id="hint3">(✓)</span>
+                </button>
+            </div>
+            
+            <p><em>💡 Συμβουλή: Αν περιμένεις τουλάχιστον 30 δευτερόλεπτα, κερδίζεις +50 πόντους υπομονής!</em></p>
         </div>
 
         <!-- Trial 2: Resource -->

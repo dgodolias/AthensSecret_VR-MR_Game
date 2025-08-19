@@ -502,8 +502,38 @@ function generateCharts(sessions, container) {
 // Global game state
 let gameState = {
     sessionId: null,
-    playerName: null
+    playerName: null,
+    startTime: null,
+    timerInterval: null
 };
+
+// Timer functions
+function startGameTimer() {
+    gameState.startTime = Date.now();
+    document.getElementById('gameTimer').style.display = 'block';
+    
+    gameState.timerInterval = setInterval(() => {
+        const elapsed = Date.now() - gameState.startTime;
+        const minutes = Math.floor(elapsed / 60000);
+        const seconds = Math.floor((elapsed % 60000) / 1000);
+        
+        document.getElementById('timerDisplay').textContent = 
+            `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }, 1000);
+}
+
+function stopGameTimer() {
+    if (gameState.timerInterval) {
+        clearInterval(gameState.timerInterval);
+        gameState.timerInterval = null;
+    }
+    document.getElementById('gameTimer').style.display = 'none';
+}
+
+function getGameDuration() {
+    if (!gameState.startTime) return 0;
+    return Math.floor((Date.now() - gameState.startTime) / 1000);
+}
 
 // Utility function to display results
 function displayResult(message, type = 'info') {
@@ -542,6 +572,9 @@ async function startGame() {
         gameState.playerName = currentUser;
 
         showResult(`Παιχνίδι ξεκίνησε! Session ID: ${data.sessionId}`, 'success');
+        
+        // Start the game timer
+        startGameTimer();
         
         updateGameStateDisplay(data);
         showCurrentTrialSection(data.currentTrial);
@@ -599,6 +632,26 @@ function showCurrentTrialSection(currentTrial) {
     switch (currentTrial) {
         case 'start':
             document.getElementById('patienceSection').style.display = 'block';
+            // Reset patience buttons to blurred state
+            const btn1 = document.getElementById('patienceBtn1');
+            const btn2 = document.getElementById('patienceBtn2');
+            const btn3 = document.getElementById('patienceBtn3');
+            
+            [btn1, btn2, btn3].forEach((btn, index) => {
+                if (btn) {
+                    btn.classList.add('blurred');
+                    btn.classList.remove('clear', 'correct', 'incorrect');
+                    btn.style.filter = 'blur(8px)';
+                    btn.style.opacity = '0.4';
+                    
+                    // Reset button content with hints
+                    const hintSymbols = ['❌', '❌', '✓'];
+                    btn.innerHTML = `Καθρέφτης ${index + 1} <span class="hint" id="hint${index + 1}" style="opacity: 0;">(${hintSymbols[index]})</span>`;
+                }
+            });
+            
+            // Start patience timer
+            startPatienceTimer();
             break;
         case 'resource':
             document.getElementById('resourceSection').style.display = 'block';
@@ -612,6 +665,115 @@ function showCurrentTrialSection(currentTrial) {
     }
 }
 
+// Patience trial state
+let patienceState = {
+    startTime: null,
+    timerInterval: null,
+    buttonsCleared: false,
+    hasWaitedEnough: false
+};
+
+// Start patience trial
+function startPatienceTimer() {
+    patienceState.startTime = Date.now();
+    patienceState.buttonsCleared = false;
+    patienceState.hasWaitedEnough = false;
+    
+    let timeLeft = 60;
+    document.getElementById('patienceTimeLeft').textContent = timeLeft;
+    
+    // Initialize blur levels
+    updateButtonBlur(timeLeft);
+    
+    patienceState.timerInterval = setInterval(() => {
+        timeLeft--;
+        document.getElementById('patienceTimeLeft').textContent = timeLeft;
+        
+        // Update blur every second (progressive clearing)
+        updateButtonBlur(timeLeft);
+        
+        // After 30 seconds, mark as waited enough for bonus
+        if (timeLeft === 30 && !patienceState.hasWaitedEnough) {
+            patienceState.hasWaitedEnough = true;
+            document.querySelector('.patience-timer').innerHTML += 
+                '<br><span style="color: #27ae60; font-weight: bold;">✓ Μπόνους υπομονής ξεκλειδώθηκε! (+50 πόντοι)</span>';
+        }
+        
+        // When timer reaches 0, clear completely and show symbols
+        if (timeLeft <= 0 && !patienceState.buttonsCleared) {
+            clearPatienceButtons();
+        }
+    }, 1000);
+}
+
+function updateButtonBlur(timeLeft) {
+    const buttons = [
+        document.getElementById('patienceBtn1'),
+        document.getElementById('patienceBtn2'),
+        document.getElementById('patienceBtn3')
+    ];
+    
+    const hints = [
+        document.getElementById('hint1'),
+        document.getElementById('hint2'),
+        document.getElementById('hint3')
+    ];
+    
+    // Calculate blur level: starts at 8px, reduces gradually to 0
+    const maxBlur = 8;
+    const blurLevel = Math.max(0, (timeLeft / 60) * maxBlur);
+    
+    buttons.forEach(btn => {
+        if (btn) {
+            btn.style.filter = `blur(${blurLevel}px)`;
+            btn.style.opacity = Math.max(0.4, 1 - (timeLeft / 60) * 0.4); // Increases from 0.6 to 1.0
+        }
+    });
+    
+    // Show hints progressively (start showing after 40 seconds, fully visible after 20 seconds)
+    const hintOpacity = Math.max(0, Math.min(1, (40 - timeLeft) / 20));
+    hints.forEach(hint => {
+        if (hint) {
+            hint.style.opacity = hintOpacity;
+        }
+    });
+}
+
+function clearPatienceButtons() {
+    patienceState.buttonsCleared = true;
+    
+    // Clear interval
+    if (patienceState.timerInterval) {
+        clearInterval(patienceState.timerInterval);
+    }
+    
+    // Set final symbols and styles
+    const btn1 = document.getElementById('patienceBtn1');
+    const btn2 = document.getElementById('patienceBtn2');
+    const btn3 = document.getElementById('patienceBtn3');
+    
+    btn1.style.filter = 'none';
+    btn1.classList.remove('blurred');
+    btn1.classList.add('clear', 'incorrect');
+    btn1.innerHTML = '❌';
+    btn1.style.opacity = '1';
+    
+    btn2.style.filter = 'none';
+    btn2.classList.remove('blurred');
+    btn2.classList.add('clear', 'incorrect');
+    btn2.innerHTML = '❌';
+    btn2.style.opacity = '1';
+    
+    btn3.style.filter = 'none';
+    btn3.classList.remove('blurred');
+    btn3.classList.add('clear', 'correct');
+    btn3.innerHTML = '✓';
+    btn3.style.opacity = '1';
+    
+    document.getElementById('patienceTimer').innerHTML = 
+        '<span style="color: #27ae60;">⏰ Τα κουμπιά είναι τώρα crystal clear! Επέλεξε σωστά.</span>';
+}
+
 // Submit patience trial choice
 async function submitPatienceChoice(choice) {
     if (!gameState.sessionId) {
@@ -619,12 +781,23 @@ async function submitPatienceChoice(choice) {
         return;
     }
 
+    // Stop patience timer
+    if (patienceState.timerInterval) {
+        clearInterval(patienceState.timerInterval);
+    }
+    
+    // Calculate waiting time
+    const waitedTime = patienceState.startTime ? 
+        Math.floor((Date.now() - patienceState.startTime) / 1000) : 0;
+    
     try {
         const response = await authenticatedFetch(`${API_BASE_URL}/trials/patience`, {
             method: 'POST',
             body: JSON.stringify({
                 SessionId: gameState.sessionId,
-                Choice: choice
+                Choice: choice,
+                WaitedSeconds: waitedTime,
+                HasWaitedEnough: patienceState.hasWaitedEnough
             })
         });
 
@@ -632,20 +805,54 @@ async function submitPatienceChoice(choice) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
 
-        const data = await response.json();
+        const result = await response.json();
         
-        const choiceText = choice === 1 ? 'Καθρέφτης 1' : 
-                          choice === 2 ? 'Καθρέφτης 2' : 'Υπομονή';
+        let message = `Επιλογή: Καθρέφτης ${choice}. `;
         
-        displayResult(`Επιλογή: ${choiceText} | ${data.result} | Αλλαγή Ενέργειας: ${data.energyChange > 0 ? '+' : ''}${data.energyChange}`, 
-                     data.isCorrect ? 'success' : 'error');
-
-        // Update game state
+        if (choice === 3) {
+            message += '✓ Σωστή επιλογή! ';
+        } else {
+            message += `❌ Λάθος επιλογή (το σωστό ήταν το 3). `;
+        }
+        
+        if (patienceState.hasWaitedEnough) {
+            message += 'Μπόνους υπομονής: +50 πόντοι! ';
+        }
+        message += `Περιμένατε: ${waitedTime} δευτερόλεπτα.`;
+        
+        displayResult(message, choice === 3 ? 'success' : 'error');
+        
+        // Update game state and continue
         await getGameState();
-
+        
+        // Hide patience section
+        document.getElementById('patienceSection').style.display = 'none';
+        
+        // Reset patience state
+        patienceState = {
+            startTime: null,
+            timerInterval: null,
+            buttonsCleared: false,
+            hasWaitedEnough: false
+        };
+        
+        // Reset button styles
+        [1, 2, 3].forEach(i => {
+            const btn = document.getElementById(`patienceBtn${i}`);
+            const hint = document.getElementById(`hint${i}`);
+            if (btn) {
+                btn.style.filter = '';
+                btn.style.opacity = '';
+                btn.classList.remove('blurred', 'clear', 'correct', 'incorrect');
+            }
+            if (hint) {
+                hint.style.opacity = '0';
+            }
+        });
+        
     } catch (error) {
-        displayResult(`Σφάλμα υποβολής επιλογής: ${error.message}`, 'error');
-        console.error('Error submitting patience choice:', error);
+        console.error('Patience trial error:', error);
+        displayResult('Σφάλμα στη δοκιμασία υπομονής: ' + error.message, 'error');
     }
 }
 
@@ -738,7 +945,14 @@ async function endGame() {
 
         const data = await response.json();
         
-        displayResult(`Παιχνίδι τερματίστηκε! Τελική βαθμολογία: ${data.score}`, 'success');
+        // Stop the game timer and show total time
+        const totalDuration = getGameDuration();
+        const minutes = Math.floor(totalDuration / 60);
+        const seconds = totalDuration % 60;
+        
+        stopGameTimer();
+        
+        displayResult(`Παιχνίδι τερματίστηκε! Τελική βαθμολογία: ${data.score} | Συνολικός χρόνος: ${minutes}:${seconds.toString().padStart(2, '0')}`, 'success');
 
         // Show player dashboard with all sessions
         await loadPlayerSessions();
@@ -746,6 +960,7 @@ async function endGame() {
         // Reset game state after showing dashboard
         gameState.sessionId = null;
         gameState.playerName = null;
+        gameState.startTime = null;
 
         // Hide all sections
         document.getElementById('gameState').style.display = 'none';
