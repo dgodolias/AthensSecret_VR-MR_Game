@@ -504,21 +504,33 @@ let gameState = {
     sessionId: null,
     playerName: null,
     startTime: null,
-    timerInterval: null
+    timerInterval: null,
+    wisdomEnergy: 0,
+    score: 0,
+    currentTrial: null
 };
 
 // Timer functions
 function startGameTimer() {
-    gameState.startTime = Date.now();
+    // Ensure we have a valid start time
+    if (!gameState.startTime) {
+        gameState.startTime = Date.now();
+    }
     document.getElementById('gameTimer').style.display = 'block';
     
     gameState.timerInterval = setInterval(() => {
-        const elapsed = Date.now() - gameState.startTime;
-        const minutes = Math.floor(elapsed / 60000);
-        const seconds = Math.floor((elapsed % 60000) / 1000);
-        
-        document.getElementById('timerDisplay').textContent = 
-            `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        if (gameState.startTime) {
+            const elapsed = Date.now() - gameState.startTime;
+            const minutes = Math.floor(elapsed / 60000);
+            const seconds = Math.floor((elapsed % 60000) / 1000);
+            
+            // Extra safety check for NaN
+            const displayMinutes = isNaN(minutes) ? 0 : minutes;
+            const displaySeconds = isNaN(seconds) ? 0 : seconds;
+            
+            document.getElementById('timerDisplay').textContent = 
+                `${displayMinutes.toString().padStart(2, '0')}:${displaySeconds.toString().padStart(2, '0')}`;
+        }
     }, 1000);
 }
 
@@ -600,7 +612,20 @@ async function getGameState() {
         }
 
         const data = await response.json();
-        updateGameStateDisplay(data);
+        
+        // Update local gameState with server data, but preserve wisdom energy AND startTime
+        const preserveWisdomEnergy = wisdomEnergyBonus !== null;
+        const preserveStartTime = gameState.startTime; // Always preserve local startTime
+        
+        gameState = { 
+            ...gameState, 
+            ...data,
+            // Keep local values
+            startTime: preserveStartTime, // Never overwrite the local timer start time
+            wisdomEnergy: preserveWisdomEnergy ? gameState.wisdomEnergy : data.wisdomEnergy
+        };
+        
+        updateGameStateDisplay(gameState);
         showCurrentTrialSection(data.currentTrial);
 
     } catch (error) {
@@ -655,12 +680,22 @@ function showCurrentTrialSection(currentTrial) {
             break;
         case 'resource':
             document.getElementById('resourceSection').style.display = 'block';
+            
+            // Start directly with patience panel (no initial choice)
+            startResourceTrialDirectly();
             break;
         case 'risk':
             document.getElementById('riskSection').style.display = 'block';
             break;
         case 'completed':
             document.getElementById('endSection').style.display = 'block';
+            
+            // Stop wisdom bonus when game is completed
+            if (wisdomEnergyBonus) {
+                clearInterval(wisdomEnergyBonus);
+                wisdomEnergyBonus = null;
+                displayResult('🏁 Παιχνίδι ολοκληρώθηκε! Το bonus σοφίας σταμάτησε.', 'info');
+            }
             break;
     }
 }
@@ -857,6 +892,216 @@ async function submitPatienceChoice(choice) {
 }
 
 // Submit resource trial choice
+// Reset resource trial to initial state
+function resetResourceTrial() {
+    // Clear any running timers
+    if (patienceTimer) {
+        clearInterval(patienceTimer);
+        patienceTimer = null;
+    }
+    
+    if (wisdomEnergyBonus) {
+        clearInterval(wisdomEnergyBonus);
+        wisdomEnergyBonus = null;
+    }
+    
+    // Reset variables
+    patienceChosen = false;
+    patienceSquareCount = 0;
+    
+    // Show ONLY initial choice phase, hide everything else
+    document.getElementById('patiencePhase').style.display = 'block';
+    document.getElementById('patiencePanel').style.display = 'none';
+    document.getElementById('olivePhase').style.display = 'none';
+    document.getElementById('pathChoicePhase').style.display = 'none';
+    
+    // Clear any selected path styling
+    document.querySelectorAll('.path-option').forEach(option => {
+        option.classList.remove('selected');
+    });
+}
+
+// Resource Trial Variables
+let patienceChosen = false;
+let patienceTimer = null;
+let wisdomEnergyBonus = null;
+let patienceSquareCount = 0;
+
+// Start resource trial directly with patience panel (after mirrors)
+function startResourceTrialDirectly() {
+    // Hide all phases initially
+    document.getElementById('patiencePhase').style.display = 'none';
+    document.getElementById('patiencePanel').style.display = 'block';
+    document.getElementById('olivePhase').style.display = 'none';
+    document.getElementById('pathChoicePhase').style.display = 'none';
+    
+    // Set patience as chosen (since we skip the choice)
+    patienceChosen = true;
+    
+    // Initialize patience grid
+    initializePatienceGrid();
+    
+    // Start the patience sequence
+    startPatienceSequence();
+    
+    // DON'T start wisdom bonus here - only after choosing "Επένδυση ενέργειας"
+    
+    displayResult('🧘‍♀️ Περίοδος αναμονής! Περιμένετε για να φτάσετε στην επιλογή της ελιάς.', 'success');
+}
+
+// Choose patience path
+function choosePatience() {
+    patienceChosen = true;
+    
+    // Hide choice buttons, show patience panel
+    document.getElementById('patiencePhase').style.display = 'none';
+    document.getElementById('patiencePanel').style.display = 'block';
+    
+    // Initialize patience grid
+    initializePatienceGrid();
+    
+    // Start the patience sequence
+    startPatienceSequence();
+    
+    // Start wisdom energy bonus (+1 per second from now until game ends)
+    startWisdomEnergyBonus();
+    
+    displayResult('🧘‍♀️ Επιλέξατε την υπομονή! Κερδίζετε +1 ενέργεια σοφίας κάθε δευτερόλεπτο μέχρι το τέλος του παιχνιδιού!', 'success');
+}
+
+// Skip patience, go directly to olive choice
+function skipPatience() {
+    patienceChosen = false;
+    
+    // Hide choice buttons, show olive phase
+    document.getElementById('patiencePhase').style.display = 'none';
+    document.getElementById('olivePhase').style.display = 'block';
+    
+    displayResult('⚡ Επιλέξατε άμεση δράση!', 'info');
+}
+
+// Initialize the 5x5 patience grid
+function initializePatienceGrid() {
+    const grid = document.getElementById('patienceGrid');
+    grid.innerHTML = '';
+    
+    for (let i = 0; i < 25; i++) {
+        const square = document.createElement('div');
+        square.className = 'patience-square';
+        square.id = `square-${i}`;
+        square.onclick = () => selectPatienceSquare(i);
+        grid.appendChild(square);
+    }
+}
+
+// Start the 5-second patience sequence
+function startPatienceSequence() {
+    let currentSquare = 0;
+    const totalSquares = 25;
+    const intervalMs = 5000 / totalSquares; // 5 seconds divided by 25 squares
+    
+    patienceTimer = setInterval(() => {
+        if (currentSquare < totalSquares) {
+            const square = document.getElementById(`square-${currentSquare}`);
+            square.classList.add('active');
+            square.innerHTML = '✨';
+            currentSquare++;
+            
+            // Update status
+            const statusEl = document.getElementById('patienceStatus');
+            statusEl.textContent = `Πρόοδος: ${currentSquare}/${totalSquares}`;
+            
+            if (currentSquare === totalSquares) {
+                // All squares are ready, show the special square to click
+                const randomSquare = Math.floor(Math.random() * totalSquares);
+                const specialSquare = document.getElementById(`square-${randomSquare}`);
+                specialSquare.style.background = '#ffd700';
+                specialSquare.innerHTML = '🌟';
+                specialSquare.style.animation = 'pulse 0.5s infinite';
+                
+                statusEl.textContent = 'Κάντε κλικ στο χρυσό τετράγωνο για να συνεχίσετε!';
+            }
+        }
+    }, intervalMs);
+}
+
+// Handle patience square selection
+function selectPatienceSquare(index) {
+    const square = document.getElementById(`square-${index}`);
+    
+    if (square.style.background === 'rgb(255, 215, 0)' || square.style.background === '#ffd700') {
+        // Correct square clicked
+        clearInterval(patienceTimer);
+        
+        // Hide patience panel, go directly to olive planting phase
+        document.getElementById('patiencePanel').style.display = 'none';
+        document.getElementById('olivePhase').style.display = 'block';
+        
+        displayResult('🌟 Τέλεια! Η υπομονή σας ανταμείφθηκε. Τώρα φυτεύετε την ελιά.', 'success');
+    }
+}
+
+// Start wisdom energy bonus (1 per second)
+function startWisdomEnergyBonus() {
+    if (wisdomEnergyBonus) {
+        clearInterval(wisdomEnergyBonus);
+    }
+    
+    displayResult('🧘‍♀️ Ξεκίνησε το bonus σοφίας: +1 ενέργεια κάθε δευτερόλεπτο!', 'success');
+    
+    wisdomEnergyBonus = setInterval(() => {
+        if (gameState.sessionId) {
+            // Add wisdom energy bonus
+            const oldWisdom = gameState.wisdomEnergy || 0;
+            gameState.wisdomEnergy = oldWisdom + 1;
+            
+            // Update the display with current gameState
+            updateGameStateDisplay(gameState);
+            
+            // Show feedback every 10 seconds to avoid spam
+            if (gameState.wisdomEnergy % 10 === 0) {
+                displayResult(`🧘‍♀️ Bonus σοφίας: ${gameState.wisdomEnergy} (συνεχίζει +1/δευτερόλεπτο)`, 'info');
+            }
+        } else {
+            // Stop bonus if no active game
+            clearInterval(wisdomEnergyBonus);
+            wisdomEnergyBonus = null;
+        }
+    }, 1000);
+}
+
+// Select path (safe/risky)
+function selectPath(pathType) {
+    // Visual feedback
+    document.querySelectorAll('.path-option').forEach(option => {
+        option.classList.remove('selected');
+    });
+    
+    const selectedOption = document.querySelector(`.path-option.${pathType}`);
+    selectedOption.classList.add('selected');
+    
+    // After selection, complete resource trial and move to next
+    setTimeout(() => {
+        const pathName = pathType === 'safe' ? 'Ασφαλές Μονοπάτι' : 'Αβέβαιο Μονοπάτι';
+        displayResult(`🛤️ Επιλέξατε: ${pathName}. Η δοκιμασία διαχείρισης πόρων ολοκληρώθηκε!`, 'success');
+        
+        // End the game after resource trial
+        setTimeout(() => {
+            displayResult('🏁 Όλες οι δοκιμασίες ολοκληρώθηκαν! Το παιχνίδι τελειώνει.', 'success');
+            
+            // Stop wisdom bonus if running
+            if (wisdomEnergyBonus) {
+                clearInterval(wisdomEnergyBonus);
+                wisdomEnergyBonus = null;
+                displayResult('💡 Το bonus σοφίας σταμάτησε.', 'info');
+            }
+            
+            // End the game
+            endGame();
+        }, 2000);
+    }, 1000);
+}
+
 async function submitResourceChoice(plantOlive) {
     if (!gameState.sessionId) {
         displayResult('Δεν υπάρχει ενεργό παιχνίδι!', 'error');
@@ -878,12 +1123,27 @@ async function submitResourceChoice(plantOlive) {
 
         const data = await response.json();
         
-        const choiceText = plantOlive ? 'Φύτεψα την ελιά' : 'Άμεσο κέρδος';
+        const choiceText = plantOlive ? 'Επένδυση ενέργειας' : 'Συλλογή άμεσα';
         
-        displayResult(`Επιλογή: ${choiceText} | ${data.result} | Αλλαγή Ενέργειας: ${data.energyChange > 0 ? '+' : ''}${data.energyChange}`, 'info');
+        displayResult(`Επιλογή: ${choiceText} | ${data.result}`, 'info');
 
-        // Update game state
-        await getGameState();
+        if (plantOlive) {
+            // INVESTMENT CHOICE: Ignore server energy change, just start the +1/sec bonus
+            displayResult('🌱💡 Επιλέξατε επένδυση! Κερδίζετε +1 ενέργεια σοφίας κάθε δευτερόλεπτο μέχρι το τέλος!', 'success');
+            startWisdomEnergyBonus();
+        } else {
+            // IMMEDIATE COLLECTION: Override server value, give +50 directly
+            gameState.wisdomEnergy += 50;
+            updateGameStateDisplay(gameState);
+            displayResult('💰 Άμεση εισπραξη! Κερδίζετε +50 μονάδες ενέργειας αμέσως!', 'success');
+        }
+        
+        // After olive choice, show path selection
+        setTimeout(() => {
+            document.getElementById('olivePhase').style.display = 'none';
+            document.getElementById('pathChoicePhase').style.display = 'block';
+            displayResult('🛤️ Επιλέξτε το μονοπάτι σας για τη συνέχεια.', 'info');
+        }, 2000);
 
     } catch (error) {
         displayResult(`Σφάλμα υποβολής επιλογής: ${error.message}`, 'error');
@@ -920,6 +1180,13 @@ async function submitRiskChoice(chooseSafePath) {
 
         // Update game state
         await getGameState();
+        
+        // Stop wisdom bonus when risk trial is completed
+        if (wisdomEnergyBonus) {
+            clearInterval(wisdomEnergyBonus);
+            wisdomEnergyBonus = null;
+            displayResult('🏁 Όλες οι δοκιμασίες ολοκληρώθηκαν! Το bonus σοφίας σταμάτησε.', 'info');
+        }
 
     } catch (error) {
         displayResult(`Σφάλμα υποβολής επιλογής: ${error.message}`, 'error');
@@ -951,6 +1218,17 @@ async function endGame() {
         const seconds = totalDuration % 60;
         
         stopGameTimer();
+        
+        // Clear resource trial timers
+        if (patienceTimer) {
+            clearInterval(patienceTimer);
+            patienceTimer = null;
+        }
+        
+        if (wisdomEnergyBonus) {
+            clearInterval(wisdomEnergyBonus);
+            wisdomEnergyBonus = null;
+        }
         
         displayResult(`Παιχνίδι τερματίστηκε! Τελική βαθμολογία: ${data.score} | Συνολικός χρόνος: ${minutes}:${seconds.toString().padStart(2, '0')}`, 'success');
 
