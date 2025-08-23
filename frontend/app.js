@@ -685,7 +685,10 @@ function showCurrentTrialSection(currentTrial) {
             startResourceTrialDirectly();
             break;
         case 'risk':
-            document.getElementById('riskSection').style.display = 'block';
+            // Skip the old riskSection with small buttons, go directly to completed
+            // The pathChoicePhase handles the risk selection with beautiful UI
+            displayResult('⏭️ Μετάβαση στο τέλος του παιχνιδιού...', 'info');
+            showCurrentTrialSection('completed');
             break;
         case 'completed':
             document.getElementById('endSection').style.display = 'block';
@@ -1083,23 +1086,57 @@ function selectPath(pathType) {
     // After selection, complete resource trial and move to next
     setTimeout(() => {
         const pathName = pathType === 'safe' ? 'Ασφαλές Μονοπάτι' : 'Αβέβαιο Μονοπάτι';
-        displayResult(`🛤️ Επιλέξατε: ${pathName}. Η δοκιμασία διαχείρισης πόρων ολοκληρώθηκε!`, 'success');
+        displayResult(`🛤️ Επιλέξατε: ${pathName}.`, 'success');
         
-        // End the game after resource trial
+        // Handle path logic locally based on current wisdom energy
         setTimeout(() => {
-            displayResult('🏁 Όλες οι δοκιμασίες ολοκληρώθηκαν! Το παιχνίδι τελειώνει.', 'success');
-            
-            // Stop wisdom bonus if running
-            if (wisdomEnergyBonus) {
-                clearInterval(wisdomEnergyBonus);
-                wisdomEnergyBonus = null;
-                displayResult('💡 Το bonus σοφίας σταμάτησε.', 'info');
-            }
-            
-            // End the game
-            endGame();
-        }, 2000);
+            handlePathChoice(pathType);
+        }, 1500);
     }, 1000);
+}
+
+// Handle path choice with local logic
+function handlePathChoice(pathType) {
+    const currentWisdom = gameState.wisdomEnergy || 0;
+    let energyChange = 0;
+    let result = '';
+    
+    if (pathType === 'safe') {
+        // Safe path: always +50
+        energyChange = 50;
+        result = 'Ασφαλές μονοπάτι - Σταθερό κέρδος!';
+        displayResult(`🛡️ ${result} | +${energyChange} ενέργεια`, 'success');
+    } else {
+        // Risky path: -100 or +100 randomly
+        const isSuccess = Math.random() > 0.5;
+        energyChange = isSuccess ? 100 : -100;
+        result = isSuccess ? 'Ριψοκίνδυνο μονοπάτι - Μεγάλη επιτυχία!' : 'Ριψοκίνδυνο μονοπάτι - Αποτυχία!';
+        
+        const resultType = isSuccess ? 'success' : 'error';
+        displayResult(`⚡ ${result} | ${energyChange > 0 ? '+' : ''}${energyChange} ενέργεια`, resultType);
+    }
+    
+    // Apply the energy change to current wisdom energy (including any bonuses)
+    gameState.wisdomEnergy = currentWisdom + energyChange;
+    
+    // Update the display
+    updateGameStateDisplay(gameState);
+    
+    // Show summary
+    displayResult(`📊 Ενέργεια: ${currentWisdom} → ${gameState.wisdomEnergy}`, 'info');
+    
+    // Stop wisdom bonus when all trials are completed
+    if (wisdomEnergyBonus) {
+        clearInterval(wisdomEnergyBonus);
+        wisdomEnergyBonus = null;
+        displayResult('🏁 Όλες οι δοκιμασίες ολοκληρώθηκαν! Το bonus σοφίας σταμάτησε.', 'info');
+    }
+    
+    // Hide path choice and go to end game
+    setTimeout(() => {
+        document.getElementById('pathChoicePhase').style.display = 'none';
+        showCurrentTrialSection('completed');
+    }, 3000);
 }
 
 async function submitResourceChoice(plantOlive) {
@@ -1178,15 +1215,23 @@ async function submitRiskChoice(chooseSafePath) {
         displayResult(`Επιλογή: ${choiceText} | ${data.result} | Αλλαγή Ενέργειας: ${data.energyChange > 0 ? '+' : ''}${data.energyChange}`, 
                      data.isSuccess ? 'success' : 'error');
 
-        // Update game state
-        await getGameState();
-        
         // Stop wisdom bonus when risk trial is completed
         if (wisdomEnergyBonus) {
             clearInterval(wisdomEnergyBonus);
             wisdomEnergyBonus = null;
             displayResult('🏁 Όλες οι δοκιμασίες ολοκληρώθηκαν! Το bonus σοφίας σταμάτησε.', 'info');
         }
+
+        // Wait a bit then update game state to show end screen
+        setTimeout(async () => {
+            await getGameState();
+            
+            // If still on risk (server hasn't updated yet), manually show end section
+            if (gameState.currentTrial === 'risk') {
+                displayResult('🎯 Δοκιμασία ρίσκου ολοκληρώθηκε! Μετάβαση στην οθόνη ολοκλήρωσης...', 'success');
+                showCurrentTrialSection('completed');
+            }
+        }, 2000);
 
     } catch (error) {
         displayResult(`Σφάλμα υποβολής επιλογής: ${error.message}`, 'error');
