@@ -9,26 +9,78 @@ let currentUser = localStorage.getItem('currentUser');
 // API Configuration
 const API_BASE_URL = 'http://localhost:5182/api';
 
+// Console logging helper for API calls
+function logAPICall(method, url, requestData, responseData, status) {
+    console.group(`🔄 API ${method.toUpperCase()} ${url}`);
+    console.log(`🌐 Full URL: ${url}`);
+    console.log(`📋 Status: ${status}`);
+    
+    if (requestData) {
+        console.log(`📤 REQUEST BODY:`, requestData);
+    }
+    
+    if (responseData) {
+        console.log(`📥 RESPONSE DATA:`, responseData);
+    }
+    
+    // Log headers if available
+    const token = localStorage.getItem('authToken');
+    if (token) {
+        console.log(`🔐 Authorization: Bearer ${token.substring(0, 20)}...`);
+    }
+    
+    console.log(`🕐 Timestamp: ${new Date().toISOString()}`);
+    console.groupEnd();
+}
+
 // Helper function for authenticated API requests
 async function authenticatedFetch(url, options = {}) {
     const token = localStorage.getItem('authToken');
     if (!token) {
+        console.error('❌ AUTHENTICATED FETCH FAILED - No token found');
         throw new Error('No authentication token found');
     }
     
+    const headers = {
+        ...options.headers,
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+    };
+    
+    console.log(`🔐 AUTHENTICATED FETCH - URL: ${url}`);
+    console.log(`🔑 Using token: ${token.substring(0, 20)}...`);
+    
     return fetch(url, {
         ...options,
-        headers: {
-            ...options.headers,
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-        }
+        headers: headers
     });
 }
 
 // Check authentication on page load
 document.addEventListener('DOMContentLoaded', function() {
+    // Console logging banner
+    console.log(`
+    🎮 VR GAME API DEBUGGING ENABLED 🎮
+    ===================================
+    📊 All API calls will be logged with detailed information:
+    📤 Request data, 📥 Response data, 🌐 URLs, 🔐 Auth tokens
+    
+    🎯 Expected API Flow:
+    1. POST /api/auth/register OR /api/auth/login
+    2. POST /api/game/start
+    3. POST /api/game/submit-complete
+    4. POST /api/auth/logout
+    
+    📋 Watch for:
+    - Request/Response schemas
+    - HTTP status codes
+    - JWT token usage
+    - API route paths
+    ===================================
+    `);
+    
     if (authToken && currentUser) {
+        console.log(`🔄 EXISTING SESSION FOUND - User: ${currentUser}, Token: ${authToken.substring(0, 20)}...`);
         showAuthenticatedView();
     }
 });
@@ -53,15 +105,24 @@ async function register() {
     }
     
     try {
-        const response = await fetch(`${API_BASE_URL}/auth/register`, {
+        const requestData = { username, password };
+        const url = `${API_BASE_URL}/auth/register`;
+        
+        console.log(`🚀 STARTING REGISTER API CALL`);
+        logAPICall('POST', url, requestData, null, 'PENDING');
+        
+        const response = await fetch(url, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ username, password })
+            body: JSON.stringify(requestData)
         });
         
         const data = await response.json();
+        
+        // Log the complete response
+        logAPICall('POST', url, requestData, data, response.status);
         
         if (response.ok) {
             // Store authentication data
@@ -71,12 +132,15 @@ async function register() {
             localStorage.setItem('currentUser', currentUser);
             localStorage.setItem('playerId', data.playerId);
             
+            console.log(`✅ REGISTER SUCCESS - Token saved, User: ${currentUser}, PlayerId: ${data.playerId}`);
             showResult(`Επιτυχής εγγραφή! Καλώς ήρθες, ${data.username}!`, 'success');
             showAuthenticatedView();
         } else {
+            console.error(`❌ REGISTER FAILED - Status: ${response.status}, Message: ${data.message}`);
             showResult(data.message || 'Σφάλμα εγγραφής', 'error');
         }
     } catch (error) {
+        console.error('🔥 REGISTER ERROR:', error);
         showResult('Σφάλμα σύνδεσης με τον server', 'error');
         console.error('Registration error:', error);
     }
@@ -92,15 +156,24 @@ async function login() {
     }
     
     try {
-        const response = await fetch(`${API_BASE_URL}/auth/login`, {
+        const requestData = { username, password };
+        const url = `${API_BASE_URL}/auth/login`;
+        
+        console.log(`🚀 STARTING LOGIN API CALL`);
+        logAPICall('POST', url, requestData, null, 'PENDING');
+        
+        const response = await fetch(url, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ username, password })
+            body: JSON.stringify(requestData)
         });
         
         const data = await response.json();
+        
+        // Log the complete response
+        logAPICall('POST', url, requestData, data, response.status);
         
         if (response.ok) {
             // Store authentication data
@@ -110,12 +183,15 @@ async function login() {
             localStorage.setItem('currentUser', currentUser);
             localStorage.setItem('playerId', data.playerId);
             
+            console.log(`✅ LOGIN SUCCESS - Token saved, User: ${currentUser}, PlayerId: ${data.playerId}`);
             showResult(`Επιτυχής είσοδος! Καλώς ήρθες πίσω, ${data.username}!`, 'success');
             showAuthenticatedView();
         } else {
+            console.error(`❌ LOGIN FAILED - Status: ${response.status}, Message: ${data.message}`);
             showResult(data.message || 'Λάθος στοιχεία', 'error');
         }
     } catch (error) {
+        console.error('🔥 LOGIN ERROR:', error);
         showResult('Σφάλμα σύνδεσης με τον server', 'error');
         console.error('Login error:', error);
     }
@@ -123,13 +199,35 @@ async function login() {
 
 async function logout() {
     try {
-        await fetch(`${API_BASE_URL}/auth/logout`, {
+        const url = `${API_BASE_URL}/auth/logout`;
+        
+        console.log(`🚀 STARTING LOGOUT API CALL`);
+        logAPICall('POST', url, null, null, 'PENDING');
+        
+        const response = await fetch(url, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${authToken}`
             }
         });
+        
+        // Try to get response data if available
+        let responseData = null;
+        try {
+            responseData = await response.text();
+            if (responseData) {
+                responseData = JSON.parse(responseData);
+            }
+        } catch (e) {
+            // Response might be empty (204 No Content)
+            responseData = { message: 'No content (204)' };
+        }
+        
+        logAPICall('POST', url, null, responseData, response.status);
+        console.log(`✅ LOGOUT COMPLETED - Status: ${response.status}`);
+        
     } catch (error) {
+        console.error('🔥 LOGOUT ERROR:', error);
         console.error('Logout error:', error);
     }
     
@@ -140,6 +238,7 @@ async function logout() {
     localStorage.removeItem('currentUser');
     localStorage.removeItem('playerId');
     
+    console.log(`🧹 LOGOUT CLEANUP - Cleared localStorage and tokens`);
     showResult('Επιτυχής έξοδος!', 'success');
     showUnauthenticatedView();
 }
@@ -186,16 +285,27 @@ async function loadPlayerSessions() {
 // Fetch and display stats for a given session ID
 async function fetchPlayerSessions(username) {
     try {
-        const response = await authenticatedFetch(`${API_BASE_URL}/game/player/${encodeURIComponent(username)}/sessions`);
+        const url = `${API_BASE_URL}/game/player/${encodeURIComponent(username)}/sessions`;
+        
+        console.log(`🚀 STARTING FETCH PLAYER SESSIONS API CALL`);
+        logAPICall('GET', url, null, null, 'PENDING');
+        
+        const response = await authenticatedFetch(url);
         
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
 
         const data = await response.json();
+        
+        // Log the complete response
+        logAPICall('GET', url, null, data, response.status);
+        console.log(`✅ FETCH SESSIONS SUCCESS - Found ${data.totalSessions} sessions for ${username}`);
+        
         displayPlayerDashboard(data);
 
     } catch (error) {
+        console.error('🔥 FETCH SESSIONS ERROR:', error);
         displayResult(`Σφάλμα ανάκτησης στατιστικών: ${error.message}`, 'error');
         console.error('Error fetching player sessions:', error);
     }
@@ -595,12 +705,18 @@ async function startGame() {
     }
 
     try {
-        const response = await authenticatedFetch(`${API_BASE_URL}/game/start`, {
+        const url = `${API_BASE_URL}/game/start`;
+        
+        console.log(`🚀 STARTING GAME START API CALL`);
+        logAPICall('POST', url, null, null, 'PENDING');
+        
+        const response = await authenticatedFetch(url, {
             method: 'POST'
         });
 
         if (!response.ok) {
             if (response.status === 401) {
+                console.error(`❌ GAME START FAILED - 401 Unauthorized`);
                 showResult('Η συνεδρία σας έχει λήξει. Παρακαλώ κάντε login ξανά.', 'error');
                 logout();
                 return;
@@ -609,6 +725,9 @@ async function startGame() {
         }
 
         const data = await response.json();
+        
+        // Log the complete response
+        logAPICall('POST', url, null, data, response.status);
         
         // Initialize game state
         gameState.sessionId = data.sessionId;
@@ -631,6 +750,10 @@ async function startGame() {
             }
         };
 
+        console.log(`✅ GAME START SUCCESS - SessionId: ${data.sessionId}, Local tracking initialized`);
+        console.log(`📊 Initial Game State:`, gameState);
+        console.log(`💾 Local Session:`, localGameSession);
+        
         showResult(`🎮 Παιχνίδι ξεκίνησε! Session ID: ${data.sessionId}`, 'success');
         showResult(`💾 Τοπική καταγραφή ενεργοποιημένη - δεδομένα θα σταλούν στο τέλος`, 'info');
         
@@ -641,6 +764,7 @@ async function startGame() {
         showCurrentTrialSection(gameState.currentTrial);
 
     } catch (error) {
+        console.error('🔥 GAME START ERROR:', error);
         displayResult(`Σφάλμα έναρξης παιχνιδιού: ${error.message}`, 'error');
         console.error('Error starting game:', error);
     }
@@ -1221,11 +1345,17 @@ async function submitCompleteGameSession() {
             totalGameDurationSeconds: localGameSession.gameMetrics.totalGameDuration
         };
 
+        const url = `${API_BASE_URL}/game/submit-complete`;
+        
+        console.log(`🚀 STARTING GAME END (SUBMIT COMPLETE) API CALL`);
+        console.log(`📦 Complete Session Data Prepared:`, completeSessionData);
+        logAPICall('POST', url, completeSessionData, null, 'PENDING');
+        
         displayResult('📤 Αποστολή πλήρους session στον server...', 'info');
         console.log('Complete session data to submit:', completeSessionData);
 
         // Use the new batch submission endpoint
-        const response = await authenticatedFetch(`${API_BASE_URL}/game/submit-complete`, {
+        const response = await authenticatedFetch(url, {
             method: 'POST',
             body: JSON.stringify(completeSessionData)
         });
@@ -1235,12 +1365,20 @@ async function submitCompleteGameSession() {
         }
 
         const result = await response.json();
+        
+        // Log the complete response
+        logAPICall('POST', url, completeSessionData, result, response.status);
+        
+        console.log(`✅ GAME END SUCCESS - Final Score: ${result.score}`);
+        console.log(`📊 Server Response:`, result);
+        
         displayResult('✅ Όλα τα δεδομένα στάλθηκαν επιτυχώς!', 'success');
         displayResult(`📊 Τελικό score: ${result.score}`, 'info');
         
         return true;
 
     } catch (error) {
+        console.error('🔥 GAME END ERROR:', error);
         displayResult(`❌ Σφάλμα αποστολής session: ${error.message}`, 'error');
         console.error('Error submitting complete session:', error);
         displayResult('💾 Δεδομένα διατηρούνται τοπικά για επανάληψη.', 'info');
