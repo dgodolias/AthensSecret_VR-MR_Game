@@ -499,16 +499,46 @@ function generateCharts(sessions, container) {
     }, 100);
 }
 
-// Global game state
+// Global game state with local storage for complete gameplay
 let gameState = {
     sessionId: null,
     playerName: null,
     startTime: null,
     timerInterval: null,
-    wisdomEnergy: 0,
+    wisdomEnergy: 50, // Starting energy
     score: 0,
-    currentTrial: null
+    currentTrial: 'start'
 };
+
+// Local game session storage - collects all data before final submission
+let localGameSession = {
+    sessionId: null,
+    playerChoices: [],
+    startTime: null,
+    endTime: null,
+    gameMetrics: {
+        totalWisdomEnergyFromBonus: 0,
+        patienceWaitTime: 0,
+        totalGameDuration: 0
+    }
+};
+
+// Helper function to record player choices locally
+function recordPlayerChoice(trialType, choice, additionalData = {}) {
+    localGameSession.playerChoices.push({
+        trialType: trialType,
+        choice: choice,
+        timestamp: Date.now(),
+        gameStateAtTime: {
+            wisdomEnergy: gameState.wisdomEnergy,
+            score: gameState.score,
+            currentTrial: gameState.currentTrial
+        },
+        ...additionalData
+    });
+    
+    displayResult(`📝 Επιλογή καταγράφηκε τοπικά: ${trialType}`, 'info');
+}
 
 // Timer functions
 function startGameTimer() {
@@ -557,7 +587,7 @@ function displayResult(message, type = 'info') {
     resultsDiv.scrollTop = resultsDiv.scrollHeight;
 }
 
-// Start a new game
+// Start a new game with local session initialization
 async function startGame() {
     if (!authToken) {
         showResult('Παρακαλώ κάντε login πρώτα!', 'error');
@@ -580,16 +610,35 @@ async function startGame() {
 
         const data = await response.json();
         
+        // Initialize game state
         gameState.sessionId = data.sessionId;
         gameState.playerName = currentUser;
+        gameState.startTime = Date.now(); // Use local time for precision
+        gameState.wisdomEnergy = 50; // Starting energy
+        gameState.score = 0;
+        gameState.currentTrial = 'start';
 
-        showResult(`Παιχνίδι ξεκίνησε! Session ID: ${data.sessionId}`, 'success');
+        // Initialize local session tracking
+        localGameSession = {
+            sessionId: data.sessionId,
+            playerChoices: [],
+            startTime: Date.now(),
+            endTime: null,
+            gameMetrics: {
+                totalWisdomEnergyFromBonus: 0,
+                patienceWaitTime: 0,
+                totalGameDuration: 0
+            }
+        };
+
+        showResult(`🎮 Παιχνίδι ξεκίνησε! Session ID: ${data.sessionId}`, 'success');
+        showResult(`💾 Τοπική καταγραφή ενεργοποιημένη - δεδομένα θα σταλούν στο τέλος`, 'info');
         
         // Start the game timer
         startGameTimer();
         
-        updateGameStateDisplay(data);
-        showCurrentTrialSection(data.currentTrial);
+        updateGameStateDisplay(gameState);
+        showCurrentTrialSection(gameState.currentTrial);
 
     } catch (error) {
         displayResult(`Σφάλμα έναρξης παιχνιδιού: ${error.message}`, 'error');
@@ -597,41 +646,18 @@ async function startGame() {
     }
 }
 
-// Get current game state
+// Get current game state (LOCAL VERSION - NO SERVER CALL)
 async function getGameState() {
     if (!gameState.sessionId) {
         displayResult('Δεν υπάρχει ενεργό παιχνίδι!', 'error');
         return;
     }
 
-    try {
-        const response = await authenticatedFetch(`${API_BASE_URL}/game/${gameState.sessionId}/state`);
-        
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data = await response.json();
-        
-        // Update local gameState with server data, but preserve wisdom energy AND startTime
-        const preserveWisdomEnergy = wisdomEnergyBonus !== null;
-        const preserveStartTime = gameState.startTime; // Always preserve local startTime
-        
-        gameState = { 
-            ...gameState, 
-            ...data,
-            // Keep local values
-            startTime: preserveStartTime, // Never overwrite the local timer start time
-            wisdomEnergy: preserveWisdomEnergy ? gameState.wisdomEnergy : data.wisdomEnergy
-        };
-        
-        updateGameStateDisplay(gameState);
-        showCurrentTrialSection(data.currentTrial);
-
-    } catch (error) {
-        displayResult(`Σφάλμα ανάκτησης κατάστασης: ${error.message}`, 'error');
-        console.error('Error getting game state:', error);
-    }
+    // Use local game state instead of server call
+    updateGameStateDisplay(gameState);
+    showCurrentTrialSection(gameState.currentTrial);
+    
+    displayResult(`🎯 Local State: ${gameState.currentTrial}, Score: ${gameState.score}, Ενέργεια: ${gameState.wisdomEnergy}`, 'info');
 }
 
 // Update the game state display
@@ -812,7 +838,7 @@ function clearPatienceButtons() {
         '<span style="color: #27ae60;">⏰ Τα κουμπιά είναι τώρα crystal clear! Επέλεξε σωστά.</span>';
 }
 
-// Submit patience trial choice
+// Submit patience trial choice (LOCAL STORAGE - NO SERVER CALL)
 async function submitPatienceChoice(choice) {
     if (!gameState.sessionId) {
         displayResult('Δεν υπάρχει ενεργό παιχνίδι!', 'error');
@@ -828,107 +854,86 @@ async function submitPatienceChoice(choice) {
     const waitedTime = patienceState.startTime ? 
         Math.floor((Date.now() - patienceState.startTime) / 1000) : 0;
     
-    try {
-        const response = await authenticatedFetch(`${API_BASE_URL}/trials/patience`, {
-            method: 'POST',
-            body: JSON.stringify({
-                SessionId: gameState.sessionId,
-                Choice: choice,
-                WaitedSeconds: waitedTime,
-                HasWaitedEnough: patienceState.hasWaitedEnough
-            })
-        });
-
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const result = await response.json();
+    // Store metrics
+    localGameSession.gameMetrics.patienceWaitTime = waitedTime;
+    
+    // Local calculation of results (instead of server call)
+    let isCorrect = false;
+    let energyChange = 0;
+    let scoreChange = 0;
+    let result = '';
+    
+    if (choice === 3) { // Correct choice
+        isCorrect = true;
+        energyChange = 25;
+        scoreChange = 100;
+        result = 'Σωστή επιλογή! Η αντανάκλασή σας είναι καθαρή.';
         
-        let message = `Επιλογή: Καθρέφτης ${choice}. `;
-        
-        if (choice === 3) {
-            message += '✓ Σωστή επιλογή! ';
-        } else {
-            message += `❌ Λάθος επιλογή (το σωστό ήταν το 3). `;
-        }
-        
+        // Bonus for patience
         if (patienceState.hasWaitedEnough) {
-            message += 'Μπόνους υπομονής: +50 πόντοι! ';
+            energyChange += 50;
+            result += ' Μπόνους υπομονής: +50 ενέργεια!';
         }
-        message += `Περιμένατε: ${waitedTime} δευτερόλεπτα.`;
-        
-        displayResult(message, choice === 3 ? 'success' : 'error');
-        
-        // Update game state and continue
-        await getGameState();
-        
-        // Hide patience section
-        document.getElementById('patienceSection').style.display = 'none';
-        
-        // Reset patience state
-        patienceState = {
-            startTime: null,
-            timerInterval: null,
-            buttonsCleared: false,
-            hasWaitedEnough: false
-        };
-        
-        // Reset button styles
-        [1, 2, 3].forEach(i => {
-            const btn = document.getElementById(`patienceBtn${i}`);
-            const hint = document.getElementById(`hint${i}`);
-            if (btn) {
-                btn.style.filter = '';
-                btn.style.opacity = '';
-                btn.classList.remove('blurred', 'clear', 'correct', 'incorrect');
-            }
-            if (hint) {
-                hint.style.opacity = '0';
-            }
-        });
-        
-    } catch (error) {
-        console.error('Patience trial error:', error);
-        displayResult('Σφάλμα στη δοκιμασία υπομονής: ' + error.message, 'error');
-    }
-}
-
-// Submit resource trial choice
-// Reset resource trial to initial state
-function resetResourceTrial() {
-    // Clear any running timers
-    if (patienceTimer) {
-        clearInterval(patienceTimer);
-        patienceTimer = null;
+    } else {
+        isCorrect = false;
+        energyChange = -25;
+        scoreChange = 0;
+        result = `Λάθος επιλογή (το σωστό ήταν το 3). Η αντανάκλαση παραμορφώθηκε.`;
     }
     
-    if (wisdomEnergyBonus) {
-        clearInterval(wisdomEnergyBonus);
-        wisdomEnergyBonus = null;
-    }
+    // Update local game state
+    gameState.wisdomEnergy += energyChange;
+    gameState.score += scoreChange;
+    gameState.currentTrial = 'resource';
     
-    // Reset variables
-    patienceChosen = false;
-    patienceSquareCount = 0;
+    // Record choice locally instead of sending to server
+    recordPlayerChoice('patience', choice, {
+        waitedSeconds: waitedTime,
+        hasWaitedEnough: patienceState.hasWaitedEnough,
+        isCorrect: isCorrect,
+        energyChange: energyChange,
+        scoreChange: scoreChange,
+        result: result
+    });
     
-    // Show ONLY initial choice phase, hide everything else
-    document.getElementById('patiencePhase').style.display = 'block';
-    document.getElementById('patiencePanel').style.display = 'none';
-    document.getElementById('olivePhase').style.display = 'none';
-    document.getElementById('pathChoicePhase').style.display = 'none';
+    let message = `Επιλογή: Καθρέφτης ${choice}. ${result} Περιμένατε: ${waitedTime} δευτερόλεπτα.`;
+    displayResult(message, isCorrect ? 'success' : 'error');
     
-    // Clear any selected path styling
-    document.querySelectorAll('.path-option').forEach(option => {
-        option.classList.remove('selected');
+    // Update display with local state
+    updateGameStateDisplay(gameState);
+    
+    // Continue to next trial
+    showCurrentTrialSection(gameState.currentTrial);
+    
+    // Hide patience section
+    document.getElementById('patienceSection').style.display = 'none';
+    
+    // Reset patience state
+    patienceState = {
+        startTime: null,
+        timerInterval: null,
+        buttonsCleared: false,
+        hasWaitedEnough: false
+    };
+    
+    // Reset button styles
+    [1, 2, 3].forEach(i => {
+        const btn = document.getElementById(`patienceBtn${i}`);
+        const hint = document.getElementById(`hint${i}`);
+        if (btn) {
+            btn.style.filter = '';
+            btn.style.opacity = '';
+            btn.classList.remove('blurred', 'clear', 'correct', 'incorrect');
+        }
+        if (hint) {
+            hint.style.opacity = '0';
+        }
     });
 }
 
-// Resource Trial Variables
-let patienceChosen = false;
+// Resource Trial Variables  
 let patienceTimer = null;
 let wisdomEnergyBonus = null;
-let patienceSquareCount = 0;
 
 // Start resource trial directly with patience panel (after mirrors)
 function startResourceTrialDirectly() {
@@ -938,9 +943,6 @@ function startResourceTrialDirectly() {
     document.getElementById('olivePhase').style.display = 'none';
     document.getElementById('pathChoicePhase').style.display = 'none';
     
-    // Set patience as chosen (since we skip the choice)
-    patienceChosen = true;
-    
     // Initialize patience grid
     initializePatienceGrid();
     
@@ -948,39 +950,7 @@ function startResourceTrialDirectly() {
     startPatienceSequence();
     
     // DON'T start wisdom bonus here - only after choosing "Επένδυση ενέργειας"
-    
     displayResult('🧘‍♀️ Περίοδος αναμονής! Περιμένετε για να φτάσετε στην επιλογή της ελιάς.', 'success');
-}
-
-// Choose patience path
-function choosePatience() {
-    patienceChosen = true;
-    
-    // Hide choice buttons, show patience panel
-    document.getElementById('patiencePhase').style.display = 'none';
-    document.getElementById('patiencePanel').style.display = 'block';
-    
-    // Initialize patience grid
-    initializePatienceGrid();
-    
-    // Start the patience sequence
-    startPatienceSequence();
-    
-    // Start wisdom energy bonus (+1 per second from now until game ends)
-    startWisdomEnergyBonus();
-    
-    displayResult('🧘‍♀️ Επιλέξατε την υπομονή! Κερδίζετε +1 ενέργεια σοφίας κάθε δευτερόλεπτο μέχρι το τέλος του παιχνιδιού!', 'success');
-}
-
-// Skip patience, go directly to olive choice
-function skipPatience() {
-    patienceChosen = false;
-    
-    // Hide choice buttons, show olive phase
-    document.getElementById('patiencePhase').style.display = 'none';
-    document.getElementById('olivePhase').style.display = 'block';
-    
-    displayResult('⚡ Επιλέξατε άμεση δράση!', 'info');
 }
 
 // Initialize the 5x5 patience grid
@@ -1044,7 +1014,7 @@ function selectPatienceSquare(index) {
     }
 }
 
-// Start wisdom energy bonus (1 per second)
+// Start wisdom energy bonus (1 per second) with local tracking
 function startWisdomEnergyBonus() {
     if (wisdomEnergyBonus) {
         clearInterval(wisdomEnergyBonus);
@@ -1052,23 +1022,30 @@ function startWisdomEnergyBonus() {
     
     displayResult('🧘‍♀️ Ξεκίνησε το bonus σοφίας: +1 ενέργεια κάθε δευτερόλεπτο!', 'success');
     
+    let bonusCount = 0;
+    
     wisdomEnergyBonus = setInterval(() => {
         if (gameState.sessionId) {
             // Add wisdom energy bonus
             const oldWisdom = gameState.wisdomEnergy || 0;
             gameState.wisdomEnergy = oldWisdom + 1;
+            bonusCount++;
+            
+            // Track total bonus for final submission
+            localGameSession.gameMetrics.totalWisdomEnergyFromBonus = bonusCount;
             
             // Update the display with current gameState
             updateGameStateDisplay(gameState);
             
             // Show feedback every 10 seconds to avoid spam
-            if (gameState.wisdomEnergy % 10 === 0) {
-                displayResult(`🧘‍♀️ Bonus σοφίας: ${gameState.wisdomEnergy} (συνεχίζει +1/δευτερόλεπτο)`, 'info');
+            if (bonusCount % 10 === 0) {
+                displayResult(`🧘‍♀️ Bonus σοφίας: +${bonusCount} συνολικά (συνεχίζει...)`, 'info');
             }
         } else {
             // Stop bonus if no active game
             clearInterval(wisdomEnergyBonus);
             wisdomEnergyBonus = null;
+            displayResult(`🏁 Bonus σοφίας σταμάτησε. Συνολικό bonus: +${bonusCount} ενέργεια`, 'info');
         }
     }, 1000);
 }
@@ -1095,20 +1072,22 @@ function selectPath(pathType) {
     }, 1000);
 }
 
-// Handle path choice with local logic
+// Handle path choice with local logic (LOCAL STORAGE - NO SERVER CALL)
 function handlePathChoice(pathType) {
     const currentWisdom = gameState.wisdomEnergy || 0;
     let energyChange = 0;
     let result = '';
+    let isSuccess = false;
     
     if (pathType === 'safe') {
         // Safe path: always +50
         energyChange = 50;
         result = 'Ασφαλές μονοπάτι - Σταθερό κέρδος!';
+        isSuccess = true;
         displayResult(`🛡️ ${result} | +${energyChange} ενέργεια`, 'success');
     } else {
         // Risky path: -100 or +100 randomly
-        const isSuccess = Math.random() > 0.5;
+        isSuccess = Math.random() > 0.5;
         energyChange = isSuccess ? 100 : -100;
         result = isSuccess ? 'Ριψοκίνδυνο μονοπάτι - Μεγάλη επιτυχία!' : 'Ριψοκίνδυνο μονοπάτι - Αποτυχία!';
         
@@ -1118,6 +1097,23 @@ function handlePathChoice(pathType) {
     
     // Apply the energy change to current wisdom energy (including any bonuses)
     gameState.wisdomEnergy = currentWisdom + energyChange;
+    gameState.score += isSuccess ? 150 : 25;
+    gameState.currentTrial = 'completed';
+    
+    // Ensure energy doesn't go below 0
+    if (gameState.wisdomEnergy < 0) {
+        gameState.wisdomEnergy = 0;
+    }
+    
+    // Record choice locally
+    recordPlayerChoice('risk', pathType === 'safe', {
+        pathType: pathType,
+        energyChange: energyChange,
+        scoreChange: isSuccess ? 150 : 25,
+        isSuccess: isSuccess,
+        result: result,
+        finalWisdomEnergy: gameState.wisdomEnergy
+    });
     
     // Update the display
     updateGameStateDisplay(gameState);
@@ -1136,110 +1132,123 @@ function handlePathChoice(pathType) {
     setTimeout(() => {
         document.getElementById('pathChoicePhase').style.display = 'none';
         showCurrentTrialSection('completed');
+        
+        // Prepare for final submission
+        displayResult('📤 Προετοιμασία για αποστολή όλων των δεδομένων στον server...', 'info');
     }, 3000);
 }
 
+// Submit resource trial choice (LOCAL STORAGE - NO SERVER CALL)
 async function submitResourceChoice(plantOlive) {
     if (!gameState.sessionId) {
         displayResult('Δεν υπάρχει ενεργό παιχνίδι!', 'error');
         return;
     }
 
-    try {
-        const response = await authenticatedFetch(`${API_BASE_URL}/trials/resource`, {
-            method: 'POST',
-            body: JSON.stringify({
-                SessionId: gameState.sessionId,
-                PlantOlive: plantOlive
-            })
-        });
+    // Local calculation of results (instead of server call)
+    const choiceText = plantOlive ? 'Επένδυση ενέργειας' : 'Συλλογή άμεσα';
+    let result = '';
+    let energyChange = 0;
+    let scoreChange = 50; // Points for making any choice
 
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data = await response.json();
-        
-        const choiceText = plantOlive ? 'Επένδυση ενέργειας' : 'Συλλογή άμεσα';
-        
-        displayResult(`Επιλογή: ${choiceText} | ${data.result}`, 'info');
-
-        if (plantOlive) {
-            // INVESTMENT CHOICE: Ignore server energy change, just start the +1/sec bonus
-            displayResult('🌱💡 Επιλέξατε επένδυση! Κερδίζετε +1 ενέργεια σοφίας κάθε δευτερόλεπτο μέχρι το τέλος!', 'success');
-            startWisdomEnergyBonus();
-        } else {
-            // IMMEDIATE COLLECTION: Override server value, give +50 directly
-            gameState.wisdomEnergy += 50;
-            updateGameStateDisplay(gameState);
-            displayResult('💰 Άμεση εισπραξη! Κερδίζετε +50 μονάδες ενέργειας αμέσως!', 'success');
-        }
-        
-        // After olive choice, show path selection
-        setTimeout(() => {
-            document.getElementById('olivePhase').style.display = 'none';
-            document.getElementById('pathChoicePhase').style.display = 'block';
-            displayResult('🛤️ Επιλέξτε το μονοπάτι σας για τη συνέχεια.', 'info');
-        }, 2000);
-
-    } catch (error) {
-        displayResult(`Σφάλμα υποβολής επιλογής: ${error.message}`, 'error');
-        console.error('Error submitting resource choice:', error);
+    if (plantOlive) {
+        // Investment choice - start wisdom bonus instead of immediate energy change
+        result = 'Φυτέψατε την ελιά. Κερδίζετε +1 ενέργεια κάθε δευτερόλεπτο μέχρι το τέλος!';
+        energyChange = 0; // No immediate change, bonus will handle it
+        displayResult('🌱💡 Επιλέξατε επένδυση! Το bonus σοφίας ξεκινάει τώρα!', 'success');
+        startWisdomEnergyBonus();
+    } else {
+        // Immediate collection choice
+        energyChange = 50;
+        result = 'Πήρατε άμεσο κέρδος ενέργειας.';
+        displayResult('� Άμεση εισπραξη! +50 μονάδες ενέργειας!', 'success');
     }
+    
+    // Update local game state
+    gameState.wisdomEnergy += energyChange;
+    gameState.score += scoreChange;
+    gameState.currentTrial = 'risk';
+    
+    // Record choice locally
+    recordPlayerChoice('resource', plantOlive, {
+        choiceText: choiceText,
+        energyChange: energyChange,
+        scoreChange: scoreChange,
+        result: result,
+        startedWisdomBonus: plantOlive
+    });
+    
+    displayResult(`Επιλογή: ${choiceText} | ${result}`, 'info');
+    
+    // Update display with local state
+    updateGameStateDisplay(gameState);
+    
+    // After olive choice, show path selection
+    setTimeout(() => {
+        document.getElementById('olivePhase').style.display = 'none';
+        document.getElementById('pathChoicePhase').style.display = 'block';
+        displayResult('🛤️ Επιλέξτε το μονοπάτι σας για τη συνέχεια.', 'info');
+    }, 2000);
 }
 
-// Submit risk trial choice
-async function submitRiskChoice(chooseSafePath) {
-    if (!gameState.sessionId) {
-        displayResult('Δεν υπάρχει ενεργό παιχνίδι!', 'error');
-        return;
+// Submit complete game session (NEW BATCH APPROACH)
+async function submitCompleteGameSession() {
+    if (!gameState.sessionId || !localGameSession.sessionId) {
+        displayResult('Δεν υπάρχει ενεργό παιχνίδι για αποστολή!', 'error');
+        return false;
     }
 
     try {
-        const response = await authenticatedFetch(`${API_BASE_URL}/trials/risk`, {
-            method: 'POST',
-            body: JSON.stringify({
-                SessionId: gameState.sessionId,
-                ChooseSafePath: chooseSafePath
-            })
-        });
-
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data = await response.json();
+        // Finalize game session data
+        localGameSession.endTime = Date.now();
+        localGameSession.gameMetrics.totalGameDuration = Math.floor((localGameSession.endTime - localGameSession.startTime) / 1000);
         
-        const choiceText = chooseSafePath ? 'Ασφαλές μονοπάτι' : 'Αβέβαιο μονοπάτι';
-        
-        displayResult(`Επιλογή: ${choiceText} | ${data.result} | Αλλαγή Ενέργειας: ${data.energyChange > 0 ? '+' : ''}${data.energyChange}`, 
-                     data.isSuccess ? 'success' : 'error');
-
-        // Stop wisdom bonus when risk trial is completed
         if (wisdomEnergyBonus) {
-            clearInterval(wisdomEnergyBonus);
-            wisdomEnergyBonus = null;
-            displayResult('🏁 Όλες οι δοκιμασίες ολοκληρώθηκαν! Το bonus σοφίας σταμάτησε.', 'info');
+            localGameSession.gameMetrics.totalWisdomEnergyFromBonus = gameState.wisdomEnergy - 50; // Subtract starting energy
         }
 
-        // Wait a bit then update game state to show end screen
-        setTimeout(async () => {
-            await getGameState();
-            
-            // If still on risk (server hasn't updated yet), manually show end section
-            if (gameState.currentTrial === 'risk') {
-                displayResult('🎯 Δοκιμασία ρίσκου ολοκληρώθηκε! Μετάβαση στην οθόνη ολοκλήρωσης...', 'success');
-                showCurrentTrialSection('completed');
-            }
-        }, 2000);
+        const completeSessionData = {
+            sessionId: gameState.sessionId,
+            finalGameState: {
+                wisdomEnergy: gameState.wisdomEnergy,
+                score: gameState.score,
+                currentTrial: gameState.currentTrial
+            },
+            playerChoices: localGameSession.playerChoices,
+            gameMetrics: localGameSession.gameMetrics,
+            clientStartTime: new Date(localGameSession.startTime).toISOString(),
+            clientEndTime: new Date(localGameSession.endTime).toISOString(),
+            totalGameDurationSeconds: localGameSession.gameMetrics.totalGameDuration
+        };
+
+        displayResult('📤 Αποστολή πλήρους session στον server...', 'info');
+        console.log('Complete session data to submit:', completeSessionData);
+
+        // Use the new batch submission endpoint
+        const response = await authenticatedFetch(`${API_BASE_URL}/game/submit-complete`, {
+            method: 'POST',
+            body: JSON.stringify(completeSessionData)
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+        displayResult('✅ Όλα τα δεδομένα στάλθηκαν επιτυχώς!', 'success');
+        displayResult(`📊 Τελικό score: ${result.score}`, 'info');
+        
+        return true;
 
     } catch (error) {
-        displayResult(`Σφάλμα υποβολής επιλογής: ${error.message}`, 'error');
-        console.error('Error submitting risk choice:', error);
+        displayResult(`❌ Σφάλμα αποστολής session: ${error.message}`, 'error');
+        console.error('Error submitting complete session:', error);
+        displayResult('💾 Δεδομένα διατηρούνται τοπικά για επανάληψη.', 'info');
+        return false;
     }
 }
 
-// End the game
+// End the game with batch submission of all data
 async function endGame() {
     if (!gameState.sessionId) {
         displayResult('Δεν υπάρχει ενεργό παιχνίδι!', 'error');
@@ -1247,17 +1256,7 @@ async function endGame() {
     }
 
     try {
-        const response = await authenticatedFetch(`${API_BASE_URL}/game/${gameState.sessionId}/end`, {
-            method: 'POST'
-        });
-
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data = await response.json();
-        
-        // Stop the game timer and show total time
+        // Stop the game timer and calculate total duration
         const totalDuration = getGameDuration();
         const minutes = Math.floor(totalDuration / 60);
         const seconds = totalDuration % 60;
@@ -1273,29 +1272,77 @@ async function endGame() {
         if (wisdomEnergyBonus) {
             clearInterval(wisdomEnergyBonus);
             wisdomEnergyBonus = null;
+            displayResult('⏹️ Bonus σοφίας σταμάτησε για τελικό υπολογισμό.', 'info');
         }
+
+        displayResult(`⏱️ Συνολικός χρόνος παιχνιδιού: ${minutes}:${seconds.toString().padStart(2, '0')}`, 'info');
         
-        displayResult(`Παιχνίδι τερματίστηκε! Τελική βαθμολογία: ${data.score} | Συνολικός χρόνος: ${minutes}:${seconds.toString().padStart(2, '0')}`, 'success');
+        // Submit all game data in a single batch
+        const submissionSuccess = await submitCompleteGameSession();
+        
+        if (submissionSuccess) {
+            displayResult(`🎉 Παιχνίδι τερματίστηκε επιτυχώς! Τελική βαθμολογία: ${gameState.score}`, 'success');
+            displayResult(`⚡ Τελική ενέργεια σοφίας: ${gameState.wisdomEnergy}`, 'info');
+            displayResult(`📊 Συνολικές επιλογές καταγεγραμμένες: ${localGameSession.playerChoices.length}`, 'info');
+            
+            // Show player dashboard with all sessions
+            setTimeout(async () => {
+                await loadPlayerSessions();
+            }, 2000);
+        } else {
+            displayResult('⚠️ Σφάλμα στην αποστολή - δοκιμάστε ξανά ή τα δεδομένα θα αποθηκευτούν τοπικά.', 'error');
+        }
 
-        // Show player dashboard with all sessions
-        await loadPlayerSessions();
+        // Reset game state after submission attempt
+        gameState = {
+            sessionId: null,
+            playerName: null,
+            startTime: null,
+            timerInterval: null,
+            wisdomEnergy: 50,
+            score: 0,
+            currentTrial: 'start'
+        };
 
-        // Reset game state after showing dashboard
-        gameState.sessionId = null;
-        gameState.playerName = null;
-        gameState.startTime = null;
+        // Reset local session
+        localGameSession = {
+            sessionId: null,
+            playerChoices: [],
+            startTime: null,
+            endTime: null,
+            gameMetrics: {
+                totalWisdomEnergyFromBonus: 0,
+                patienceWaitTime: 0,
+                totalGameDuration: 0
+            }
+        };
 
         // Hide all sections
         document.getElementById('gameState').style.display = 'none';
         showCurrentTrialSection('none');
 
     } catch (error) {
-        displayResult(`Σφάλμα τερματισμού παιχνιδιού: ${error.message}`, 'error');
+        displayResult(`❌ Σφάλμα τερματισμού παιχνιδιού: ${error.message}`, 'error');
         console.error('Error ending game:', error);
     }
 }
 
-// Initialize page
+// Initialize page with debug functions
 document.addEventListener('DOMContentLoaded', function() {
     displayResult('Frontend έτοιμο! Βεβαιωθείτε ότι το backend τρέχει στο https://localhost:7299', 'info');
+    displayResult('🆕 Ενεργοποιημένη νέα αρχιτεκτονική: Local storage + batch submission', 'success');
+    
+    // Add debug function to global scope
+    window.debugGameSession = function() {
+        console.log('=== DEBUG: Current Game State ===');
+        console.log('gameState:', gameState);
+        console.log('localGameSession:', localGameSession);
+        console.log('Wisdom bonus active:', wisdomEnergyBonus !== null);
+        console.log('Total choices recorded:', localGameSession.playerChoices?.length || 0);
+        
+        displayResult(`🔧 Debug: ${localGameSession.playerChoices?.length || 0} επιλογές καταγεγραμμένες`, 'info');
+        return { gameState, localGameSession };
+    };
+    
+    displayResult('💡 Tip: Χρησιμοποιήστε debugGameSession() στο console για debug info', 'info');
 });

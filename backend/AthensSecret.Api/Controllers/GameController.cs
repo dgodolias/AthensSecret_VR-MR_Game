@@ -137,9 +137,84 @@ public class GameController : ControllerBase
             Sessions = sessions
         });
     }
+
+    [HttpPost("submit-complete")]
+    public async Task<IActionResult> SubmitCompleteGameSession([FromBody] CompleteGameSessionRequest request)
+    {
+        // Get player ID from JWT token
+        var playerIdClaim = User.FindFirst("PlayerId")?.Value;
+        if (string.IsNullOrEmpty(playerIdClaim) || !int.TryParse(playerIdClaim, out int playerId))
+        {
+            return Unauthorized(new { message = "Invalid token" });
+        }
+
+        // Find the game session
+        var gameSession = await _context.GameSessions
+            .FirstOrDefaultAsync(gs => gs.Id == request.SessionId && gs.PlayerId == playerId && gs.IsActive);
+
+        if (gameSession == null)
+        {
+            return NotFound(new { message = "Game session not found or inactive" });
+        }
+
+        // Update game session with final data from client
+        gameSession.WisdomEnergy = request.FinalGameState.WisdomEnergy;
+        gameSession.Score = request.FinalGameState.Score;
+        gameSession.CurrentTrial = request.FinalGameState.CurrentTrial;
+        gameSession.IsActive = false;
+        gameSession.EndTime = DateTime.UtcNow;
+
+        // Save to database
+        await _context.SaveChangesAsync();
+
+        return Ok(new
+        {
+            Success = true,
+            Message = "Game session completed successfully",
+            SessionId = gameSession.Id,
+            Score = gameSession.Score,
+            FinalWisdomEnergy = gameSession.WisdomEnergy,
+            TotalChoices = request.PlayerChoices?.Count ?? 0,
+            GameDurationSeconds = request.TotalGameDurationSeconds,
+            GameMetrics = request.GameMetrics
+        });
+    }
 }
 
 public class StartGameRequest
 {
     public required string Username { get; set; }
+}
+
+public class CompleteGameSessionRequest
+{
+    public int SessionId { get; set; }
+    public FinalGameState FinalGameState { get; set; } = new();
+    public List<PlayerChoice> PlayerChoices { get; set; } = new();
+    public GameMetrics GameMetrics { get; set; } = new();
+    public string ClientStartTime { get; set; } = "";
+    public string ClientEndTime { get; set; } = "";
+    public int TotalGameDurationSeconds { get; set; }
+}
+
+public class FinalGameState
+{
+    public int WisdomEnergy { get; set; }
+    public int Score { get; set; }
+    public string CurrentTrial { get; set; } = "";
+}
+
+public class PlayerChoice
+{
+    public string TrialType { get; set; } = "";
+    public object? Choice { get; set; }
+    public long Timestamp { get; set; }
+    public Dictionary<string, object>? GameStateAtTime { get; set; }
+}
+
+public class GameMetrics
+{
+    public int TotalWisdomEnergyFromBonus { get; set; }
+    public int PatienceWaitTime { get; set; }
+    public int TotalGameDuration { get; set; }
 }
