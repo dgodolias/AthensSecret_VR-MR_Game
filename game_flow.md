@@ -228,6 +228,56 @@ Response: {
 }
 ```
 
+## Notes & Implementation Details
+
+### 🔧 Configuration System
+The game now uses a centralized `config.js` file for all settings:
+- **API Base URL**: Easily switch between local/production servers
+- **Game Mechanics**: All numerical values configurable
+- **Environment Detection**: Auto-detection of local vs production
+- **Debug Settings**: Console logging toggles
+
+**To deploy**: Simply update `CONFIG.API.BASE_URL` in `config.js`
+
+### ⚡ Energy Bonus Formula (Square Root)
+The olive tree investment now uses **√x formula** instead of linear +1/second:
+
+**Formula**: `bonus = ⌊√(elapsed_seconds)⌋`
+
+**Examples**:
+- 4 seconds → ⌊√4⌋ = ⌊2.0⌋ = +2 energy
+- 9 seconds → ⌊√9⌋ = ⌊3.0⌋ = +3 energy  
+- 16 seconds → ⌊√16⌋ = ⌊4.0⌋ = +4 energy
+- 25 seconds → ⌊√25⌋ = ⌊5.0⌋ = +5 energy
+
+**Key Behavior**:
+- Energy only increases when reaching **perfect squares**
+- No fractional energy shown (waits for integer values)
+- Growing gaps prevent infinite waiting (1→4→9→16→25 seconds)
+- Player sees next milestone: "Next bonus in X seconds"
+
+**Implementation**:
+```javascript
+const currentBonusInteger = Math.floor(Math.sqrt(elapsedSeconds));
+if (currentBonusInteger > lastBonusShown) {
+    // Award new energy point
+    gameState.wisdomEnergy += (currentBonusInteger - lastBonusShown);
+}
+```
+
+### 📊 Milestone Timeline
+| Time (sec) | √Time | Energy Bonus | Gap to Next |
+|------------|-------|--------------|-------------|
+| 1          | 1.0   | +1           | 3 sec       |
+| 4          | 2.0   | +2           | 5 sec       |
+| 9          | 3.0   | +3           | 7 sec       |
+| 16         | 4.0   | +4           | 9 sec       |
+| 25         | 5.0   | +5           | 11 sec      |
+| 36         | 6.0   | +6           | 13 sec      |
+| 49         | 7.0   | +7           | 15 sec      |
+
+This creates **diminishing returns** that encourage optimal play rather than infinite waiting.
+
 ## Unity Implementation Notes
 
 ### 1. Local State Management

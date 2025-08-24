@@ -5,12 +5,13 @@ let chartInstances = {};
 let authToken = localStorage.getItem('authToken');
 let currentUser = localStorage.getItem('currentUser');
 
-// API Base URL
-// API Configuration
-const API_BASE_URL = 'http://localhost:5182/api';
+// API Configuration - Now loaded from config.js
+const API_BASE_URL = CONFIG.API.BASE_URL;
 
 // Console logging helper for API calls
 function logAPICall(method, url, requestData, responseData, status) {
+    if (!CONFIG.DEBUG.ENABLE_API_LOGGING) return;
+    
     console.group(`🔄 API ${method.toUpperCase()} ${url}`);
     console.log(`🌐 Full URL: ${url}`);
     console.log(`📋 Status: ${status}`);
@@ -76,6 +77,12 @@ document.addEventListener('DOMContentLoaded', function() {
     - HTTP status codes
     - JWT token usage
     - API route paths
+    
+    ⚙️  CONFIGURATION LOADED:
+    - API Base URL: ${CONFIG.API.BASE_URL}
+    - Starting Energy: ${CONFIG.GAME.STARTING_ENERGY}
+    - Olive Investment: Square Root Formula (√x)
+    - Console Logging: ${CONFIG.DEBUG.ENABLE_API_LOGGING ? 'ON' : 'OFF'}
     ===================================
     `);
     
@@ -733,7 +740,7 @@ async function startGame() {
         gameState.sessionId = data.sessionId;
         gameState.playerName = currentUser;
         gameState.startTime = Date.now(); // Use local time for precision
-        gameState.wisdomEnergy = 50; // Starting energy
+        gameState.wisdomEnergy = CONFIG.GAME.STARTING_ENERGY; // Starting energy
         gameState.score = 0;
         gameState.currentTrial = 'start';
 
@@ -1138,38 +1145,56 @@ function selectPatienceSquare(index) {
     }
 }
 
-// Start wisdom energy bonus (1 per second) with local tracking
+// Start wisdom energy bonus (square root formula) with local tracking
 function startWisdomEnergyBonus() {
     if (wisdomEnergyBonus) {
         clearInterval(wisdomEnergyBonus);
     }
     
-    displayResult('🧘‍♀️ Ξεκίνησε το bonus σοφίας: +1 ενέργεια κάθε δευτερόλεπτο!', 'success');
+    displayResult('🧘‍♀️ Ξεκίνησε το bonus σοφίας: ενέργεια σύμφωνα με √χ!', 'success');
+    displayResult('⏱️ Τα βόνους δίνονται σε ακέραιες τιμές: 4δευτ=+2, 9δευτ=+3, 16δευτ=+4...', 'info');
     
-    let bonusCount = 0;
+    const startTime = Date.now();
+    const initialWisdomEnergy = gameState.wisdomEnergy || CONFIG.GAME.STARTING_ENERGY;
+    let lastBonusShown = 0;
     
     wisdomEnergyBonus = setInterval(() => {
         if (gameState.sessionId) {
-            // Add wisdom energy bonus
-            const oldWisdom = gameState.wisdomEnergy || 0;
-            gameState.wisdomEnergy = oldWisdom + 1;
-            bonusCount++;
+            const elapsedSeconds = Math.floor((Date.now() - startTime) / 1000);
             
-            // Track total bonus for final submission
-            localGameSession.gameMetrics.totalWisdomEnergyFromBonus = bonusCount;
+            // Calculate bonus using square root formula: √elapsed_seconds
+            const currentBonusFloat = Math.sqrt(elapsedSeconds);
+            const currentBonusInteger = Math.floor(currentBonusFloat);
             
-            // Update the display with current gameState
-            updateGameStateDisplay(gameState);
-            
-            // Show feedback every 10 seconds to avoid spam
-            if (bonusCount % 10 === 0) {
-                displayResult(`🧘‍♀️ Bonus σοφίας: +${bonusCount} συνολικά (συνεχίζει...)`, 'info');
+            // Only update energy when we reach a new integer value
+            if (currentBonusInteger > lastBonusShown) {
+                const energyToAdd = currentBonusInteger - lastBonusShown;
+                gameState.wisdomEnergy = initialWisdomEnergy + currentBonusInteger;
+                
+                // Track total bonus for final submission
+                localGameSession.gameMetrics.totalWisdomEnergyFromBonus = currentBonusInteger;
+                
+                // Update the display
+                updateGameStateDisplay(gameState);
+                
+                // Show feedback when bonus increases
+                displayResult(`🧘‍♀️ Bonus σοφίας: +${energyToAdd} ενέργεια! (Συνολικά: +${currentBonusInteger}) [${elapsedSeconds}δευτ = √${elapsedSeconds} = ${currentBonusFloat.toFixed(2)}]`, 'success');
+                
+                lastBonusShown = currentBonusInteger;
+                
+                // Show next milestone info
+                const nextMilestone = Math.pow(currentBonusInteger + 1, 2);
+                const timeToNext = nextMilestone - elapsedSeconds;
+                if (timeToNext > 0) {
+                    displayResult(`⏳ Επόμενο bonus σε ${timeToNext} δευτερόλεπτα (${nextMilestone}δευτ για +${currentBonusInteger + 1})`, 'info');
+                }
             }
+            
         } else {
             // Stop bonus if no active game
             clearInterval(wisdomEnergyBonus);
             wisdomEnergyBonus = null;
-            displayResult(`🏁 Bonus σοφίας σταμάτησε. Συνολικό bonus: +${bonusCount} ενέργεια`, 'info');
+            displayResult(`🏁 Bonus σοφίας σταμάτησε. Συνολικό bonus: +${lastBonusShown} ενέργεια`, 'info');
         }
     }, 1000);
 }
@@ -1205,14 +1230,14 @@ function handlePathChoice(pathType) {
     
     if (pathType === 'safe') {
         // Safe path: always +50
-        energyChange = 50;
+        energyChange = CONFIG.GAME.RISK_SAFE_BONUS;
         result = 'Ασφαλές μονοπάτι - Σταθερό κέρδος!';
         isSuccess = true;
         displayResult(`🛡️ ${result} | +${energyChange} ενέργεια`, 'success');
     } else {
         // Risky path: -100 or +100 randomly
-        isSuccess = Math.random() > 0.5;
-        energyChange = isSuccess ? 100 : -100;
+        isSuccess = Math.random() > CONFIG.GAME.RISK_SUCCESS_CHANCE;
+        energyChange = isSuccess ? CONFIG.GAME.RISK_RISKY_SUCCESS : CONFIG.GAME.RISK_RISKY_PENALTY;
         result = isSuccess ? 'Ριψοκίνδυνο μονοπάτι - Μεγάλη επιτυχία!' : 'Ριψοκίνδυνο μονοπάτι - Αποτυχία!';
         
         const resultType = isSuccess ? 'success' : 'error';
@@ -1283,9 +1308,9 @@ async function submitResourceChoice(plantOlive) {
         startWisdomEnergyBonus();
     } else {
         // Immediate collection choice
-        energyChange = 50;
+        energyChange = CONFIG.GAME.OLIVE_IMMEDIATE_BONUS;
         result = 'Πήρατε άμεσο κέρδος ενέργειας.';
-        displayResult('� Άμεση εισπραξη! +50 μονάδες ενέργειας!', 'success');
+        displayResult(`💰 Άμεση εισπραξη! +${CONFIG.GAME.OLIVE_IMMEDIATE_BONUS} μονάδες ενέργειας!`, 'success');
     }
     
     // Update local game state
