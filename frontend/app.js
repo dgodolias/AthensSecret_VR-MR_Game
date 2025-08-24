@@ -1145,14 +1145,15 @@ function selectPatienceSquare(index) {
     }
 }
 
-// Start wisdom energy bonus (square root formula) with local tracking
+// Start wisdom energy bonus (configurable formula) with local tracking
 function startWisdomEnergyBonus() {
     if (wisdomEnergyBonus) {
         clearInterval(wisdomEnergyBonus);
     }
     
-    displayResult('🧘‍♀️ Ξεκίνησε το bonus σοφίας: ενέργεια σύμφωνα με √χ!', 'success');
-    displayResult('⏱️ Τα βόνους δίνονται σε ακέραιες τιμές: 4δευτ=+2, 9δευτ=+3, 16δευτ=+4...', 'info');
+    const formula = CONFIG.GAME.OLIVE_INVESTMENT_FORMULA;
+    displayResult(`🧘‍♀️ Ξεκίνησε το bonus σοφίας με ${formula} formula!`, 'success');
+    displayResult('⏱️ Τα βόνους δίνονται σε ακέραιες τιμές - περίμενε για milestones!', 'info');
     
     const startTime = Date.now();
     const initialWisdomEnergy = gameState.wisdomEnergy || CONFIG.GAME.STARTING_ENERGY;
@@ -1162,14 +1163,18 @@ function startWisdomEnergyBonus() {
         if (gameState.sessionId) {
             const elapsedSeconds = Math.floor((Date.now() - startTime) / 1000);
             
-            // Calculate bonus using square root formula: √elapsed_seconds
-            const currentBonusFloat = Math.sqrt(elapsedSeconds);
-            const currentBonusInteger = Math.floor(currentBonusFloat);
+            // Calculate bonus using configurable formula
+            const currentBonusInteger = GAME_UTILS.calculateEnergyBonus(elapsedSeconds);
             
             // Only update energy when we reach a new integer value
             if (currentBonusInteger > lastBonusShown) {
                 const energyToAdd = currentBonusInteger - lastBonusShown;
                 gameState.wisdomEnergy = initialWisdomEnergy + currentBonusInteger;
+                
+                // Ensure we don't exceed max energy
+                if (gameState.wisdomEnergy > CONFIG.GAME.MAX_ENERGY) {
+                    gameState.wisdomEnergy = CONFIG.GAME.MAX_ENERGY;
+                }
                 
                 // Track total bonus for final submission
                 localGameSession.gameMetrics.totalWisdomEnergyFromBonus = currentBonusInteger;
@@ -1178,15 +1183,14 @@ function startWisdomEnergyBonus() {
                 updateGameStateDisplay(gameState);
                 
                 // Show feedback when bonus increases
-                displayResult(`🧘‍♀️ Bonus σοφίας: +${energyToAdd} ενέργεια! (Συνολικά: +${currentBonusInteger}) [${elapsedSeconds}δευτ = √${elapsedSeconds} = ${currentBonusFloat.toFixed(2)}]`, 'success');
+                displayResult(`🧘‍♀️ Bonus σοφίας: +${energyToAdd} ενέργεια! (Συνολικά: +${currentBonusInteger}) [${elapsedSeconds}δευτ]`, 'success');
                 
                 lastBonusShown = currentBonusInteger;
                 
                 // Show next milestone info
-                const nextMilestone = Math.pow(currentBonusInteger + 1, 2);
-                const timeToNext = nextMilestone - elapsedSeconds;
-                if (timeToNext > 0) {
-                    displayResult(`⏳ Επόμενο bonus σε ${timeToNext} δευτερόλεπτα (${nextMilestone}δευτ για +${currentBonusInteger + 1})`, 'info');
+                const nextMilestone = GAME_UTILS.getNextMilestone(elapsedSeconds);
+                if (nextMilestone) {
+                    displayResult(`⏳ Επόμενο bonus σε ${nextMilestone.timeToWait} δευτερόλεπτα (+${nextMilestone.bonus - currentBonusInteger})`, 'info');
                 }
             }
             
@@ -1196,7 +1200,7 @@ function startWisdomEnergyBonus() {
             wisdomEnergyBonus = null;
             displayResult(`🏁 Bonus σοφίας σταμάτησε. Συνολικό bonus: +${lastBonusShown} ενέργεια`, 'info');
         }
-    }, 1000);
+    }, CONFIG.GAME.OLIVE_UPDATE_INTERVAL_MS);
 }
 
 // Select path (safe/risky)
