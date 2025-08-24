@@ -1194,6 +1194,18 @@ function startWisdomEnergyBonus() {
                 }
             }
             
+            // Update investment status every few seconds
+            if (elapsedSeconds % 3 === 0) { // Update every 3 seconds
+                const statusElement = document.getElementById('investmentStatus');
+                if (statusElement) {
+                    const nextMilestone = GAME_UTILS.getNextMilestone(elapsedSeconds);
+                    const statusText = nextMilestone ? 
+                        `⚡ Τρέχουσα ενέργεια: +${currentBonusInteger} | Επόμενο bonus σε ${nextMilestone.timeToWait}δευτ` :
+                        `⚡ Τρέχουσα ενέργεια: +${currentBonusInteger} | Μπορείτε να προχωρήσετε`;
+                    statusElement.innerHTML = `🧘‍♀️ <strong>Επένδυση σε εξέλιξη...</strong><br>${statusText}`;
+                }
+            }
+            
         } else {
             // Stop bonus if no active game
             clearInterval(wisdomEnergyBonus);
@@ -1305,43 +1317,108 @@ async function submitResourceChoice(plantOlive) {
     let scoreChange = 50; // Points for making any choice
 
     if (plantOlive) {
-        // Investment choice - start wisdom bonus instead of immediate energy change
-        result = 'Φυτέψατε την ελιά. Κερδίζετε +1 ενέργεια κάθε δευτερόλεπτο μέχρι το τέλος!';
+        // Investment choice - start wisdom bonus but DON'T advance to next trial
+        result = 'Φυτέψατε την ελιά. Κερδίζετε ενέργεια μέχρι να προχωρήσετε!';
         energyChange = 0; // No immediate change, bonus will handle it
         displayResult('🌱💡 Επιλέξατε επένδυση! Το bonus σοφίας ξεκινάει τώρα!', 'success');
+        
+        // Show the continue section
+        document.getElementById('investmentContinueSection').style.display = 'block';
+        
+        // Start the investment bonus
         startWisdomEnergyBonus();
+        
+        // Update local game state (but don't change trial yet)
+        gameState.wisdomEnergy += energyChange;
+        gameState.score += scoreChange;
+        // DON'T set gameState.currentTrial = 'risk' yet
+        
+        // Record choice locally
+        recordPlayerChoice('resource', plantOlive, {
+            choiceText: choiceText,
+            energyChange: energyChange,
+            scoreChange: scoreChange,
+            result: result,
+            startedWisdomBonus: true
+        });
+        
+        displayResult(`Επιλογή: ${choiceText} | ${result}`, 'info');
+        updateGameStateDisplay(gameState);
+        
+        // No auto-advance - wait for user to click "Next"
+        
     } else {
-        // Immediate collection choice
+        // Immediate collection choice - proceed normally
         energyChange = CONFIG.GAME.OLIVE_IMMEDIATE_BONUS;
         result = 'Πήρατε άμεσο κέρδος ενέργειας.';
         displayResult(`💰 Άμεση εισπραξη! +${CONFIG.GAME.OLIVE_IMMEDIATE_BONUS} μονάδες ενέργειας!`, 'success');
+        
+        // Update local game state
+        gameState.wisdomEnergy += energyChange;
+        gameState.score += scoreChange;
+        gameState.currentTrial = 'risk';
+        
+        // Record choice locally
+        recordPlayerChoice('resource', plantOlive, {
+            choiceText: choiceText,
+            energyChange: energyChange,
+            scoreChange: scoreChange,
+            result: result,
+            startedWisdomBonus: false
+        });
+        
+        displayResult(`Επιλογή: ${choiceText} | ${result}`, 'info');
+        updateGameStateDisplay(gameState);
+        
+        // Auto-advance to next trial for immediate choice
+        setTimeout(() => {
+            proceedToRiskTrial();
+        }, 2000);
     }
-    
-    // Update local game state
-    gameState.wisdomEnergy += energyChange;
-    gameState.score += scoreChange;
+}
+
+// Proceed to Risk Trial (called when user clicks "Next Stage" or auto-advance)
+function proceedToRiskTrial() {
+    // Update trial state
     gameState.currentTrial = 'risk';
     
-    // Record choice locally
-    recordPlayerChoice('resource', plantOlive, {
-        choiceText: choiceText,
-        energyChange: energyChange,
-        scoreChange: scoreChange,
-        result: result,
-        startedWisdomBonus: plantOlive
-    });
+    // Hide olive phase and show path choice
+    document.getElementById('olivePhase').style.display = 'none';
+    document.getElementById('pathChoicePhase').style.display = 'block';
+    displayResult('🛤️ Επιλέξτε το μονοπάτι σας για τη συνέχεια.', 'info');
+}
+
+// Proceed to Next Trial (button click handler)
+function proceedToNextTrial() {
+    displayResult('➡️ Προχωρώντας στο επόμενο στάδιο...', 'info');
     
-    displayResult(`Επιλογή: ${choiceText} | ${result}`, 'info');
+    // Stop the investment bonus
+    if (wisdomEnergyBonus) {
+        clearInterval(wisdomEnergyBonus);
+        wisdomEnergyBonus = null;
+        displayResult('⏹️ Το bonus σοφίας σταμάτησε.', 'info');
+    }
     
-    // Update display with local state
-    updateGameStateDisplay(gameState);
+    // Hide the continue section
+    document.getElementById('investmentContinueSection').style.display = 'none';
     
-    // After olive choice, show path selection
+    // Proceed to risk trial
     setTimeout(() => {
-        document.getElementById('olivePhase').style.display = 'none';
-        document.getElementById('pathChoicePhase').style.display = 'block';
-        displayResult('🛤️ Επιλέξτε το μονοπάτι σας για τη συνέχεια.', 'info');
-    }, 2000);
+        proceedToRiskTrial();
+    }, 1000);
+}
+
+// Stop Investment (button click handler)
+function stopInvestment() {
+    if (wisdomEnergyBonus) {
+        clearInterval(wisdomEnergyBonus);
+        wisdomEnergyBonus = null;
+        displayResult('⏹️ Σταματήσατε την επένδυση. Διατηρείτε την ενέργεια που έχετε κερδίσει.', 'success');
+        
+        // Show proceed button prominently
+        document.getElementById('investmentStatus').innerHTML = 
+            '<strong>✅ Επένδυση ολοκληρώθηκε.</strong><br>Πατήστε "Επόμενο Στάδιο" για να συνεχίσετε.';
+    }
 }
 
 // Submit complete game session (NEW BATCH APPROACH)

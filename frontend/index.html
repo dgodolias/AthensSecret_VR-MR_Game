@@ -454,6 +454,20 @@
                 <p>Τι θα κάνετε μετά τη φύτευση της ελιάς;</p>
                 <button onclick="submitResourceChoice(false)">💰 Συλλογή άμεσα (Άμεσο κέρδος)</button>
                 <button onclick="submitResourceChoice(true)">⚡ Επένδυση ενέργειας (Μακροπρόθεσμο όφελος)</button>
+                
+                <!-- Investment Continue Button (hidden initially) -->
+                <div id="investmentContinueSection" style="display: none; margin-top: 20px; padding: 15px; background: #e8f5e8; border-radius: 8px;">
+                    <p style="color: #2d5016; margin-bottom: 10px;">
+                        🧘‍♀️ <strong>Επένδυση σε εξέλιξη...</strong><br>
+                        <span id="investmentStatus">Συλλέγετε ενέργεια σοφίας! Μπορείτε να προχωρήσετε όταν θέλετε.</span>
+                    </p>
+                    <button onclick="proceedToNextTrial()" style="background: #27ae60; color: white; padding: 12px 20px; border: none; border-radius: 5px; font-size: 16px; cursor: pointer;">
+                        ➡️ Επόμενο Στάδιο
+                    </button>
+                    <button onclick="stopInvestment()" style="background: #e74c3c; color: white; padding: 8px 15px; border: none; border-radius: 5px; font-size: 14px; cursor: pointer; margin-left: 10px;">
+                        ⏹️ Σταμάτημα Επένδυσης
+                    </button>
+                </div>
             </div>
 
             <!-- Path Choice (after patience) -->

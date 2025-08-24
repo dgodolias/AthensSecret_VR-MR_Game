@@ -278,6 +278,37 @@ if (currentBonusInteger > lastBonusShown) {
 
 This creates **diminishing returns** that encourage optimal play rather than infinite waiting.
 
+### 🎮 Manual Trial Progression for Investment
+When player selects **olive tree investment** (resource trial):
+
+**Behavior**:
+- Investment bonus starts immediately using √x formula
+- Game **remains in resource trial** (does not auto-advance)  
+- "Next Stage" button appears below investment section
+- Energy updates continue until user clicks "Next Stage"
+- Only then does the game progress to risk trial
+
+**Implementation**:
+```javascript
+// Investment choice flow
+if (plantOlive) {
+    startWisdomEnergyBonus(); // Start √x energy gain
+    showContinueButton(); // Show "Next Stage" button
+    // DON'T advance trial automatically
+} else {
+    // Immediate choice auto-advances after 2 seconds
+    setTimeout(proceedToRiskTrial, 2000);
+}
+```
+
+**UI Components**:
+- **Continue Button**: "➡️ Επόμενο Στάδιο" 
+- **Stop Button**: "⏹️ Σταμάτημα Επένδυσης" (optional early stop)
+- **Status Display**: Live energy count and next milestone info
+- **Real-time Updates**: Status updates every 3 seconds
+
+**Player Agency**: User controls when to stop investment and proceed, allowing for strategic timing decisions.
+
 ## Unity Implementation Notes
 
 ### 1. Local State Management

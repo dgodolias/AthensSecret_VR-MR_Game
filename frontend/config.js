@@ -74,7 +74,9 @@ const CONFIG = {
         // Game flow timing
         TRIAL_TRANSITION_DELAY: 2000, // ms between trials
         RESULT_DISPLAY_DURATION: 3000, // ms to show results
-        AUTO_ADVANCE_TRIALS: true, // Auto-advance or require user input
+        AUTO_ADVANCE_TRIALS: false, // Investment requires manual advance
+        MANUAL_ADVANCE_FOR_INVESTMENT: true, // User must click "Next" for investment
+        INVESTMENT_STATUS_UPDATE_INTERVAL: 3000, // ms between status updates
         
         // Performance and limits
         MAX_GAME_DURATION_MINUTES: 30,
