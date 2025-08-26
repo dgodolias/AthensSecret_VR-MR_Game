@@ -108,7 +108,9 @@ public class AuthController : ControllerBase
 
     private string GenerateJwtToken(Player player)
     {
-        var jwtKey = _configuration["JwtSettings:Key"] ?? "your-super-secret-jwt-key-that-is-at-least-32-characters-long";
+        var jwtKey = Environment.GetEnvironmentVariable("JWT_SECRET_KEY") 
+            ?? _configuration["JwtSettings:Key"] 
+            ?? "your-super-secret-jwt-key-that-is-at-least-32-characters-long";
         var key = Encoding.ASCII.GetBytes(jwtKey);
 
         var tokenDescriptor = new SecurityTokenDescriptor

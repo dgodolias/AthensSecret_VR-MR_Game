@@ -43,6 +43,18 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
     {
+        policy.WithOrigins("http://localhost:3000", 
+                          "http://localhost:8080", 
+                          "https://localhost:7182",
+                          "file://",
+                          "null")
+              .AllowAnyMethod()
+              .AllowAnyHeader()
+              .AllowCredentials();
+    });
+    
+    options.AddPolicy("AllowAllOrigins", policy =>
+    {
         policy.AllowAnyOrigin()
               .AllowAnyMethod()
               .AllowAnyHeader();
@@ -59,7 +71,15 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.UseCors("AllowAll");
+// Use different CORS policy based on environment
+if (app.Environment.IsDevelopment())
+{
+    app.UseCors("AllowAll");
+}
+else
+{
+    app.UseCors("AllowAllOrigins");
+}
 
 app.UseAuthentication();
 app.UseAuthorization();
