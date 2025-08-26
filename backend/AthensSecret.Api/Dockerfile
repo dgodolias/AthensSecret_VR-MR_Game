@@ -7,14 +7,17 @@ EXPOSE 443
 # Use the official .NET 9 SDK image for building
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
-COPY ["AthensSecret.Api.csproj", "."]
-RUN dotnet restore "AthensSecret.Api.csproj"
-COPY . .
-WORKDIR "/src"
-RUN dotnet build "AthensSecret.Api.csproj" -c Release -o /app/build
+
+# Copy the project file and restore dependencies
+COPY *.csproj ./
+RUN dotnet restore
+
+# Copy the rest of the source code
+COPY . ./
+RUN dotnet build -c Release -o /app/build
 
 FROM build AS publish
-RUN dotnet publish "AthensSecret.Api.csproj" -c Release -o /app/publish
+RUN dotnet publish -c Release -o /app/publish
 
 FROM base AS final
 WORKDIR /app
