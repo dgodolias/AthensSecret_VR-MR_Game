@@ -116,36 +116,36 @@ graph TD
 ```http
 GET /api/config/server
 Response: {
-  "success": true,
-  "data": {
-    "serverVersion": "1.0.0",
-    "apiVersion": "v1", 
-    "serverTime": "2025-08-26T12:00:00Z",
-    "environment": "Development",
-    "status": {
-      "isHealthy": true,
-      "activeSessions": 5,
-      "healthMessage": "Server is running normally"
+  "Success": true,
+  "Data": {
+    "ServerVersion": "1.0.0",
+    "ApiVersion": "v1", 
+    "ServerTime": "2025-08-26T12:00:00Z",
+    "Environment": "Development",
+    "Status": {
+      "IsHealthy": true,
+      "ActiveSessions": 5,
+      "HealthMessage": "Server is running normally"
     },
-    "endpoints": {
-      "baseUrl": "http://localhost:5182/api",
-      "auth": {
-        "login": "/api/auth/login",
-        "register": "/api/auth/register"
+    "Endpoints": {
+      "BaseUrl": "http://localhost:5182/api",
+      "Auth": {
+        "Login": "/api/auth/login",
+        "Register": "/api/auth/register"
       },
-      "game": {
-        "start": "/api/game/start",
-        "getState": "/api/game/{sessionId}/state"
+      "Game": {
+        "Start": "/api/game/start",
+        "GetState": "/api/game/{sessionId}/state"
       }
     },
-    "security": {
-      "jwt": {
-        "expirationHours": 24,
-        "algorithm": "HS256"
+    "Security": {
+      "Jwt": {
+        "ExpirationHours": 24,
+        "Algorithm": "HS256"
       }
     }
   },
-  "message": "Server information retrieved successfully"
+  "Message": "Server information retrieved successfully"
 }
 Status: 200 OK | 500 Server Error
 ```
@@ -153,67 +153,67 @@ Status: 200 OK | 500 Server Error
 ```http
 GET /api/config/game
 Response: {
-  "success": true,
-  "data": {
-    "energy": {
-      "startingEnergy": 50,
-      "minEnergy": 0,
-      "maxEnergy": 1000,
-      "energyCapWarningThreshold": 950
+  "Success": true,
+  "Data": {
+    "Energy": {
+      "StartingEnergy": 50,
+      "MinEnergy": 0,
+      "MaxEnergy": 1000,
+      "EnergyCapWarningThreshold": 950
     },
-    "trials": {
-      "patience": {
-        "timerDurationSeconds": 60,
-        "bonusThresholdSeconds": 30,
-        "bonusEnergyAmount": 50,
-        "numberOfMirrors": 3,
-        "correctMirrorLogic": "random"
+    "Trials": {
+      "Patience": {
+        "TimerDurationSeconds": 60,
+        "BonusThresholdSeconds": 30,
+        "BonusEnergyAmount": 50,
+        "NumberOfMirrors": 3,
+        "CorrectMirrorLogic": "random"
       },
-      "resource": {
-        "patienceGridSize": 25,
-        "immediateBonusEnergy": 50,
-        "oliveInvestment": {
-          "enableInvestment": true,
-          "formula": "sqrt",
-          "formulaMultiplier": 1.0,
-          "maxBonusCap": 100,
-          "updateIntervalMs": 1000,
-          "maxInvestmentDurationSeconds": 300
+      "Resource": {
+        "PatienceGridSize": 25,
+        "ImmediateBonusEnergy": 50,
+        "OliveInvestment": {
+          "EnableInvestment": true,
+          "Formula": "sqrt",
+          "FormulaMultiplier": 1.0,
+          "MaxBonusCap": 100,
+          "UpdateIntervalMs": 1000,
+          "MaxInvestmentDurationSeconds": 300
         }
       },
-      "risk": {
-        "numberOfPaths": 2,
-        "safePath": {
-          "energyModifier": 10,
-          "successRate": 1.0
+      "Risk": {
+        "NumberOfPaths": 2,
+        "SafePath": {
+          "EnergyModifier": 10,
+          "SuccessRate": 1.0
         },
-        "riskyPath": {
-          "energyModifier": 25,
-          "successRate": 0.7,
-          "failurePenalty": -15
+        "RiskyPath": {
+          "EnergyModifier": 25,
+          "SuccessRate": 0.7,
+          "FailurePenalty": -15
         }
       }
     },
-    "timing": {
-      "gameSessionTimeoutMinutes": 30,
-      "inactivityTimeoutMinutes": 10,
-      "autoSaveIntervalSeconds": 30
+    "Timing": {
+      "GameSessionTimeoutMinutes": 30,
+      "InactivityTimeoutMinutes": 10,
+      "AutoSaveIntervalSeconds": 30
     },
-    "scoring": {
-      "weights": {
-        "energyToScoreRatio": 1.0,
-        "timeCompletionBonus": 0.5,
-        "perfectTrialMultiplier": 1.5
+    "Scoring": {
+      "Weights": {
+        "EnergyToScoreRatio": 1.0,
+        "TimeCompletionBonus": 0.5,
+        "PerfectTrialMultiplier": 1.5
       },
-      "bonuses": {
-        "firstTimeCompletionBonus": 100,
-        "allTrialsCompletedBonus": 200,
-        "highEnergyFinishBonus": 150,
-        "highEnergyThreshold": 200
+      "Bonuses": {
+        "FirstTimeCompletionBonus": 100,
+        "AllTrialsCompletedBonus": 200,
+        "HighEnergyFinishBonus": 150,
+        "HighEnergyThreshold": 200
       }
     }
   },
-  "message": "Game configuration retrieved successfully"
+  "Message": "Game configuration retrieved successfully"
 }
 Status: 200 OK | 500 Server Error
 ```

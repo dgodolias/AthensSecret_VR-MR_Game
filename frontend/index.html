@@ -362,13 +362,11 @@
         <h1>🏛️ Το Μυστικό της Αθήνας</h1>
         <p><strong>Test Frontend για το API</strong></p>
 
-        <!-- NEW: Configuration Testing Section -->
+        <!-- Configuration Testing Section - AUTO-LOADED -->
         <div class="trial-section" id="configTestingSection">
-            <h3>⚙️ Configuration Testing (Unity Client Simulation)</h3>
-            <p>Αυτά τα endpoints θα πρέπει να καλεί η Unity εφαρμογή κατά την εκκίνηση:</p>
-            <button onclick="fetchGameConfig()" style="background: #27ae60;">🎮 Fetch Game Config</button>
-            <button onclick="fetchServerInfo()" style="background: #2980b9;">🌐 Fetch Server Info</button>
-            <p><small>Ελέγξτε την κονσόλα για λεπτομερή logs των API calls</small></p>
+            <h3>⚙️ Configuration (Auto-Loaded from Backend)</h3>
+            <p>✅ Configuration is automatically loaded when the page loads. Unity clients should implement the same pattern.</p>
+            <p><small>Check console for detailed API loading logs</small></p>
         </div>
 
         <!-- Authentication Section -->
@@ -545,7 +543,6 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="config.js"></script>
     <script src="app.js"></script>
 </body>
 </html>

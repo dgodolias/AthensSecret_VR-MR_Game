@@ -5,9 +5,64 @@ let chartInstances = {};
 let authToken = localStorage.getItem('authToken');
 let currentUser = localStorage.getItem('currentUser');
 
-// API Configuration - DEPRECATED: Now loaded from backend API
-// Unity clients should use: GET /api/config/game and GET /api/config/server
-const API_BASE_URL = 'http://localhost:5182/api'; // Fallback for dummy frontend only
+// Store the game configuration globally - loaded from API
+let gameConfig = null;
+let serverInfo = null;
+let configInitialized = false;
+
+// API Configuration
+const API_BASE_URL = 'http://localhost:5182/api';
+
+// Auto-initialize configuration when needed
+async function ensureConfigLoaded() {
+    if (!configInitialized) {
+        try {
+            console.log('🔄 AUTO-INITIALIZING CONFIGURATION...');
+            await loadConfiguration();
+            configInitialized = true;
+            console.log('✅ CONFIGURATION AUTO-LOADED SUCCESSFULLY');
+        } catch (error) {
+            console.error('❌ CONFIGURATION AUTO-LOAD FAILED:', error);
+            throw error;
+        }
+    }
+    return { gameConfig, serverInfo };
+}
+
+// Load configuration from API
+async function loadConfiguration() {
+    try {
+        // Load game config
+        const gameResponse = await fetch(`${API_BASE_URL}/config/game`);
+        const gameData = await gameResponse.json();
+        
+        if (gameData.success && gameData.data) {
+            gameConfig = gameData.data;
+            console.log('✅ Game config loaded:', gameConfig);
+            // Auto-display config in UI
+            displayGameConfig(gameConfig);
+        } else {
+            throw new Error('Failed to load game configuration');
+        }
+        
+        // Load server info  
+        const serverResponse = await fetch(`${API_BASE_URL}/config/server`);
+        const serverData = await serverResponse.json();
+        
+        if (serverData.success && serverData.data) {
+            serverInfo = serverData.data;
+            console.log('✅ Server info loaded:', serverInfo);
+            // Auto-display server info in UI
+            displayServerInfo(serverInfo);
+        } else {
+            throw new Error('Failed to load server information');
+        }
+        
+    } catch (error) {
+        console.error('❌ Configuration loading failed:', error);
+        throw error;
+    }
+}
 
 // Console logging helper for API calls
 function logAPICall(method, url, requestData, responseData, status) {
@@ -93,6 +148,17 @@ document.addEventListener('DOMContentLoaded', function() {
     ===================================
     `);
     
+    // Auto-load configuration on page load  
+    loadConfiguration()
+        .then(() => {
+            console.log('✅ Configuration auto-loaded successfully on page load');
+            configInitialized = true;
+        })
+        .catch(error => {
+            console.log('⚠️  Configuration auto-load failed (server may be down):', error.message);
+            // Don't block the app, just log the error
+        });
+    
     if (authToken && currentUser) {
         console.log(`🔄 EXISTING SESSION FOUND - User: ${currentUser}, Token: ${authToken.substring(0, 20)}...`);
         showAuthenticatedView();
@@ -107,55 +173,6 @@ function switchTab(tab) {
     
     document.querySelector(`[onclick="switchTab('${tab}')"]`).classList.add('active');
     document.getElementById(`${tab}Form`).classList.add('active');
-}
-
-// NEW: Configuration fetching functions for Unity demonstration
-async function fetchGameConfig() {
-    try {
-        console.log('🎮 FETCHING GAME CONFIG - Unity clients should call this on startup');
-        
-        const response = await fetch(`${API_BASE_URL}/config/game`);
-        const configData = await response.json();
-        
-        logAPICall('GET', `${API_BASE_URL}/config/game`, null, configData, response.status);
-        
-        if (configData.success && configData.data) {
-            console.log('✅ GAME CONFIG LOADED - Unity can now apply these settings:', configData.data);
-            
-            // Display config in UI for testing purposes
-            displayGameConfig(configData.data);
-            return configData.data;
-        } else {
-            throw new Error('Failed to load game configuration');
-        }
-    } catch (error) {
-        console.error('❌ GAME CONFIG FETCH FAILED:', error);
-        throw error;
-    }
-}
-
-async function fetchServerInfo() {
-    try {
-        console.log('🌐 FETCHING SERVER INFO - Unity clients should call this to get connection info');
-        
-        const response = await fetch(`${API_BASE_URL}/config/server`);
-        const serverData = await response.json();
-        
-        logAPICall('GET', `${API_BASE_URL}/config/server`, null, serverData, response.status);
-        
-        if (serverData.success && serverData.data) {
-            console.log('✅ SERVER INFO LOADED - Unity can use this for connection management:', serverData.data);
-            
-            // Display server info in UI for testing purposes
-            displayServerInfo(serverData.data);
-            return serverData.data;
-        } else {
-            throw new Error('Failed to load server information');
-        }
-    } catch (error) {
-        console.error('❌ SERVER INFO FETCH FAILED:', error);
-        throw error;
-    }
 }
 
 function displayGameConfig(config) {
@@ -844,6 +861,9 @@ async function startGame() {
     }
 
     try {
+        // Auto-initialize configuration if not loaded
+        await ensureConfigLoaded();
+        
         const url = `${API_BASE_URL}/game/start`;
         
         console.log(`🚀 STARTING GAME START API CALL`);
@@ -872,7 +892,7 @@ async function startGame() {
         gameState.sessionId = data.sessionId;
         gameState.playerName = currentUser;
         gameState.startTime = Date.now(); // Use local time for precision
-        gameState.wisdomEnergy = CONFIG.GAME.STARTING_ENERGY; // Starting energy
+        gameState.wisdomEnergy = gameConfig?.energy?.startingEnergy || 100; // Starting energy from API config
         gameState.score = 0;
         gameState.currentTrial = 'start';
 
@@ -1283,12 +1303,12 @@ function startWisdomEnergyBonus() {
         clearInterval(wisdomEnergyBonus);
     }
     
-    const formula = CONFIG.GAME.OLIVE_INVESTMENT_FORMULA;
+    const formula = gameConfig?.trials?.resource?.oliveInvestment?.formula || "sqrt";
     displayResult(`🧘‍♀️ Ξεκίνησε το bonus σοφίας με ${formula} formula!`, 'success');
     displayResult('⏱️ Τα βόνους δίνονται σε ακέραιες τιμές - περίμενε για milestones!', 'info');
     
     const startTime = Date.now();
-    const initialWisdomEnergy = gameState.wisdomEnergy || CONFIG.GAME.STARTING_ENERGY;
+    const initialWisdomEnergy = gameState.wisdomEnergy || gameConfig?.energy?.startingEnergy || 100;
     let lastBonusShown = 0;
     
     wisdomEnergyBonus = setInterval(() => {
@@ -1304,8 +1324,9 @@ function startWisdomEnergyBonus() {
                 gameState.wisdomEnergy = initialWisdomEnergy + currentBonusInteger;
                 
                 // Ensure we don't exceed max energy
-                if (gameState.wisdomEnergy > CONFIG.GAME.MAX_ENERGY) {
-                    gameState.wisdomEnergy = CONFIG.GAME.MAX_ENERGY;
+                const maxEnergy = gameConfig?.energy?.maxEnergy || 200;
+                if (gameState.wisdomEnergy > maxEnergy) {
+                    gameState.wisdomEnergy = maxEnergy;
                 }
                 
                 // Track total bonus for final submission
@@ -1344,7 +1365,7 @@ function startWisdomEnergyBonus() {
             wisdomEnergyBonus = null;
             displayResult(`🏁 Bonus σοφίας σταμάτησε. Συνολικό bonus: +${lastBonusShown} ενέργεια`, 'info');
         }
-    }, CONFIG.GAME.OLIVE_UPDATE_INTERVAL_MS);
+    }, gameConfig?.trials?.resource?.oliveInvestment?.updateIntervalMs || 1000);
 }
 
 // Select path (safe/risky)
@@ -1378,14 +1399,17 @@ function handlePathChoice(pathType) {
     
     if (pathType === 'safe') {
         // Safe path: always +50
-        energyChange = CONFIG.GAME.RISK_SAFE_BONUS;
+        energyChange = gameConfig?.trials?.risk?.safeChoice?.energyBonus || 50;
         result = 'Ασφαλές μονοπάτι - Σταθερό κέρδος!';
         isSuccess = true;
         displayResult(`🛡️ ${result} | +${energyChange} ενέργεια`, 'success');
     } else {
         // Risky path: -100 or +100 randomly
-        isSuccess = Math.random() > CONFIG.GAME.RISK_SUCCESS_CHANCE;
-        energyChange = isSuccess ? CONFIG.GAME.RISK_RISKY_SUCCESS : CONFIG.GAME.RISK_RISKY_PENALTY;
+        const successChance = gameConfig?.trials?.risk?.riskyChoice?.successChance || 0.5;
+        isSuccess = Math.random() > successChance;
+        const successBonus = gameConfig?.trials?.risk?.riskyChoice?.successBonus || 100;
+        const failurePenalty = gameConfig?.trials?.risk?.riskyChoice?.failurePenalty || -100;
+        energyChange = isSuccess ? successBonus : failurePenalty;
         result = isSuccess ? 'Ριψοκίνδυνο μονοπάτι - Μεγάλη επιτυχία!' : 'Ριψοκίνδυνο μονοπάτι - Αποτυχία!';
         
         const resultType = isSuccess ? 'success' : 'error';
@@ -1481,9 +1505,10 @@ async function submitResourceChoice(plantOlive) {
         
     } else {
         // Immediate collection choice - proceed normally
-        energyChange = CONFIG.GAME.OLIVE_IMMEDIATE_BONUS;
+        const immediateBonus = gameConfig?.trials?.resource?.oliveInvestment?.immediateBonus || 25;
+        energyChange = immediateBonus;
         result = 'Πήρατε άμεσο κέρδος ενέργειας.';
-        displayResult(`💰 Άμεση εισπραξη! +${CONFIG.GAME.OLIVE_IMMEDIATE_BONUS} μονάδες ενέργειας!`, 'success');
+        displayResult(`💰 Άμεση εισπραξη! +${immediateBonus} μονάδες ενέργειας!`, 'success');
         
         // Update local game state
         gameState.wisdomEnergy += energyChange;

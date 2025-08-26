@@ -30,6 +30,9 @@ public class ConfigController : ControllerBase
     {
         try
         {
+            Console.WriteLine("🔧 [CONFIG API] GetGameConfig() called");
+            Console.WriteLine($"🌍 Environment: {_environment.EnvironmentName}");
+            
             var config = new GameConfig
             {
                 Energy = new EnergySettings
@@ -108,6 +111,46 @@ public class ConfigController : ControllerBase
                 Investment = new InvestmentSettings()
             };
 
+            // DETAILED CONSOLE LOGGING για validation
+            Console.WriteLine("📊 [CONFIG] Energy Settings:");
+            Console.WriteLine($"   StartingEnergy: {config.Energy.StartingEnergy}");
+            Console.WriteLine($"   MaxEnergy: {config.Energy.MaxEnergy}");
+            Console.WriteLine($"   EnergyCapWarningThreshold: {config.Energy.EnergyCapWarningThreshold}");
+            
+            Console.WriteLine("⏳ [CONFIG] Patience Trial Settings:");
+            Console.WriteLine($"   TimerDurationSeconds: {config.Trials.Patience.TimerDurationSeconds}");
+            Console.WriteLine($"   BonusThresholdSeconds: {config.Trials.Patience.BonusThresholdSeconds}");
+            Console.WriteLine($"   BonusEnergyAmount: {config.Trials.Patience.BonusEnergyAmount}");
+            Console.WriteLine($"   NumberOfMirrors: {config.Trials.Patience.NumberOfMirrors}");
+            Console.WriteLine($"   CorrectMirrorLogic: {config.Trials.Patience.CorrectMirrorLogic}");
+            
+            Console.WriteLine("🌱 [CONFIG] Resource Trial Settings:");
+            Console.WriteLine($"   PatienceGridSize: {config.Trials.Resource.PatienceGridSize}");
+            Console.WriteLine($"   ImmediateBonusEnergy: {config.Trials.Resource.ImmediateBonusEnergy}");
+            Console.WriteLine($"   OliveInvestment.EnableInvestment: {config.Trials.Resource.OliveInvestment.EnableInvestment}");
+            Console.WriteLine($"   OliveInvestment.Formula: {config.Trials.Resource.OliveInvestment.Formula}");
+            Console.WriteLine($"   OliveInvestment.MaxBonusCap: {config.Trials.Resource.OliveInvestment.MaxBonusCap}");
+            Console.WriteLine($"   OliveInvestment.UpdateIntervalMs: {config.Trials.Resource.OliveInvestment.UpdateIntervalMs}");
+            Console.WriteLine($"   OliveInvestment.MaxInvestmentDurationSeconds: {config.Trials.Resource.OliveInvestment.MaxInvestmentDurationSeconds}");
+            
+            Console.WriteLine("🛤️ [CONFIG] Risk Trial Settings:");
+            Console.WriteLine($"   NumberOfPaths: {config.Trials.Risk.NumberOfPaths}");
+            Console.WriteLine($"   SafePath.EnergyModifier: {config.Trials.Risk.SafePath.EnergyModifier}");
+            Console.WriteLine($"   SafePath.SuccessRate: {config.Trials.Risk.SafePath.SuccessRate}");
+            Console.WriteLine($"   SafePath.FailurePenalty: {config.Trials.Risk.SafePath.FailurePenalty}");
+            Console.WriteLine($"   RiskyPath.EnergyModifier: {config.Trials.Risk.RiskyPath.EnergyModifier}");
+            Console.WriteLine($"   RiskyPath.SuccessRate: {config.Trials.Risk.RiskyPath.SuccessRate}");
+            Console.WriteLine($"   RiskyPath.FailurePenalty: {config.Trials.Risk.RiskyPath.FailurePenalty}");
+            
+            Console.WriteLine("🎯 [CONFIG] Scoring Settings:");
+            Console.WriteLine($"   EnergyToScoreRatio: {config.Scoring.Weights.EnergyToScoreRatio}");
+            Console.WriteLine($"   TimeCompletionBonus: {config.Scoring.Weights.TimeCompletionBonus}");
+            Console.WriteLine($"   PerfectTrialMultiplier: {config.Scoring.Weights.PerfectTrialMultiplier}");
+            Console.WriteLine($"   FirstTimeCompletionBonus: {config.Scoring.Bonuses.FirstTimeCompletionBonus}");
+            Console.WriteLine($"   AllTrialsCompletedBonus: {config.Scoring.Bonuses.AllTrialsCompletedBonus}");
+            Console.WriteLine($"   HighEnergyFinishBonus: {config.Scoring.Bonuses.HighEnergyFinishBonus}");
+            Console.WriteLine($"   HighEnergyThreshold: {config.Scoring.Bonuses.HighEnergyThreshold}");
+
             var response = new ApiResponse<GameConfig>
             {
                 Success = true,
@@ -123,10 +166,18 @@ public class ConfigController : ControllerBase
                 }
             };
 
+            Console.WriteLine($"✅ [CONFIG] Response created successfully at {response.Timestamp}");
+            Console.WriteLine($"📦 [CONFIG] Response.Success: {response.Success}");
+            Console.WriteLine($"📦 [CONFIG] Response.Message: {response.Message}");
+            Console.WriteLine($"📦 [CONFIG] Response.StatusCode: {response.StatusCode}");
+
             return Ok(response);
         }
         catch (Exception ex)
         {
+            Console.WriteLine($"❌ [CONFIG ERROR] Exception in GetGameConfig(): {ex.Message}");
+            Console.WriteLine($"❌ [CONFIG ERROR] Stack Trace: {ex.StackTrace}");
+            
             var errorResponse = new ApiResponse<GameConfig>
             {
                 Success = false,
@@ -154,11 +205,17 @@ public class ConfigController : ControllerBase
     {
         try
         {
+            Console.WriteLine("🌐 [SERVER INFO API] GetServerInfo() called");
+            Console.WriteLine($"🌍 Environment: {_environment.EnvironmentName}");
+            Console.WriteLine($"🖥️ Machine Name: {Environment.MachineName}");
+            
             // Get active sessions count
             var activeSessions = await _context.GameSessions.CountAsync(gs => gs.IsActive);
+            Console.WriteLine($"🎮 [SERVER INFO] Active Sessions: {activeSessions}");
 
             // Get database info (sanitized)
             var databaseConnected = await _context.Database.CanConnectAsync();
+            Console.WriteLine($"🗄️ [SERVER INFO] Database Connected: {databaseConnected}");
             
             var serverInfo = new ServerInfo
             {
@@ -218,6 +275,42 @@ public class ConfigController : ControllerBase
                 }
             };
 
+            // DETAILED CONSOLE LOGGING για validation
+            Console.WriteLine("📊 [SERVER INFO] Server Details:");
+            Console.WriteLine($"   ServerVersion: {serverInfo.ServerVersion}");
+            Console.WriteLine($"   ApiVersion: {serverInfo.ApiVersion}");
+            Console.WriteLine($"   Environment: {serverInfo.Environment}");
+            Console.WriteLine($"   ServerTime: {serverInfo.ServerTime}");
+            
+            Console.WriteLine("💚 [SERVER INFO] Status:");
+            Console.WriteLine($"   IsHealthy: {serverInfo.Status.IsHealthy}");
+            Console.WriteLine($"   HealthMessage: {serverInfo.Status.HealthMessage}");
+            Console.WriteLine($"   ActiveSessions: {serverInfo.Status.ActiveSessions}");
+            Console.WriteLine($"   LastHealthCheck: {serverInfo.Status.LastHealthCheck}");
+            
+            Console.WriteLine("🔗 [SERVER INFO] Endpoints:");
+            Console.WriteLine($"   BaseUrl: {serverInfo.Endpoints.BaseUrl}");
+            Console.WriteLine($"   Auth.Login: {serverInfo.Endpoints.Auth.Login}");
+            Console.WriteLine($"   Auth.Register: {serverInfo.Endpoints.Auth.Register}");
+            Console.WriteLine($"   Game.Start: {serverInfo.Endpoints.Game.Start}");
+            Console.WriteLine($"   Game.GetState: {serverInfo.Endpoints.Game.GetState}");
+            Console.WriteLine($"   Config.GameConfig: {serverInfo.Endpoints.Config.GameConfig}");
+            Console.WriteLine($"   Config.ServerInfo: {serverInfo.Endpoints.Config.ServerInfo}");
+            
+            Console.WriteLine("🔐 [SERVER INFO] Security Settings:");
+            Console.WriteLine($"   JWT.ExpirationHours: {serverInfo.Security.Jwt.ExpirationHours}");
+            Console.WriteLine($"   JWT.Algorithm: {serverInfo.Security.Jwt.Algorithm}");
+            Console.WriteLine($"   JWT.RequireHttps: {serverInfo.Security.Jwt.RequireHttps}");
+            Console.WriteLine($"   CORS.AllowCredentials: {serverInfo.Security.Cors.AllowCredentials}");
+            Console.WriteLine($"   CORS.AllowedOrigins: [{string.Join(", ", serverInfo.Security.Cors.AllowedOrigins)}]");
+            Console.WriteLine($"   RateLimit.Enabled: {serverInfo.Security.RateLimit.Enabled}");
+            Console.WriteLine($"   RateLimit.RequestsPerMinute: {serverInfo.Security.RateLimit.RequestsPerMinute}");
+            
+            Console.WriteLine("🗄️ [SERVER INFO] Database:");
+            Console.WriteLine($"   Provider: {serverInfo.Database.Provider}");
+            Console.WriteLine($"   IsConnected: {serverInfo.Database.IsConnected}");
+            Console.WriteLine($"   ConnectionString: {serverInfo.Database.ConnectionString}");
+
             var response = new ApiResponse<ServerInfo>
             {
                 Success = true,
@@ -233,10 +326,19 @@ public class ConfigController : ControllerBase
                 }
             };
 
+            Console.WriteLine($"✅ [SERVER INFO] Response created successfully at {response.Timestamp}");
+            Console.WriteLine($"📦 [SERVER INFO] Response.Success: {response.Success}");
+            Console.WriteLine($"📦 [SERVER INFO] Response.Message: {response.Message}");
+            Console.WriteLine($"📦 [SERVER INFO] Response.StatusCode: {response.StatusCode}");
+            Console.WriteLine($"📦 [SERVER INFO] Metadata RequestId: {response.Metadata["requestId"]}");
+
             return Ok(response);
         }
         catch (Exception ex)
         {
+            Console.WriteLine($"❌ [SERVER INFO ERROR] Exception in GetServerInfo(): {ex.Message}");
+            Console.WriteLine($"❌ [SERVER INFO ERROR] Stack Trace: {ex.StackTrace}");
+            
             var errorResponse = new ApiResponse<ServerInfo>
             {
                 Success = false,
