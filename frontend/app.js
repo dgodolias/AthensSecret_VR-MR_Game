@@ -10,10 +10,8 @@ let gameConfig = null;
 let serverInfo = null;
 let configInitialized = false;
 
-// API Configuration
-const API_BASE_URL = window.location.hostname === 'localhost' 
-    ? 'http://localhost:5182/api'
-    : 'https://athens-secret-api.onrender.com/api';
+// API Configuration - Force use Render.com API even when running locally
+const API_BASE_URL = 'https://athens-secret-api.onrender.com/api';
 
 // Auto-initialize configuration when needed
 async function ensureConfigLoaded() {
