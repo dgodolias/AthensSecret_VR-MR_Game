@@ -299,6 +299,33 @@
             font-size: 48px;
             margin-bottom: 15px;
         }
+        /* Configuration display styles */
+        .config-section {
+            background: #f8f9fa;
+            border-left: 4px solid #3498db;
+            padding: 10px 15px;
+            margin: 10px 0;
+        }
+        .config-section h4 {
+            margin-top: 0;
+            color: #2c3e50;
+        }
+        .config-section ul {
+            margin: 5px 0;
+            padding-left: 20px;
+        }
+        .config-section li {
+            margin: 3px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+        #gameConfigDisplay, #serverInfoDisplay {
+            border: 2px solid #27ae60;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+            background: linear-gradient(135deg, #d5f4e6 0%, #ffeaa7 100%);
+        }
         .path-title {
             font-size: 18px;
             font-weight: bold;
@@ -334,6 +361,15 @@
     <div class="container">
         <h1>🏛️ Το Μυστικό της Αθήνας</h1>
         <p><strong>Test Frontend για το API</strong></p>
+
+        <!-- NEW: Configuration Testing Section -->
+        <div class="trial-section" id="configTestingSection">
+            <h3>⚙️ Configuration Testing (Unity Client Simulation)</h3>
+            <p>Αυτά τα endpoints θα πρέπει να καλεί η Unity εφαρμογή κατά την εκκίνηση:</p>
+            <button onclick="fetchGameConfig()" style="background: #27ae60;">🎮 Fetch Game Config</button>
+            <button onclick="fetchServerInfo()" style="background: #2980b9;">🌐 Fetch Server Info</button>
+            <p><small>Ελέγξτε την κονσόλα για λεπτομερή logs των API calls</small></p>
+        </div>
 
         <!-- Authentication Section -->
         <div class="auth-section" id="authSection">

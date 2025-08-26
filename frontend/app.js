@@ -5,13 +5,12 @@ let chartInstances = {};
 let authToken = localStorage.getItem('authToken');
 let currentUser = localStorage.getItem('currentUser');
 
-// API Configuration - Now loaded from config.js
-const API_BASE_URL = CONFIG.API.BASE_URL;
+// API Configuration - DEPRECATED: Now loaded from backend API
+// Unity clients should use: GET /api/config/game and GET /api/config/server
+const API_BASE_URL = 'http://localhost:5182/api'; // Fallback for dummy frontend only
 
 // Console logging helper for API calls
 function logAPICall(method, url, requestData, responseData, status) {
-    if (!CONFIG.DEBUG.ENABLE_API_LOGGING) return;
-    
     console.group(`🔄 API ${method.toUpperCase()} ${url}`);
     console.log(`🌐 Full URL: ${url}`);
     console.log(`📋 Status: ${status}`);
@@ -68,9 +67,11 @@ document.addEventListener('DOMContentLoaded', function() {
     
     🎯 Expected API Flow:
     1. POST /api/auth/register OR /api/auth/login
-    2. POST /api/game/start
-    3. POST /api/game/submit-complete
-    4. POST /api/auth/logout
+    2. GET /api/config/game (Unity should fetch game configuration)
+    3. GET /api/config/server (Unity should fetch server info)
+    4. POST /api/game/start
+    5. POST /api/game/submit-complete
+    6. POST /api/auth/logout
     
     📋 Watch for:
     - Request/Response schemas
@@ -78,11 +79,17 @@ document.addEventListener('DOMContentLoaded', function() {
     - JWT token usage
     - API route paths
     
-    ⚙️  CONFIGURATION LOADED:
-    - API Base URL: ${CONFIG.API.BASE_URL}
-    - Starting Energy: ${CONFIG.GAME.STARTING_ENERGY}
-    - Olive Investment: Square Root Formula (√x)
-    - Console Logging: ${CONFIG.DEBUG.ENABLE_API_LOGGING ? 'ON' : 'OFF'}
+    ⚠️  NOTE: This is a DUMMY FRONTEND for testing only!
+    🎮 Unity clients should:
+    - Fetch configuration from /api/config/game
+    - Use standardized API responses
+    - Implement proper error handling
+    
+    ⚙️  CONFIGURATION NOW SERVER-SIDE:
+    - API Base URL: ${API_BASE_URL}
+    - Game Config: Available via API endpoint
+    - Server Info: Available via API endpoint  
+    - Console Logging: Always enabled for debugging
     ===================================
     `);
     
@@ -99,8 +106,133 @@ function switchTab(tab) {
     document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
     
     document.querySelector(`[onclick="switchTab('${tab}')"]`).classList.add('active');
-    document.getElementById(tab + 'Form').classList.add('active');
+    document.getElementById(`${tab}Form`).classList.add('active');
 }
+
+// NEW: Configuration fetching functions for Unity demonstration
+async function fetchGameConfig() {
+    try {
+        console.log('🎮 FETCHING GAME CONFIG - Unity clients should call this on startup');
+        
+        const response = await fetch(`${API_BASE_URL}/config/game`);
+        const configData = await response.json();
+        
+        logAPICall('GET', `${API_BASE_URL}/config/game`, null, configData, response.status);
+        
+        if (configData.success && configData.data) {
+            console.log('✅ GAME CONFIG LOADED - Unity can now apply these settings:', configData.data);
+            
+            // Display config in UI for testing purposes
+            displayGameConfig(configData.data);
+            return configData.data;
+        } else {
+            throw new Error('Failed to load game configuration');
+        }
+    } catch (error) {
+        console.error('❌ GAME CONFIG FETCH FAILED:', error);
+        throw error;
+    }
+}
+
+async function fetchServerInfo() {
+    try {
+        console.log('🌐 FETCHING SERVER INFO - Unity clients should call this to get connection info');
+        
+        const response = await fetch(`${API_BASE_URL}/config/server`);
+        const serverData = await response.json();
+        
+        logAPICall('GET', `${API_BASE_URL}/config/server`, null, serverData, response.status);
+        
+        if (serverData.success && serverData.data) {
+            console.log('✅ SERVER INFO LOADED - Unity can use this for connection management:', serverData.data);
+            
+            // Display server info in UI for testing purposes
+            displayServerInfo(serverData.data);
+            return serverData.data;
+        } else {
+            throw new Error('Failed to load server information');
+        }
+    } catch (error) {
+        console.error('❌ SERVER INFO FETCH FAILED:', error);
+        throw error;
+    }
+}
+
+function displayGameConfig(config) {
+    const configDiv = document.createElement('div');
+    configDiv.id = 'gameConfigDisplay';
+    configDiv.innerHTML = `
+        <h3>🎮 Game Configuration (Loaded from Backend)</h3>
+        <div class="config-section">
+            <h4>Energy Settings:</h4>
+            <ul>
+                <li>Starting Energy: ${config.energy.startingEnergy}</li>
+                <li>Max Energy: ${config.energy.maxEnergy}</li>
+                <li>Warning Threshold: ${config.energy.energyCapWarningThreshold}</li>
+            </ul>
+        </div>
+        <div class="config-section">
+            <h4>Patience Trial:</h4>
+            <ul>
+                <li>Timer Duration: ${config.trials.patience.timerDurationSeconds}s</li>
+                <li>Bonus Threshold: ${config.trials.patience.bonusThresholdSeconds}s</li>
+                <li>Energy Bonus: ${config.trials.patience.bonusEnergyAmount}</li>
+                <li>Number of Mirrors: ${config.trials.patience.numberOfMirrors}</li>
+            </ul>
+        </div>
+        <div class="config-section">
+            <h4>Olive Investment:</h4>
+            <ul>
+                <li>Formula: ${config.trials.resource.oliveInvestment.formula}</li>
+                <li>Max Bonus: ${config.trials.resource.oliveInvestment.maxBonusCap}</li>
+                <li>Update Interval: ${config.trials.resource.oliveInvestment.updateIntervalMs}ms</li>
+            </ul>
+        </div>
+    `;
+    
+    // Remove existing config display if present
+    const existing = document.getElementById('gameConfigDisplay');
+    if (existing) existing.remove();
+    
+    // Add to page
+    document.querySelector('.container').appendChild(configDiv);
+}
+
+function displayServerInfo(serverInfo) {
+    const infoDiv = document.createElement('div');
+    infoDiv.id = 'serverInfoDisplay';
+    infoDiv.innerHTML = `
+        <h3>🌐 Server Information (For Unity Connection)</h3>
+        <div class="config-section">
+            <h4>Server Status:</h4>
+            <ul>
+                <li>Version: ${serverInfo.serverVersion}</li>
+                <li>API Version: ${serverInfo.apiVersion}</li>
+                <li>Environment: ${serverInfo.environment}</li>
+                <li>Health: ${serverInfo.status.isHealthy ? '✅ Healthy' : '❌ Unhealthy'}</li>
+                <li>Active Sessions: ${serverInfo.status.activeSessions}</li>
+            </ul>
+        </div>
+        <div class="config-section">
+            <h4>API Endpoints:</h4>
+            <ul>
+                <li>Base URL: ${serverInfo.endpoints.baseUrl}</li>
+                <li>Auth Login: ${serverInfo.endpoints.auth.login}</li>
+                <li>Game Start: ${serverInfo.endpoints.game.start}</li>
+                <li>Game Config: ${serverInfo.endpoints.config.gameConfig}</li>
+            </ul>
+        </div>
+    `;
+    
+    // Remove existing info display if present
+    const existing = document.getElementById('serverInfoDisplay');
+    if (existing) existing.remove();
+    
+    // Add to page
+    document.querySelector('.container').appendChild(infoDiv);
+}
+    
+
 
 async function register() {
     const username = document.getElementById('registerUsername').value.trim();
