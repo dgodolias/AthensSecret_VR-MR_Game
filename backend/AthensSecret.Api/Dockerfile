@@ -2,12 +2,15 @@
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /app
 
-# Copy everything
+# Copy project file first for better caching
+COPY AthensSecret.Api.csproj ./
+RUN dotnet restore AthensSecret.Api.csproj
+
+# Copy everything else
 COPY . ./
 
-# Restore and build
-RUN dotnet restore
-RUN dotnet publish -c Release -o out
+# Build and publish
+RUN dotnet publish AthensSecret.Api.csproj -c Release -o out
 
 # Runtime stage
 FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS runtime
