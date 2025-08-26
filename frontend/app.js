@@ -10,6 +10,26 @@ let gameConfig = null;
 let serverInfo = null;
 let configInitialized = false;
 
+// Game utility functions for energy calculations
+const GAME_UTILS = {
+    // Calculate energy bonus using square root formula: floor(√x)
+    calculateEnergyBonus: function(elapsedSeconds) {
+        return Math.floor(Math.sqrt(elapsedSeconds));
+    },
+    
+    // Get the next milestone (next perfect square) 
+    getNextMilestone: function(elapsedSeconds) {
+        const currentBonus = Math.floor(Math.sqrt(elapsedSeconds));
+        const nextPerfectSquare = Math.pow(currentBonus + 1, 2);
+        const secondsToNext = nextPerfectSquare - elapsedSeconds;
+        return {
+            nextBonusValue: currentBonus + 1,
+            secondsToNext: secondsToNext,
+            nextPerfectSquare: nextPerfectSquare
+        };
+    }
+};
+
 // API Configuration - Force use Render.com API even when running locally
 const API_BASE_URL = 'https://athens-secret-api.onrender.com/api';
 
