@@ -14,7 +14,8 @@ var connectionString = Environment.GetEnvironmentVariable("DATABASE_URL")
 if (connectionString?.StartsWith("postgresql://") == true)
 {
     var uri = new Uri(connectionString);
-    connectionString = $"Host={uri.Host};Port={uri.Port};Database={uri.AbsolutePath.Trim('/')};Username={uri.UserInfo.Split(':')[0]};Password={uri.UserInfo.Split(':')[1]};SslMode=Require;TrustServerCertificate=true";
+    var port = uri.Port == -1 ? 5432 : uri.Port; // Default PostgreSQL port if not specified
+    connectionString = $"Host={uri.Host};Port={port};Database={uri.AbsolutePath.Trim('/')};Username={uri.UserInfo.Split(':')[0]};Password={uri.UserInfo.Split(':')[1]};SslMode=Require;TrustServerCertificate=true";
 }
 
 builder.Services.AddDbContext<ApiDbContext>(options =>
