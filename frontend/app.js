@@ -11,7 +11,9 @@ let serverInfo = null;
 let configInitialized = false;
 
 // API Configuration
-const API_BASE_URL = 'http://localhost:5182/api';
+const API_BASE_URL = window.location.hostname === 'localhost' 
+    ? 'http://localhost:5182/api'
+    : 'https://your-railway-app.railway.app/api';  // Replace με το Railway URL σου
 
 // Auto-initialize configuration when needed
 async function ensureConfigLoaded() {
