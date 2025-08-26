@@ -1,7 +1,9 @@
 # VR Game Flow Diagram
 
-> **🔧 Updated: August 26, 2025**  
+> **🔧 Updated: August 27, 2025**  
+> **Production Ready**: Backend deployed on Render.com with PostgreSQL database  
 > **New Features**: Backend Configuration System for Unity Integration  
+> **Database**: Render PostgreSQL with automatic connection string parsing  
 > **Changes**: Added `/api/config/game` and `/api/config/server` endpoints for production-ready Unity client setup
 
 ## Game Architecture Overview
@@ -111,31 +113,35 @@ graph TD
 
 ## API Endpoints for Unity VR Integration
 
-### 🔧 Configuration APIs (NEW - Unity Client Setup)
+### 🔧 Configuration APIs (Unity Client Setup - Production Ready)
 
 ```http
 GET /api/config/server
+Base URL: https://athens-secret-api.onrender.com/api
 Response: {
   "Success": true,
   "Data": {
     "ServerVersion": "1.0.0",
     "ApiVersion": "v1", 
-    "ServerTime": "2025-08-26T12:00:00Z",
-    "Environment": "Development",
+    "ServerTime": "2025-08-27T12:00:00Z",
+    "Environment": "Production",
+    "DatabaseProvider": "PostgreSQL (Render)",
     "Status": {
       "IsHealthy": true,
       "ActiveSessions": 5,
       "HealthMessage": "Server is running normally"
     },
     "Endpoints": {
-      "BaseUrl": "http://localhost:5182/api",
+      "BaseUrl": "https://athens-secret-api.onrender.com/api",
       "Auth": {
         "Login": "/api/auth/login",
         "Register": "/api/auth/register"
       },
       "Game": {
         "Start": "/api/game/start",
-        "GetState": "/api/game/{sessionId}/state"
+        "GetState": "/api/game/{sessionId}/state",
+        "SubmitComplete": "/api/game/submit-complete",
+        "GetPlayerSessions": "/api/game/player/{username}/sessions"
       }
     },
     "Security": {
@@ -609,6 +615,88 @@ public class ConfigCache
 - **Connection timeout**: Implement reasonable timeout values for VR experience
 - **Retry logic**: Exponential backoff for failed configuration requests
 - **Offline mode**: Graceful degradation when configuration server is unavailable
+
+## 🚀 Production Environment Details
+
+### Backend Deployment (Render.com)
+- **Service URL**: https://athens-secret-api.onrender.com
+- **Database**: PostgreSQL on Render (Internal)
+- **Environment Variables**: 
+  - `DATABASE_URL`: Automatically provided by Render PostgreSQL
+  - `JWT_SECRET`: Configured in Render environment variables
+- **Connection String Parsing**: Automatic conversion from PostgreSQL URL format to .NET connection string
+- **SSL**: Required and configured automatically
+
+### Database Schema (Created Successfully ✅)
+**Players Table:**
+```sql
+CREATE TABLE Players (
+    Id SERIAL PRIMARY KEY,
+    Username VARCHAR(50) UNIQUE NOT NULL,
+    PasswordHash VARCHAR(255) NOT NULL,
+    CreatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+**GameSessions Table:**
+```sql
+CREATE TABLE GameSessions (
+    Id SERIAL PRIMARY KEY,
+    PlayerId INTEGER REFERENCES Players(Id),
+    WisdomEnergy INTEGER DEFAULT 50,
+    Score INTEGER DEFAULT 0,
+    CurrentTrial VARCHAR(50) DEFAULT 'start',
+    IsActive BOOLEAN DEFAULT true,
+    StartTime TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    EndTime TIMESTAMP NULL
+);
+```
+
+### Frontend Configuration
+- **Development**: http://localhost:8080 (Python server)
+- **API Endpoint**: https://athens-secret-api.onrender.com/api
+- **CORS**: Configured for cross-origin requests
+
+### Unity VR Client Setup
+```csharp
+// Unity Production Configuration
+public class ProductionConfig : MonoBehaviour
+{
+    private const string PRODUCTION_API_URL = "https://athens-secret-api.onrender.com/api";
+    private const string DEVELOPMENT_API_URL = "http://localhost:5182/api";
+    
+    [Header("Environment Settings")]
+    public bool useProductionServer = true;
+    
+    void Start()
+    {
+        string baseUrl = useProductionServer ? PRODUCTION_API_URL : DEVELOPMENT_API_URL;
+        APIClient.Initialize(baseUrl);
+        
+        // Test connection and get configuration
+        StartCoroutine(InitializeGameConfiguration());
+    }
+}
+```
+
+### Authentication Flow (Production Ready)
+1. **Register/Login**: POST to `/api/auth/register` or `/api/auth/login`
+2. **JWT Token**: Store securely in Unity PlayerPrefs or secure storage
+3. **API Requests**: Include `Authorization: Bearer {token}` header
+4. **Token Refresh**: Handle 401 responses with re-authentication
+
+### Game Data Flow (Optimized for VR)
+1. **Startup**: Fetch server config and game settings
+2. **Local Gameplay**: All trials run locally without server calls
+3. **Batch Submit**: Single POST to `/api/game/submit-complete` with all data
+4. **Statistics**: GET `/api/game/player/{username}/sessions` for history
+
+### Performance Optimizations
+- **Connection Pooling**: HTTP client reuse
+- **Response Caching**: Game configuration cached locally
+- **Async Operations**: Non-blocking API calls
+- **Error Recovery**: Retry logic with exponential backoff
+- **Offline Support**: Local data persistence until connection restored
 
 ### 1. Local State Management
 - **No server calls during trials** - everything cached locally
