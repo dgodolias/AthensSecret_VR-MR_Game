@@ -94,4 +94,21 @@ app.UseAuthorization();
 
 app.MapControllers();
 
+// Ensure database is created (replaces migrations)
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<ApiDbContext>();
+    try
+    {
+        Console.WriteLine("🔧 Ensuring database is created...");
+        context.Database.EnsureCreated();
+        Console.WriteLine("✅ Database ready!");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"❌ Database creation failed: {ex.Message}");
+        throw;
+    }
+}
+
 app.Run();
