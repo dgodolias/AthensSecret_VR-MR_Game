@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Athens Secret - Εγγραφή Παίκτη</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: url('registration_form_background.png') center/cover no-repeat,
+                        linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+            position: relative;
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('registration_form_background.png') center/cover no-repeat;
+            filter: blur(8px) brightness(0.7);
+            z-index: -2;
+            animation: backgroundMove 20s ease-in-out infinite;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, 
+                rgba(102, 126, 234, 0.3) 0%, 
+                rgba(118, 75, 162, 0.3) 50%,
+                rgba(102, 126, 234, 0.2) 100%);
+            z-index: -1;
+            animation: gradientShift 15s ease-in-out infinite;
+        }
+
+        @keyframes backgroundMove {
+            0%, 100% { transform: scale(1) rotate(0deg); }
+            25% { transform: scale(1.05) rotate(0.5deg); }
+            50% { transform: scale(1.02) rotate(-0.3deg); }
+            75% { transform: scale(1.07) rotate(0.2deg); }
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { 
+                background: linear-gradient(135deg, 
+                    rgba(102, 126, 234, 0.3) 0%, 
+                    rgba(118, 75, 162, 0.3) 50%,
+                    rgba(102, 126, 234, 0.2) 100%);
+            }
+            33% { 
+                background: linear-gradient(225deg, 
+                    rgba(118, 75, 162, 0.4) 0%, 
+                    rgba(102, 126, 234, 0.2) 50%,
+                    rgba(118, 75, 162, 0.3) 100%);
+            }
+            66% { 
+                background: linear-gradient(45deg, 
+                    rgba(102, 126, 234, 0.2) 0%, 
+                    rgba(118, 75, 162, 0.4) 50%,
+                    rgba(102, 126, 234, 0.3) 100%);
+            }
+        }
+
+        /* Floating particles animation */
+        .floating-particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .particle {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            animation: float 8s infinite ease-in-out;
+        }
+
+        .particle:nth-child(1) { width: 4px; height: 4px; left: 10%; animation-delay: 0s; }
+        .particle:nth-child(2) { width: 6px; height: 6px; left: 20%; animation-delay: 1s; }
+        .particle:nth-child(3) { width: 3px; height: 3px; left: 30%; animation-delay: 2s; }
+        .particle:nth-child(4) { width: 5px; height: 5px; left: 40%; animation-delay: 3s; }
+        .particle:nth-child(5) { width: 4px; height: 4px; left: 50%; animation-delay: 4s; }
+        .particle:nth-child(6) { width: 7px; height: 7px; left: 60%; animation-delay: 5s; }
+        .particle:nth-child(7) { width: 3px; height: 3px; left: 70%; animation-delay: 6s; }
+        .particle:nth-child(8) { width: 5px; height: 5px; left: 80%; animation-delay: 7s; }
+        .particle:nth-child(9) { width: 4px; height: 4px; left: 90%; animation-delay: 1.5s; }
+        .particle:nth-child(10) { width: 6px; height: 6px; left: 15%; animation-delay: 2.5s; }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(-10vh) rotate(360deg); opacity: 0; }
+        }
+
+        .form-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2), 
+                        0 5px 15px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            width: 100%;
+            max-width: 750px;
+            max-height: 90vh;
+            position: relative;
+            overflow-y: auto;
+            overflow-x: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            animation: cardFloat 6s ease-in-out infinite;
+            margin: 10px 0;
+        }
+
+        /* Fade effect for smooth scrolling appearance - only when scrollable */
+        .form-container.scrollable::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 20px;
+            background: linear-gradient(transparent, rgba(255, 255, 255, 0.95));
+            pointer-events: none;
+            z-index: 1;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .form-container.scrollable.has-more-content::after {
+            opacity: 1;
+        }
+
+        @keyframes cardFloat {
+            0%, 100% { transform: translateY(0px) rotateX(0deg); }
+            50% { transform: translateY(-10px) rotateX(1deg); }
+        }
+
+        .form-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            animation: borderGlow 3s ease-in-out infinite;
+        }
+
+        @keyframes borderGlow {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; box-shadow: 0 0 20px rgba(102, 126, 234, 0.5); }
+        }
+
+        .form-container:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2), 
+                        0 10px 25px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .form-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .form-header h1 {
+            color: #2d3748;
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .form-header p {
+            color: #718096;
+            font-size: 16px;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #2d3748;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="number"] {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: #f7fafc;
+        }
+
+        input[type="text"]:focus,
+        input[type="email"]:focus,
+        input[type="number"]:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1),
+                        0 4px 12px rgba(102, 126, 234, 0.15);
+            transform: translateY(-2px);
+        }
+
+        input[type="text"]:hover,
+        input[type="email"]:hover,
+        input[type="number"]:hover {
+            border-color: #a4b4f0;
+            transform: translateY(-1px);
+            transition: all 0.2s ease;
+        }
+
+        .question-section {
+            background: #f7fafc;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 32px 0;
+            border-left: 4px solid #667eea;
+        }
+
+        .question-section h2 {
+            color: #2d3748;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .question-item {
+            margin-bottom: 24px;
+        }
+
+        .question-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .question-text {
+            color: #4a5568;
+            font-size: 15px;
+            line-height: 1.5;
+            margin-bottom: 12px;
+        }
+
+        .scale-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 8px;
+        }
+
+        .scale-label {
+            font-size: 12px;
+            color: #718096;
+            min-width: 140px;
+        }
+
+        .scale-input {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        input[type="range"] {
+            flex: 1;
+            height: 6px;
+            border-radius: 3px;
+            background: #e2e8f0;
+            outline: none;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(102, 126, 234, 0.3);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 6px rgba(102, 126, 234, 0.3);
+        }
+
+        .scale-value {
+            background: #667eea;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            min-width: 32px;
+            text-align: center;
+        }
+
+        .submit-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 16px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 32px;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .submit-btn:active {
+            transform: translateY(0);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .submit-btn.loading {
+            position: relative;
+            color: transparent;
+        }
+
+        .submit-btn.loading::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top: 2px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: translate(-50%, -50%) rotate(0deg); }
+            100% { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+
+        .result-section {
+            margin-top: 32px;
+            padding: 20px;
+            background: #f0f8f0;
+            border-radius: 8px;
+            border-left: 4px solid #48bb78;
+            display: none;
+        }
+
+        .result-section.error {
+            background: #fef5e7;
+            border-left-color: #ed8936;
+        }
+
+        .result-text {
+            color: #2d3748;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        @media (max-width: 768px) {
+            .form-container {
+                padding: 24px;
+                margin: 10px;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .form-header h1 {
+                font-size: 24px;
+            }
+
+            .scale-container {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 8px;
+            }
+
+            .scale-label {
+                min-width: auto;
+                text-align: center;
+            }
+        }
+
+        .required {
+            color: #e53e3e;
+        }
+
+        .error-message {
+            color: #e53e3e;
+            font-size: 12px;
+            margin-top: 4px;
+            display: none;
+        }
+
+        .form-group.error input {
+            border-color: #e53e3e;
+            background: #fef5f5;
+        }
+
+        .form-group.error .error-message {
+            display: block;
+        }
+
+        /* Custom Scrollbar Styling - Very Discrete */
+        .form-container::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .form-container::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .form-container::-webkit-scrollbar-thumb {
+            background: rgba(102, 126, 234, 0.2);
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            opacity: 0;
+        }
+
+        .form-container:hover::-webkit-scrollbar-thumb {
+            opacity: 1;
+            background: rgba(102, 126, 234, 0.4);
+        }
+
+        .form-container::-webkit-scrollbar-thumb:hover {
+            background: rgba(102, 126, 234, 0.7);
+        }
+
+        /* Firefox scrollbar */
+        .form-container {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(102, 126, 234, 0.2) transparent;
+        }
+
+        /* Mobile - Even more discrete */
+        @media (max-width: 768px) {
+            .form-container::-webkit-scrollbar {
+                width: 2px;
+            }
+            
+            .form-container::-webkit-scrollbar-thumb {
+                background: rgba(102, 126, 234, 0.15);
+            }
+
+            .form-container:hover::-webkit-scrollbar-thumb {
+                background: rgba(102, 126, 234, 0.3);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="floating-particles">
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+    </div>
+
+    <div class="form-container">
+        <div class="form-header">
+            <h1>Athens Secret</h1>
+            <p>Συμπληρώστε τα στοιχεία σας για να συμμετάσχετε στο παιχνίδι!</p>
+        </div>
+
+        <form id="registrationForm">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="firstName">Όνομα <span class="required">*</span></label>
+                    <input type="text" id="firstName" name="firstName" required>
+                    <div class="error-message">Παρακαλώ εισάγετε το όνομά σας</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="lastName">Επίθετο <span class="required">*</span></label>
+                    <input type="text" id="lastName" name="lastName" required>
+                    <div class="error-message">Παρακαλώ εισάγετε το επίθετό σας</div>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="email">Email <span class="required">*</span></label>
+                    <input type="email" id="email" name="email" required>
+                    <div class="error-message">Παρακαλώ εισάγετε έγκυρο email</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="age">Ηλικία <span class="required">*</span></label>
+                    <input type="number" id="age" name="age" min="1" max="120" required>
+                    <div class="error-message">Παρακαλώ εισάγετε την ηλικία σας (1-120)</div>
+                </div>
+            </div>
+
+            <div class="question-section">
+                <h2>Ερωτήσεις Αξιολόγησης</h2>
+                
+                <div class="question-item">
+                    <div class="question-text">
+                        <strong>Q1:</strong> Σε σύγκριση με άλλους ανθρώπους, πόσο διατεθειμένος/η είστε να θυσιάσετε κάτι σήμερα για να επωφεληθείτε στο μέλλον;
+                    </div>
+                    <div class="scale-container">
+                        <div class="scale-label">Καθόλου διατεθειμένος/η</div>
+                        <div class="scale-input">
+                            <input type="range" id="q1" name="q1" min="1" max="10" value="5">
+                            <div class="scale-value" id="q1Value">5</div>
+                        </div>
+                        <div class="scale-label">Πολύ διατεθειμένος/η</div>
+                    </div>
+                </div>
+
+                <div class="question-item">
+                    <div class="question-text">
+                        <strong>Q2:</strong> Πόσο διατεθειμένος/η είστε να αναλάβετε ρίσκο για υψηλότερη μελλοντική απόδοση;
+                    </div>
+                    <div class="scale-container">
+                        <div class="scale-label">Καθόλου</div>
+                        <div class="scale-input">
+                            <input type="range" id="q2" name="q2" min="1" max="10" value="5">
+                            <div class="scale-value" id="q2Value">5</div>
+                        </div>
+                        <div class="scale-label">Μέγιστο</div>
+                    </div>
+                </div>
+
+                <div class="question-item">
+                    <div class="question-text">
+                        <strong>Q3:</strong> Πόσο σημαντική θεωρείτε τη λήψη αποφάσεων βάσει διαθέσιμων πληροφοριών;
+                    </div>
+                    <div class="scale-container">
+                        <div class="scale-label">Καθόλου σημαντική</div>
+                        <div class="scale-input">
+                            <input type="range" id="q3" name="q3" min="1" max="10" value="5">
+                            <div class="scale-value" id="q3Value">5</div>
+                        </div>
+                        <div class="scale-label">Πολύ σημαντική</div>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="submit-btn" id="submitBtn">
+                Υποβολή
+            </button>
+        </form>
+
+        <div id="resultSection" class="result-section">
+            <div id="resultText" class="result-text"></div>
+        </div>
+    </div>
+
+    <script>
+        // Update scale values in real-time
+        ['q1', 'q2', 'q3'].forEach(questionId => {
+            const slider = document.getElementById(questionId);
+            const valueDisplay = document.getElementById(questionId + 'Value');
+            
+            slider.addEventListener('input', function() {
+                valueDisplay.textContent = this.value;
+            });
+        });
+
+        // Interactive mouse movement effect
+        document.addEventListener('mousemove', function(e) {
+            const formContainer = document.querySelector('.form-container');
+            const rect = formContainer.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            
+            const deltaX = (e.clientX - centerX) / 50;
+            const deltaY = (e.clientY - centerY) / 50;
+            
+            formContainer.style.transform = `perspective(1000px) rotateY(${deltaX}deg) rotateX(${-deltaY}deg)`;
+        });
+
+        // Reset transform when mouse leaves
+        document.addEventListener('mouseleave', function() {
+            const formContainer = document.querySelector('.form-container');
+            formContainer.style.transform = 'perspective(1000px) rotateY(0deg) rotateX(0deg)';
+        });
+
+        // Parallax effect for background
+        document.addEventListener('mousemove', function(e) {
+            const moveX = (e.clientX / window.innerWidth) * 20;
+            const moveY = (e.clientY / window.innerHeight) * 20;
+            
+            document.body.style.backgroundPosition = `${50 + moveX}% ${50 + moveY}%`;
+        });
+
+        // Smart fade effect - only show when there's content to scroll
+        function updateScrollFade() {
+            const container = document.querySelector('.form-container');
+            const isScrollable = container.scrollHeight > container.clientHeight;
+            // More sensitive threshold - fade starts disappearing when 80% scrolled
+            const scrollPercentage = (container.scrollTop + container.clientHeight) / container.scrollHeight;
+            const shouldShowFade = scrollPercentage < 0.8;
+            
+            if (isScrollable) {
+                container.classList.add('scrollable');
+                if (shouldShowFade) {
+                    container.classList.add('has-more-content');
+                } else {
+                    container.classList.remove('has-more-content');
+                }
+            } else {
+                container.classList.remove('scrollable', 'has-more-content');
+            }
+        }
+
+        // Check on load and resize
+        window.addEventListener('load', updateScrollFade);
+        window.addEventListener('resize', updateScrollFade);
+
+        // Check when scrolling
+        document.querySelector('.form-container').addEventListener('scroll', updateScrollFade);
+
+        // Form validation and submission
+        document.getElementById('registrationForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            // Clear previous errors
+            document.querySelectorAll('.form-group.error').forEach(group => {
+                group.classList.remove('error');
+            });
+            
+            // Validate form
+            let isValid = true;
+            const requiredFields = ['firstName', 'lastName', 'email', 'age'];
+            
+            requiredFields.forEach(fieldId => {
+                const field = document.getElementById(fieldId);
+                const group = field.closest('.form-group');
+                
+                if (!field.value.trim()) {
+                    group.classList.add('error');
+                    isValid = false;
+                }
+            });
+            
+            // Validate email format
+            const email = document.getElementById('email');
+            const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (email.value && !emailPattern.test(email.value)) {
+                email.closest('.form-group').classList.add('error');
+                isValid = false;
+            }
+            
+            // Validate age range
+            const age = document.getElementById('age');
+            if (age.value && (parseInt(age.value) < 1 || parseInt(age.value) > 120)) {
+                age.closest('.form-group').classList.add('error');
+                isValid = false;
+            }
+            
+            if (!isValid) {
+                return;
+            }
+            
+            // Prepare data
+            const formData = {
+                firstName: document.getElementById('firstName').value.trim(),
+                lastName: document.getElementById('lastName').value.trim(),
+                email: document.getElementById('email').value.trim(),
+                age: parseInt(document.getElementById('age').value),
+                q1: parseInt(document.getElementById('q1').value),
+                q2: parseInt(document.getElementById('q2').value),
+                q3: parseInt(document.getElementById('q3').value)
+            };
+            
+            // Submit to API
+            const submitBtn = document.getElementById('submitBtn');
+            const resultSection = document.getElementById('resultSection');
+            const resultText = document.getElementById('resultText');
+            
+            submitBtn.disabled = true;
+            submitBtn.classList.add('loading');
+            submitBtn.textContent = 'Υποβολή...';
+            
+            try {
+                const response = await fetch('http://localhost:5182/api/player/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    resultSection.classList.remove('error');
+                    resultText.innerHTML = `
+                        <strong>Επιτυχής εγγραφή!</strong><br>
+                        Το Player ID σας είναι: <strong>${result.playerId}</strong><br>
+                        Παρακαλώ σημειώστε αυτό τον αριθμό για να συνδεθείτε στο παιχνίδι.
+                    `;
+                    
+                    // Reset form
+                    document.getElementById('registrationForm').reset();
+                    ['q1', 'q2', 'q3'].forEach(questionId => {
+                        document.getElementById(questionId + 'Value').textContent = '5';
+                    });
+                    
+                } else {
+                    throw new Error(result.message || 'Σφάλμα κατά την εγγραφή');
+                }
+                
+            } catch (error) {
+                resultSection.classList.add('error');
+                resultText.innerHTML = `
+                    <strong>Σφάλμα:</strong> ${error.message}<br>
+                    Παρακαλώ δοκιμάστε ξανά ή επικοινωνήστε με τον διαχειριστή.
+                `;
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('loading');
+                submitBtn.textContent = 'Εγγραφή στην Έρευνα';
+                resultSection.style.display = 'block';
+                resultSection.scrollIntoView({ behavior: 'smooth' });
+            }
+        });
+    </script>
+</body>
+</html>
