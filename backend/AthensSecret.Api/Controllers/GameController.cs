@@ -147,7 +147,7 @@ public class GameController : ControllerBase
     }
 
     [HttpPost("mirrors/end")]
-    public async Task<IActionResult> EndMirrorsTrial([FromQuery] int sessionId, [FromQuery] int playerId, [FromBody] int totalGainedWisdom)
+    public async Task<IActionResult> EndMirrorsTrial([FromQuery] int sessionId, [FromQuery] int playerId, [FromBody] MirrorsTrialEndRequest request)
     {
         // Verify session belongs to player and is active
         var gameSession = await _context.GameSessions
@@ -167,7 +167,7 @@ public class GameController : ControllerBase
         }
 
         mirrorsTrial.EndTime = DateTime.UtcNow;
-        mirrorsTrial.TotalGainedWisdom = totalGainedWisdom;
+        mirrorsTrial.TotalGainedWisdom = request.TotalGainedWisdom;
 
         await _context.SaveChangesAsync();
 
@@ -176,8 +176,7 @@ public class GameController : ControllerBase
             sessionId = sessionId,
             startTime = mirrorsTrial.StartTime,
             endTime = mirrorsTrial.EndTime,
-            totalGainedWisdom = mirrorsTrial.TotalGainedWisdom,
-            durationMinutes = (mirrorsTrial.EndTime - mirrorsTrial.StartTime)?.TotalMinutes
+            totalGainedWisdom = mirrorsTrial.TotalGainedWisdom
         });
     }
 
@@ -253,7 +252,7 @@ public class GameController : ControllerBase
     }
 
     [HttpPost("oiltree/end")]
-    public async Task<IActionResult> EndOilTreeTrial([FromQuery] int sessionId, [FromQuery] int playerId, [FromBody] int totalGainedWisdom)
+    public async Task<IActionResult> EndOilTreeTrial([FromQuery] int sessionId, [FromQuery] int playerId, [FromBody] OilTreeTrialEndRequest request)
     {
         // Verify session belongs to player and is active
         var gameSession = await _context.GameSessions
@@ -273,7 +272,7 @@ public class GameController : ControllerBase
         }
 
         oilTreeTrial.EndTime = DateTime.UtcNow;
-        oilTreeTrial.TotalGainedWisdom = totalGainedWisdom;
+        oilTreeTrial.TotalGainedWisdom = request.TotalGainedWisdom;
 
         await _context.SaveChangesAsync();
 
@@ -423,6 +422,16 @@ public class GameController : ControllerBase
 }
 
 // Request models
+public class MirrorsTrialEndRequest
+{
+    public int TotalGainedWisdom { get; set; }
+}
+
+public class OilTreeTrialEndRequest
+{
+    public int TotalGainedWisdom { get; set; }
+}
+
 public class PathTrialEndRequest
 {
     public int TotalGainedWisdom { get; set; }
