@@ -213,7 +213,7 @@
         
         <button onclick="startGameSession()">Start Game Session</button>
         <button onclick="endGameSession()" id="endGameBtn" disabled>End Game Session</button>
-        <button onclick="getGameSession()" id="getSessionBtn" disabled>Get Session Info</button>
+        <button onclick="getStatistics()" id="getStatisticsBtn" disabled>Get Statistics</button>
         
         <div class="response-section" id="gameResponseSection" style="display: none;">
             <h3>📤 Game Request:</h3>
@@ -371,7 +371,7 @@
                     currentSessionId = result.sessionId;
                     document.getElementById('sessionId').value = currentSessionId;
                     document.getElementById('endGameBtn').disabled = false;
-                    document.getElementById('getSessionBtn').disabled = false;
+                    // Statistics button stays disabled until game session ends
                 }
                 
             } catch (error) {
@@ -405,7 +405,7 @@
                 
                 if (response.ok) {
                     document.getElementById('endGameBtn').disabled = true;
-                    document.getElementById('getSessionBtn').disabled = true;
+                    document.getElementById('getStatisticsBtn').disabled = false;
                 }
                 
             } catch (error) {
@@ -415,7 +415,7 @@
             document.getElementById('gameResponseSection').style.display = 'block';
         }
 
-        async function getGameSession() {
+        async function getStatistics() {
             const sessionId = document.getElementById('sessionId').value || currentSessionId;
             const playerId = document.getElementById('playerId').value;
             
@@ -425,7 +425,7 @@
             }
             
             const apiUrl = getApiUrl();
-            const url = `${apiUrl}/api/game/session/${sessionId}?playerId=${playerId}`;
+            const url = `${apiUrl}/api/game/statistics?sessionId=${sessionId}&playerId=${playerId}`;
             
             try {
                 document.getElementById('gameRequest').textContent = `GET ${url}`;

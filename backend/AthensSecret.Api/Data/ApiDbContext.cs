@@ -16,6 +16,7 @@ public class ApiDbContext : DbContext
     public DbSet<MirrorsTrial> MirrorsTrials { get; set; }
     public DbSet<OilTreeTrial> OilTreeTrials { get; set; }
     public DbSet<PathTrial> PathTrials { get; set; }
+    public DbSet<ResponsesStatistics> ResponsesStatistics { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -130,6 +131,16 @@ public class ApiDbContext : DbContext
                   .WithOne(gs => gs.PathTrial)
                   .HasForeignKey<PathTrial>(pt => pt.GameSessionId)
                   .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // Configure ResponsesStatistics - map to responses_statistics table
+        modelBuilder.Entity<ResponsesStatistics>(entity =>
+        {
+            entity.ToTable("responses_statistics");
+            entity.HasKey(rs => rs.Age);
+            entity.Property(rs => rs.Age).HasColumnName("age");
+            entity.Property(rs => rs.Patience).HasColumnName("patience").IsRequired();
+            entity.Property(rs => rs.Risk).HasColumnName("risk").IsRequired();
         });
     }
 }

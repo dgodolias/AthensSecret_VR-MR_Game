@@ -407,6 +407,82 @@ public class GameController : ControllerBase
             } : null
         });
     }
+
+    // Get player statistics by comparing responses with age-based expected values
+    [HttpGet("statistics")]
+    public async Task<IActionResult> GetPlayerStatistics([FromQuery] int sessionId, [FromQuery] int playerId)
+    {
+        // Verify session belongs to player and is ended
+        var gameSession = await _context.GameSessions
+            .Include(gs => gs.Player)
+            .ThenInclude(p => p!.Response)
+            .FirstOrDefaultAsync(gs => gs.Id == sessionId && gs.PlayerId == playerId && gs.EndedAt != null);
+
+        if (gameSession == null)
+        {
+            return NotFound("Completed game session not found");
+        }
+
+        if (gameSession.Player?.Response == null)
+        {
+            return NotFound("Player responses not found");
+        }
+
+        // Get age-based statistics for this player
+        var ageStats = await _context.ResponsesStatistics
+            .FirstOrDefaultAsync(rs => rs.Age == gameSession.Player.Age);
+
+        if (ageStats == null)
+        {
+            return NotFound($"Statistics not available for age {gameSession.Player.Age}");
+        }
+
+        var player = gameSession.Player;
+        var response = player.Response;
+
+        // Compare Q1 (patience) with expected patience for age
+        string q1Comparison = response.Q1 > ageStats.Patience ? "Higher" : 
+                             response.Q1 < ageStats.Patience ? "Lower" : "Equal";
+
+        // Compare Q2 (risk) with expected risk for age  
+        string q2Comparison = response.Q2 > ageStats.Risk ? "Higher" :
+                             response.Q2 < ageStats.Risk ? "Lower" : "Equal";
+
+        return Ok(new
+        {
+            sessionId = sessionId,
+            playerId = playerId,
+            playerAge = player.Age,
+            playerResponses = new
+            {
+                Q1_Patience = response.Q1,
+                Q2_Risk = response.Q2,
+                Q3 = response.Q3
+            },
+            expectedForAge = new
+            {
+                Patience = ageStats.Patience,
+                Risk = ageStats.Risk
+            },
+            comparison = new
+            {
+                Q1_vs_Expected_Patience = new
+                {
+                    PlayerValue = response.Q1,
+                    ExpectedValue = ageStats.Patience,
+                    Comparison = q1Comparison,
+                    Difference = response.Q1 - ageStats.Patience
+                },
+                Q2_vs_Expected_Risk = new
+                {
+                    PlayerValue = response.Q2,
+                    ExpectedValue = ageStats.Risk,
+                    Comparison = q2Comparison,
+                    Difference = response.Q2 - ageStats.Risk
+                }
+            }
+        });
+    }
 }
 
 // Request models
