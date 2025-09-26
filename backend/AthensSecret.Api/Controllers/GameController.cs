@@ -70,15 +70,12 @@ public class GameController : ControllerBase
         gameSession.EndedAt = DateTime.UtcNow;
         await _context.SaveChangesAsync();
 
-        var duration = gameSession.EndedAt - gameSession.StartedAt;
-
         return Ok(new
         {
             sessionId = gameSession.Id,
             playerId = gameSession.PlayerId,
             startedAt = gameSession.StartedAt,
-            endedAt = gameSession.EndedAt,
-            durationMinutes = duration?.TotalMinutes
+            endedAt = gameSession.EndedAt
         });
     }
 
@@ -276,21 +273,13 @@ public class GameController : ControllerBase
 
         await _context.SaveChangesAsync();
 
-        double? waitTimeMinutes = null;
-        if (oilTreeTrial.InvestmentStartTime.HasValue && oilTreeTrial.EndTime.HasValue)
-        {
-            waitTimeMinutes = (oilTreeTrial.EndTime - oilTreeTrial.InvestmentStartTime)?.TotalMinutes;
-        }
-
         return Ok(new
         {
             sessionId = sessionId,
             startTime = oilTreeTrial.StartTime,
             endTime = oilTreeTrial.EndTime,
             investmentStartTime = oilTreeTrial.InvestmentStartTime,
-            totalGainedWisdom = oilTreeTrial.TotalGainedWisdom,
-            waitTimeMinutes = waitTimeMinutes,
-            durationMinutes = (oilTreeTrial.EndTime - oilTreeTrial.StartTime)?.TotalMinutes
+            totalGainedWisdom = oilTreeTrial.TotalGainedWisdom
         });
     }
 
@@ -367,8 +356,7 @@ public class GameController : ControllerBase
             startTime = pathTrial.StartTime,
             endTime = pathTrial.EndTime,
             totalGainedWisdom = pathTrial.TotalGainedWisdom,
-            safePath = pathTrial.SafePath,
-            durationMinutes = (pathTrial.EndTime - pathTrial.StartTime)?.TotalMinutes
+            safePath = pathTrial.SafePath
         });
     }
 

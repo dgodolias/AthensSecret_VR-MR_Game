@@ -445,6 +445,8 @@
 
         async function startOilTreeTrial() {
             await startTrial('oiltree', 'investBtn');
+            // Also enable the end button so user can end without investment
+            document.getElementById('endOilTreeBtn').disabled = false;
         }
 
         async function setOilTreeInvestment() {
@@ -481,7 +483,9 @@
         }
 
         async function endOilTreeTrial() {
-            await endTrial('oiltree', Math.floor(Math.random() * 100) + 1);
+            await endTrial('oiltree', {
+                totalGainedWisdom: Math.floor(Math.random() * 100) + 1
+            });
         }
 
         async function startPathTrial() {
