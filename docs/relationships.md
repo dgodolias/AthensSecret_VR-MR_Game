@@ -11,9 +11,9 @@ erDiagram
 
   RESPONSES {
     int player_id PK, FK
-    string Q1
-    string Q2
-    string Q3
+    int Q1
+    int Q2
+    int Q3
   }
 
   GAME_SESSIONS {

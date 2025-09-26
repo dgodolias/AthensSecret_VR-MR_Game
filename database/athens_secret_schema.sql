@@ -13,9 +13,9 @@ CREATE TABLE PLAYER (
 -- ====================================================================================
 CREATE TABLE RESPONSES (
     player_id INTEGER PRIMARY KEY,
-    Q1 TEXT NOT NULL,
-    Q2 TEXT NOT NULL,
-    Q3 TEXT NOT NULL,
+    Q1 INTEGER NOT NULL,
+    Q2 INTEGER NOT NULL,
+    Q3 INTEGER NOT NULL,
     
     FOREIGN KEY (player_id) REFERENCES PLAYER(id) ON DELETE CASCADE
 );

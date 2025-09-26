@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Athens Secret - Backend Tester</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            background-color: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        h1, h2 {
+            color: #333;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        
+        input[type="text"], input[type="email"], input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+        
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        
+        button:hover {
+            background-color: #0056b3;
+        }
+        
+        button:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+        
+        .response-section {
+            margin-top: 20px;
+        }
+        
+        .request-data, .response-data {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 10px 0;
+            border-left: 4px solid #007bff;
+        }
+        
+        .request-data {
+            border-left-color: #28a745;
+        }
+        
+        .response-data {
+            border-left-color: #dc3545;
+        }
+        
+        .user-id {
+            background-color: #fff3cd;
+            padding: 10px;
+            border-radius: 4px;
+            border-left: 4px solid #ffc107;
+            font-weight: bold;
+            color: #856404;
+        }
+        
+        pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            margin: 0;
+            font-size: 12px;
+        }
+        
+        .error {
+            color: #dc3545;
+            background-color: #f8d7da;
+            padding: 10px;
+            border-radius: 4px;
+            border-left: 4px solid #dc3545;
+        }
+        
+        .success {
+            color: #155724;
+            background-color: #d4edda;
+            padding: 10px;
+            border-radius: 4px;
+            border-left: 4px solid #28a745;
+        }
+        
+        .config-section {
+            margin-top: 20px;
+        }
+        
+        .api-url {
+            color: #007bff;
+            font-family: monospace;
+            background-color: #f8f9fa;
+            padding: 5px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🏛️ Athens Secret - Backend API Tester</h1>
+    
+    <!-- Configuration Section -->
+    <div class="container">
+        <h2>⚙️ API Configuration</h2>
+        <div class="form-group">
+            <label for="apiUrl">Backend API URL:</label>
+            <input type="text" id="apiUrl" value="http://localhost:5182" placeholder="http://localhost:5182">
+        </div>
+        <button onclick="testConnection()">Test Connection</button>
+        <div id="connectionResult"></div>
+    </div>
+
+    <!-- Player Registration Form -->
+    <div class="container">
+        <h2>👤 Player Registration & Response Form</h2>
+        <p><strong>Note:</strong> This sends a single request with both player info and survey responses.</p>
+        <form id="playerForm">
+            <div class="form-group">
+                <label for="firstName">First Name:</label>
+                <input type="text" id="firstName" value="John" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="lastName">Last Name:</label>
+                <input type="text" id="lastName" value="Doe" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" value="johndoe@mail.com" required>
+            </div>
+            
+            <h3>📋 Survey Responses (included in same request)</h3>
+            <div class="form-group">
+                <label for="q1">Q1 Response:</label>
+                <input type="number" id="q1" value="7" min="1" max="10" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="q2">Q2 Response:</label>
+                <input type="number" id="q2" value="4" min="1" max="10" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="q3">Q3 Response:</label>
+                <input type="number" id="q3" value="9" min="1" max="10" required>
+            </div>
+            
+            <button type="submit">Submit Player & Responses (Single Request)</button>
+        </form>
+        
+        <div class="response-section" id="playerResponseSection" style="display: none;">
+            <h3>📤 Request Sent:</h3>
+            <div class="request-data">
+                <pre id="playerRequest"></pre>
+            </div>
+            
+            <h3>📥 Response Received:</h3>
+            <div class="response-data">
+                <pre id="playerResponse"></pre>
+            </div>
+            
+            <div class="user-id" id="userIdDisplay" style="display: none;"></div>
+        </div>
+    </div>
+
+    <!-- Game Session Testing -->
+    <div class="container">
+        <h2>🎮 Game Session Testing</h2>
+        <div class="form-group">
+            <label for="playerId">Player ID (from registration above):</label>
+            <input type="number" id="playerId" placeholder="Enter player ID">
+        </div>
+        
+        <button onclick="startGameSession()">Start Game Session</button>
+        <button onclick="endGameSession()" id="endGameBtn" disabled>End Game Session</button>
+        <button onclick="getGameSession()" id="getSessionBtn" disabled>Get Session Info</button>
+        
+        <div class="response-section" id="gameResponseSection" style="display: none;">
+            <h3>📤 Game Request:</h3>
+            <div class="request-data">
+                <pre id="gameRequest"></pre>
+            </div>
+            
+            <h3>📥 Game Response:</h3>
+            <div class="response-data">
+                <pre id="gameResponse"></pre>
+            </div>
+        </div>
+    </div>
+
+    <!-- Trial Testing -->
+    <div class="container">
+        <h2>🔬 Trial Testing</h2>
+        <div class="form-group">
+            <label for="sessionId">Session ID:</label>
+            <input type="number" id="sessionId" placeholder="Enter session ID">
+        </div>
+        
+        <div class="form-group">
+            <label for="trialPlayerId">Player ID:</label>
+            <input type="number" id="trialPlayerId" placeholder="Enter player ID">
+        </div>
+        
+        <h3>🪞 Mirrors Trial</h3>
+        <button onclick="startMirrorsTrial()">Start Mirrors Trial</button>
+        <button onclick="endMirrorsTrial()" id="endMirrorsBtn" disabled>End Mirrors Trial</button>
+        
+        <h3>🌳 Oil Tree Trial</h3>
+        <button onclick="startOilTreeTrial()">Start Oil Tree Trial</button>
+        <button onclick="setOilTreeInvestment()" id="investBtn" disabled>Set Investment</button>
+        <button onclick="endOilTreeTrial()" id="endOilTreeBtn" disabled>End Oil Tree Trial</button>
+        
+        <h3>🛤️ Path Trial</h3>
+        <button onclick="startPathTrial()">Start Path Trial</button>
+        <button onclick="endPathTrial(true)" id="endPathSafeBtn" disabled>End Path (Safe)</button>
+        <button onclick="endPathTrial(false)" id="endPathUnsafeBtn" disabled>End Path (Unsafe)</button>
+        
+        <div class="response-section" id="trialResponseSection" style="display: none;">
+            <h3>📤 Trial Request:</h3>
+            <div class="request-data">
+                <pre id="trialRequest"></pre>
+            </div>
+            
+            <h3>📥 Trial Response:</h3>
+            <div class="response-data">
+                <pre id="trialResponse"></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentSessionId = null;
+        let currentPlayerId = null;
+
+        function getApiUrl() {
+            return document.getElementById('apiUrl').value.replace(/\/$/, '');
+        }
+
+        async function testConnection() {
+            const resultDiv = document.getElementById('connectionResult');
+            const apiUrl = getApiUrl();
+            
+            try {
+                const response = await fetch(`${apiUrl}/api/config`);
+                if (response.ok) {
+                    resultDiv.innerHTML = '<div class="success">✅ Connection successful! Backend is running.</div>';
+                } else {
+                    resultDiv.innerHTML = '<div class="error">❌ Backend responded with error: ' + response.status + '</div>';
+                }
+            } catch (error) {
+                resultDiv.innerHTML = '<div class="error">❌ Connection failed: ' + error.message + '</div>';
+            }
+        }
+
+        document.getElementById('playerForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const firstName = document.getElementById('firstName').value;
+            const lastName = document.getElementById('lastName').value;
+            const email = document.getElementById('email').value;
+            const q1 = parseInt(document.getElementById('q1').value);
+            const q2 = parseInt(document.getElementById('q2').value);
+            const q3 = parseInt(document.getElementById('q3').value);
+            
+            // Combine player data and responses in single request
+            const registrationData = {
+                firstName: firstName,
+                lastName: lastName,
+                email: email,
+                q1: q1,
+                q2: q2,
+                q3: q3
+            };
+            
+            const apiUrl = getApiUrl();
+            
+            try {
+                // Single request: Register player with responses
+                document.getElementById('playerRequest').textContent = 
+                    `POST ${apiUrl}/api/player/register\n\n` + JSON.stringify(registrationData, null, 2);
+                
+                const playerResponse = await fetch(`${apiUrl}/api/player/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(registrationData)
+                });
+                
+                const playerResult = await playerResponse.json();
+                document.getElementById('playerResponse').textContent = JSON.stringify(playerResult, null, 2);
+                
+                if (playerResponse.ok && playerResult.playerId) {
+                    currentPlayerId = playerResult.playerId;
+                    document.getElementById('playerId').value = currentPlayerId;
+                    document.getElementById('trialPlayerId').value = currentPlayerId;
+                    document.getElementById('userIdDisplay').textContent = `🆔 Player ID: ${currentPlayerId}`;
+                    document.getElementById('userIdDisplay').style.display = 'block';
+                }
+                
+            } catch (error) {
+                document.getElementById('playerResponse').textContent = 'Error: ' + error.message;
+            }
+            
+            document.getElementById('playerResponseSection').style.display = 'block';
+        });
+
+        async function startGameSession() {
+            const playerId = document.getElementById('playerId').value;
+            if (!playerId) {
+                alert('Please enter a Player ID');
+                return;
+            }
+            
+            const apiUrl = getApiUrl();
+            const url = `${apiUrl}/api/game/start?playerId=${playerId}`;
+            
+            try {
+                document.getElementById('gameRequest').textContent = `POST ${url}`;
+                
+                const response = await fetch(url, {
+                    method: 'POST'
+                });
+                
+                const result = await response.json();
+                document.getElementById('gameResponse').textContent = JSON.stringify(result, null, 2);
+                
+                if (response.ok && result.sessionId) {
+                    currentSessionId = result.sessionId;
+                    document.getElementById('sessionId').value = currentSessionId;
+                    document.getElementById('endGameBtn').disabled = false;
+                    document.getElementById('getSessionBtn').disabled = false;
+                }
+                
+            } catch (error) {
+                document.getElementById('gameResponse').textContent = 'Error: ' + error.message;
+            }
+            
+            document.getElementById('gameResponseSection').style.display = 'block';
+        }
+
+        async function endGameSession() {
+            const sessionId = document.getElementById('sessionId').value || currentSessionId;
+            const playerId = document.getElementById('playerId').value;
+            
+            if (!sessionId || !playerId) {
+                alert('Please provide Session ID and Player ID');
+                return;
+            }
+            
+            const apiUrl = getApiUrl();
+            const url = `${apiUrl}/api/game/end?sessionId=${sessionId}&playerId=${playerId}`;
+            
+            try {
+                document.getElementById('gameRequest').textContent = `POST ${url}`;
+                
+                const response = await fetch(url, {
+                    method: 'POST'
+                });
+                
+                const result = await response.json();
+                document.getElementById('gameResponse').textContent = JSON.stringify(result, null, 2);
+                
+                if (response.ok) {
+                    document.getElementById('endGameBtn').disabled = true;
+                    document.getElementById('getSessionBtn').disabled = true;
+                }
+                
+            } catch (error) {
+                document.getElementById('gameResponse').textContent = 'Error: ' + error.message;
+            }
+            
+            document.getElementById('gameResponseSection').style.display = 'block';
+        }
+
+        async function getGameSession() {
+            const sessionId = document.getElementById('sessionId').value || currentSessionId;
+            const playerId = document.getElementById('playerId').value;
+            
+            if (!sessionId || !playerId) {
+                alert('Please provide Session ID and Player ID');
+                return;
+            }
+            
+            const apiUrl = getApiUrl();
+            const url = `${apiUrl}/api/game/session/${sessionId}?playerId=${playerId}`;
+            
+            try {
+                document.getElementById('gameRequest').textContent = `GET ${url}`;
+                
+                const response = await fetch(url);
+                const result = await response.json();
+                document.getElementById('gameResponse').textContent = JSON.stringify(result, null, 2);
+                
+            } catch (error) {
+                document.getElementById('gameResponse').textContent = 'Error: ' + error.message;
+            }
+            
+            document.getElementById('gameResponseSection').style.display = 'block';
+        }
+
+        // Trial functions
+        async function startMirrorsTrial() {
+            await startTrial('mirrors', 'endMirrorsBtn');
+        }
+
+        async function endMirrorsTrial() {
+            await endTrial('mirrors', { totalGainedWisdom: Math.floor(Math.random() * 100) + 1 });
+        }
+
+        async function startOilTreeTrial() {
+            await startTrial('oiltree', 'investBtn');
+        }
+
+        async function setOilTreeInvestment() {
+            const sessionId = document.getElementById('sessionId').value;
+            const playerId = document.getElementById('trialPlayerId').value;
+            
+            if (!sessionId || !playerId) {
+                alert('Please provide Session ID and Player ID');
+                return;
+            }
+            
+            const apiUrl = getApiUrl();
+            const url = `${apiUrl}/api/game/oiltree/invest?sessionId=${sessionId}&playerId=${playerId}`;
+            
+            try {
+                document.getElementById('trialRequest').textContent = `POST ${url}`;
+                
+                const response = await fetch(url, {
+                    method: 'POST'
+                });
+                
+                const result = await response.json();
+                document.getElementById('trialResponse').textContent = JSON.stringify(result, null, 2);
+                
+                if (response.ok) {
+                    document.getElementById('endOilTreeBtn').disabled = false;
+                }
+                
+            } catch (error) {
+                document.getElementById('trialResponse').textContent = 'Error: ' + error.message;
+            }
+            
+            document.getElementById('trialResponseSection').style.display = 'block';
+        }
+
+        async function endOilTreeTrial() {
+            await endTrial('oiltree', Math.floor(Math.random() * 100) + 1);
+        }
+
+        async function startPathTrial() {
+            await startTrial('path', 'endPathSafeBtn');
+            document.getElementById('endPathUnsafeBtn').disabled = false;
+        }
+
+        async function endPathTrial(safePath) {
+            await endTrial('path', {
+                totalGainedWisdom: Math.floor(Math.random() * 100) + 1,
+                safePath: safePath
+            });
+        }
+
+        async function startTrial(trialType, enableBtnId) {
+            const sessionId = document.getElementById('sessionId').value;
+            const playerId = document.getElementById('trialPlayerId').value;
+            
+            if (!sessionId || !playerId) {
+                alert('Please provide Session ID and Player ID');
+                return;
+            }
+            
+            const apiUrl = getApiUrl();
+            const url = `${apiUrl}/api/game/${trialType}/start?sessionId=${sessionId}&playerId=${playerId}`;
+            
+            try {
+                document.getElementById('trialRequest').textContent = `POST ${url}`;
+                
+                const response = await fetch(url, {
+                    method: 'POST'
+                });
+                
+                const result = await response.json();
+                document.getElementById('trialResponse').textContent = JSON.stringify(result, null, 2);
+                
+                if (response.ok && enableBtnId) {
+                    document.getElementById(enableBtnId).disabled = false;
+                }
+                
+            } catch (error) {
+                document.getElementById('trialResponse').textContent = 'Error: ' + error.message;
+            }
+            
+            document.getElementById('trialResponseSection').style.display = 'block';
+        }
+
+        async function endTrial(trialType, data) {
+            const sessionId = document.getElementById('sessionId').value;
+            const playerId = document.getElementById('trialPlayerId').value;
+            
+            if (!sessionId || !playerId) {
+                alert('Please provide Session ID and Player ID');
+                return;
+            }
+            
+            const apiUrl = getApiUrl();
+            const url = `${apiUrl}/api/game/${trialType}/end?sessionId=${sessionId}&playerId=${playerId}`;
+            
+            try {
+                document.getElementById('trialRequest').textContent = 
+                    `POST ${url}\n\nBody: ${JSON.stringify(data, null, 2)}`;
+                
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                document.getElementById('trialResponse').textContent = JSON.stringify(result, null, 2);
+                
+            } catch (error) {
+                document.getElementById('trialResponse').textContent = 'Error: ' + error.message;
+            }
+            
+            document.getElementById('trialResponseSection').style.display = 'block';
+        }
+
+        // Initialize random values on page load
+        window.onload = function() {
+            document.getElementById('q1').value = Math.floor(Math.random() * 10) + 1;
+            document.getElementById('q2').value = Math.floor(Math.random() * 10) + 1;
+            document.getElementById('q3').value = Math.floor(Math.random() * 10) + 1;
+        };
+    </script>
+</body>
+</html>

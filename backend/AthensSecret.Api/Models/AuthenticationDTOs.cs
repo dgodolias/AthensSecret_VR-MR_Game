@@ -6,9 +6,9 @@ public class PlayerRegistrationRequest
     public required string FirstName { get; set; }
     public required string LastName { get; set; }
     public required string Email { get; set; }
-    public required string Q1 { get; set; }
-    public required string Q2 { get; set; }
-    public required string Q3 { get; set; }
+    public int Q1 { get; set; }
+    public int Q2 { get; set; }
+    public int Q3 { get; set; }
 }
 
 public class PlayerRegistrationResponse
