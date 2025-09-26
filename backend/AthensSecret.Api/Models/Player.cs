@@ -3,10 +3,11 @@ namespace AthensSecret.Api.Models;
 public class Player
 {
     public int Id { get; set; }
-    public required string Username { get; set; }
-    public required string PasswordHash { get; set; }
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public required string FirstName { get; set; }
+    public required string LastName { get; set; }
+    public required string Email { get; set; }
     
-    // Navigation property
+    // Navigation properties
     public virtual ICollection<GameSession> GameSessions { get; set; } = new List<GameSession>();
+    public virtual Response? Response { get; set; }
 }

@@ -4,13 +4,12 @@ public class GameSession
 {
     public int Id { get; set; }
     public int PlayerId { get; set; }
-    public int WisdomEnergy { get; set; } = 50; // Default starting energy
-    public DateTime StartTime { get; set; } = DateTime.UtcNow;
-    public DateTime? EndTime { get; set; }
-    public string CurrentTrial { get; set; } = "start";
-    public int Score { get; set; } = 0;
-    public bool IsActive { get; set; } = true;
+    public DateTime StartedAt { get; set; } = DateTime.UtcNow;
+    public DateTime? EndedAt { get; set; }
 
-    // Navigation property
+    // Navigation properties - exactly as per relationships.md
     public virtual Player? Player { get; set; }
+    public virtual MirrorsTrial? MirrorsTrial { get; set; }
+    public virtual OilTreeTrial? OilTreeTrial { get; set; }
+    public virtual PathTrial? PathTrial { get; set; }
 }

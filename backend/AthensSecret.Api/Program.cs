@@ -21,26 +21,6 @@ if (connectionString?.StartsWith("postgresql://") == true)
 builder.Services.AddDbContext<ApiDbContext>(options =>
     options.UseNpgsql(connectionString));
 
-// Add JWT Authentication
-var jwtKey = Environment.GetEnvironmentVariable("JWT_SECRET_KEY") 
-    ?? builder.Configuration["JwtSettings:Key"] 
-    ?? "your-super-secret-jwt-key-that-is-at-least-32-characters-long";
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
-    {
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(jwtKey)),
-            ValidateIssuer = false,
-            ValidateAudience = false,
-            ValidateLifetime = true,
-            ClockSkew = TimeSpan.Zero
-        };
-    });
-
-builder.Services.AddAuthorization();
-
 builder.Services.AddControllers();
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
@@ -88,9 +68,6 @@ else
 {
     app.UseCors("AllowAllOrigins");
 }
-
-app.UseAuthentication();
-app.UseAuthorization();
 
 app.MapControllers();
 
