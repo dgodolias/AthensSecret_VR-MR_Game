@@ -164,6 +164,11 @@
                 <input type="email" id="email" value="johndoe@mail.com" required>
             </div>
             
+            <div class="form-group">
+                <label for="age">Age:</label>
+                <input type="number" id="age" value="25" min="1" max="120" required>
+            </div>
+            
             <h3>📋 Survey Responses (included in same request)</h3>
             <div class="form-group">
                 <label for="q1">Q1 Response:</label>
@@ -293,6 +298,7 @@
             const firstName = document.getElementById('firstName').value;
             const lastName = document.getElementById('lastName').value;
             const email = document.getElementById('email').value;
+            const age = parseInt(document.getElementById('age').value);
             const q1 = parseInt(document.getElementById('q1').value);
             const q2 = parseInt(document.getElementById('q2').value);
             const q3 = parseInt(document.getElementById('q3').value);
@@ -302,6 +308,7 @@
                 firstName: firstName,
                 lastName: lastName,
                 email: email,
+                age: age,
                 q1: q1,
                 q2: q2,
                 q3: q3

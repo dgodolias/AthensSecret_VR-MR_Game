@@ -35,7 +35,8 @@ public class PlayerController : ControllerBase
             {
                 FirstName = request.FirstName,
                 LastName = request.LastName,
-                Email = request.Email
+                Email = request.Email,
+                Age = request.Age
             };
 
             _context.Players.Add(player);
@@ -59,6 +60,7 @@ public class PlayerController : ControllerBase
                 FirstName = player.FirstName,
                 LastName = player.LastName,
                 Email = player.Email,
+                Age = player.Age,
                 Message = $"Registration successful! Your Player ID is: {player.Id}. Please save this ID to access the game."
             });
         }
@@ -93,6 +95,7 @@ public class PlayerController : ControllerBase
                 FirstName = player.FirstName,
                 LastName = player.LastName,
                 Email = player.Email,
+                Age = player.Age,
                 Message = $"Welcome back, {player.FirstName}!"
             });
         }
@@ -126,6 +129,7 @@ public class PlayerController : ControllerBase
                 FirstName = player.FirstName,
                 LastName = player.LastName,
                 Email = player.Email,
+                Age = player.Age,
                 TotalSessions = player.GameSessions.Count,
                 Responses = player.Response != null ? new
                 {
