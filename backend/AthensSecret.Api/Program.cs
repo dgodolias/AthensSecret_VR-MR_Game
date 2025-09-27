@@ -24,7 +24,18 @@ builder.Services.AddDbContext<ApiDbContext>(options =>
     options.UseNpgsql(connectionString));
 
 // Configure admin security
-builder.Services.Configure<AdminSecurityOptions>(builder.Configuration.GetSection(AdminSecurityOptions.SectionName));
+builder.Services.Configure<AdminSecurityOptions>(options =>
+{
+    var adminSection = builder.Configuration.GetSection(AdminSecurityOptions.SectionName);
+    adminSection.Bind(options);
+    
+    // Override with environment variable if present
+    var envApiKey = Environment.GetEnvironmentVariable("ADMIN_API_KEY");
+    if (!string.IsNullOrEmpty(envApiKey))
+    {
+        options.ApiKey = envApiKey;
+    }
+});
 
 builder.Services.AddControllers()
     .AddJsonOptions(options =>

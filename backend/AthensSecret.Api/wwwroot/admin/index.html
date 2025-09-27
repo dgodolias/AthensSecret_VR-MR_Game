@@ -741,9 +741,11 @@
 
         async function loadConfiguration() {
             try {
+                // Encode the admin key to base64 to handle special characters
+                const encodedKey = btoa(adminKey);
                 const response = await fetch('/api/admin/configuration', {
                     headers: {
-                        'X-Admin-Key': adminKey
+                        'X-Admin-Key': encodedKey
                     }
                 });
                 
@@ -892,11 +894,13 @@
                 globalSaveBtn.classList.add('loading');
                 globalSaveBtn.textContent = 'Saving...';
 
+                // Encode the admin key to base64 to handle special characters
+                const encodedKey = btoa(adminKey);
                 const response = await fetch('/api/admin/configuration', {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-Admin-Key': adminKey
+                        'X-Admin-Key': encodedKey
                     },
                     body: JSON.stringify(formData)
                 });
