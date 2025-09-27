@@ -31,7 +31,7 @@ public class AdminController : ControllerBase
             _logger.LogInformation("Configuration GET request from IP: {ClientIP}", 
                 HttpContext.Connection.RemoteIpAddress?.ToString());
 
-            var config = await _context.GameConfigurations.FirstOrDefaultAsync();
+            var config = await _context.GameConfigurations.OrderBy(c => c.Id).FirstOrDefaultAsync();
             
             if (config == null)
             {
