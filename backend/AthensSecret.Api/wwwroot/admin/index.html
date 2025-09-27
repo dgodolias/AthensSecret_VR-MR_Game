@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Athens Secret - Admin Panel</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         * {
             margin: 0;
@@ -13,7 +14,8 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: url('../background.png') center/cover no-repeat,
+                        linear-gradient(135deg, #f4f1e8 0%, #e8dcc0 50%, #d4c4a0 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -31,8 +33,8 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            filter: brightness(0.7);
+            background: url('../background.png') center/cover no-repeat;
+            filter: blur(8px) brightness(0.7);
             z-index: -2;
             animation: backgroundMove 20s ease-in-out infinite;
         }
@@ -45,9 +47,9 @@
             width: 100%;
             height: 100%;
             background: linear-gradient(135deg, 
-                rgba(102, 126, 234, 0.3) 0%, 
-                rgba(118, 75, 162, 0.3) 50%,
-                rgba(102, 126, 234, 0.2) 100%);
+                rgba(244, 241, 232, 0.4) 0%, 
+                rgba(232, 220, 192, 0.3) 50%,
+                rgba(212, 196, 160, 0.2) 100%);
             z-index: -1;
             animation: gradientShift 15s ease-in-out infinite;
         }
@@ -62,21 +64,21 @@
         @keyframes gradientShift {
             0%, 100% { 
                 background: linear-gradient(135deg, 
-                    rgba(102, 126, 234, 0.3) 0%, 
-                    rgba(118, 75, 162, 0.3) 50%,
-                    rgba(102, 126, 234, 0.2) 100%);
+                    rgba(244, 241, 232, 0.4) 0%, 
+                    rgba(232, 220, 192, 0.3) 50%,
+                    rgba(212, 196, 160, 0.2) 100%);
             }
             33% { 
                 background: linear-gradient(225deg, 
-                    rgba(118, 75, 162, 0.4) 0%, 
-                    rgba(102, 126, 234, 0.2) 50%,
-                    rgba(118, 75, 162, 0.3) 100%);
+                    rgba(212, 196, 160, 0.4) 0%, 
+                    rgba(244, 241, 232, 0.2) 50%,
+                    rgba(232, 220, 192, 0.3) 100%);
             }
             66% { 
                 background: linear-gradient(45deg, 
-                    rgba(102, 126, 234, 0.2) 0%, 
-                    rgba(118, 75, 162, 0.4) 50%,
-                    rgba(102, 126, 234, 0.3) 100%);
+                    rgba(232, 220, 192, 0.2) 0%, 
+                    rgba(212, 196, 160, 0.4) 50%,
+                    rgba(244, 241, 232, 0.3) 100%);
             }
         }
 
@@ -111,7 +113,7 @@
             margin-bottom: 30px;
             font-size: 2.2em;
             font-weight: 600;
-            background: linear-gradient(135deg, #667eea, #764ba2);
+            background: linear-gradient(135deg, #c9941a, #f4d03f, #d4af37);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -124,9 +126,9 @@
             gap: 15px;
             margin-bottom: 30px;
             padding: 20px;
-            background: rgba(102, 126, 234, 0.1);
+            background: rgba(212, 196, 160, 0.2);
             border-radius: 12px;
-            border: 1px solid rgba(102, 126, 234, 0.2);
+            border: 1px solid rgba(201, 148, 26, 0.3);
         }
 
         .config-form {
@@ -170,13 +172,39 @@
 
         .field-input:focus {
             outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            border-color: #c9941a;
+            box-shadow: 0 0 0 3px rgba(201, 148, 26, 0.1);
         }
 
         .field-input:read-only {
-            background: rgba(240, 240, 240, 0.8);
+            background: #e8e8e8;
+            color: #666;
             cursor: not-allowed;
+            border-color: #ccc;
+        }
+
+        .field-input:disabled {
+            background: #e8e8e8;
+            color: #666;
+            cursor: not-allowed;
+            border-color: #ccc;
+        }
+
+        /* Special styling for enabled select elements */
+        select.field-input:not(:disabled) {
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+            cursor: pointer;
+            border-color: #ddd;
+        }
+
+        select.field-input:not(:disabled):hover {
+            border-color: #c9941a;
+        }
+
+        select.field-input:not(:disabled):focus {
+            border-color: #c9941a;
+            box-shadow: 0 0 0 3px rgba(201, 148, 26, 0.1);
         }
 
         .field-controls {
@@ -198,13 +226,13 @@
         }
 
         .btn-edit {
-            background: linear-gradient(135deg, #667eea, #764ba2);
+            background: linear-gradient(135deg, #c9941a, #d4af37);
             color: white;
         }
 
         .btn-edit:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+            box-shadow: 0 4px 12px rgba(201, 148, 26, 0.3);
         }
 
         .btn-save {
@@ -224,7 +252,7 @@
         }
 
         .btn-global-edit {
-            background: linear-gradient(135deg, #667eea, #764ba2);
+            background: linear-gradient(135deg, #c9941a, #d4af37);
             color: white;
         }
 
@@ -281,8 +309,51 @@
             color: #721c24;
         }
 
-        /* Responsive design */
+        /* Custom Scrollbar Styling - Very Discrete */
+        .admin-container::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .admin-container::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .admin-container::-webkit-scrollbar-thumb {
+            background: rgba(201, 148, 26, 0.2);
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            opacity: 0;
+        }
+
+        .admin-container:hover::-webkit-scrollbar-thumb {
+            opacity: 1;
+            background: rgba(201, 148, 26, 0.4);
+        }
+
+        .admin-container::-webkit-scrollbar-thumb:hover {
+            background: rgba(201, 148, 26, 0.7);
+        }
+
+        /* Firefox scrollbar */
+        .admin-container {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(201, 148, 26, 0.2) transparent;
+        }
+
+        /* Mobile - Even more discrete */
         @media (max-width: 768px) {
+            .admin-container::-webkit-scrollbar {
+                width: 2px;
+            }
+            
+            .admin-container::-webkit-scrollbar-thumb {
+                background: rgba(201, 148, 26, 0.15);
+            }
+
+            .admin-container:hover::-webkit-scrollbar-thumb {
+                background: rgba(201, 148, 26, 0.3);
+            }
+
             .field-group {
                 flex-direction: column;
                 align-items: stretch;
@@ -305,14 +376,14 @@
 </head>
 <body>
     <div class="admin-container">
-        <h1 class="admin-title">🎮 Game Configuration Panel</h1>
+        <h1 class="admin-title"><i class="fas fa-cog"></i> Game Configuration Panel</h1>
         
         <div class="global-controls">
             <button id="globalEditBtn" class="btn btn-global btn-global-edit">
-                ✏️ Edit All Fields
+                <i class="fas fa-edit"></i> Edit All Fields
             </button>
             <button id="globalSaveBtn" class="btn btn-global btn-global-save" disabled>
-                ✅ Save All Changes
+                <i class="fas fa-save"></i> Save All Changes
             </button>
         </div>
 
@@ -321,8 +392,8 @@
                 <label class="field-label">Starting Wisdom:</label>
                 <input type="number" id="StartingWisdom" class="field-input" readonly>
                 <div class="field-controls">
-                    <button type="button" class="btn btn-edit" data-field="StartingWisdom">✏️</button>
-                    <button type="button" class="btn btn-save" data-field="StartingWisdom" style="display: none;">✅</button>
+                    <button type="button" class="btn btn-edit" data-field="StartingWisdom"><i class="fas fa-edit"></i></button>
+                    <button type="button" class="btn btn-save" data-field="StartingWisdom" style="display: none;"><i class="fas fa-check"></i></button>
                 </div>
             </div>
 
@@ -330,8 +401,8 @@
                 <label class="field-label">Mirror Wisdom If Waits:</label>
                 <input type="number" id="MirrorWisdomIfWaits" class="field-input" readonly>
                 <div class="field-controls">
-                    <button type="button" class="btn btn-edit" data-field="MirrorWisdomIfWaits">✏️</button>
-                    <button type="button" class="btn btn-save" data-field="MirrorWisdomIfWaits" style="display: none;">✅</button>
+                    <button type="button" class="btn btn-edit" data-field="MirrorWisdomIfWaits"><i class="fas fa-edit"></i></button>
+                    <button type="button" class="btn btn-save" data-field="MirrorWisdomIfWaits" style="display: none;"><i class="fas fa-check"></i></button>
                 </div>
             </div>
 
@@ -339,8 +410,8 @@
                 <label class="field-label">Mirror Wisdom If Risks Correctly:</label>
                 <input type="number" id="MirrorWisdomIfRisksCorrectly" class="field-input" readonly>
                 <div class="field-controls">
-                    <button type="button" class="btn btn-edit" data-field="MirrorWisdomIfRisksCorrectly">✏️</button>
-                    <button type="button" class="btn btn-save" data-field="MirrorWisdomIfRisksCorrectly" style="display: none;">✅</button>
+                    <button type="button" class="btn btn-edit" data-field="MirrorWisdomIfRisksCorrectly"><i class="fas fa-edit"></i></button>
+                    <button type="button" class="btn btn-save" data-field="MirrorWisdomIfRisksCorrectly" style="display: none;"><i class="fas fa-check"></i></button>
                 </div>
             </div>
 
@@ -348,8 +419,8 @@
                 <label class="field-label">Mirror Wisdom If Risks Falsely:</label>
                 <input type="number" id="MirrorWisdomIfRisksFalsely" class="field-input" readonly>
                 <div class="field-controls">
-                    <button type="button" class="btn btn-edit" data-field="MirrorWisdomIfRisksFalsely">✏️</button>
-                    <button type="button" class="btn btn-save" data-field="MirrorWisdomIfRisksFalsely" style="display: none;">✅</button>
+                    <button type="button" class="btn btn-edit" data-field="MirrorWisdomIfRisksFalsely"><i class="fas fa-edit"></i></button>
+                    <button type="button" class="btn btn-save" data-field="MirrorWisdomIfRisksFalsely" style="display: none;"><i class="fas fa-check"></i></button>
                 </div>
             </div>
 
@@ -357,8 +428,8 @@
                 <label class="field-label">Oil Tree Wisdom Not Investment:</label>
                 <input type="number" id="OilTreeWisdomNotInvestment" class="field-input" readonly>
                 <div class="field-controls">
-                    <button type="button" class="btn btn-edit" data-field="OilTreeWisdomNotInvestment">✏️</button>
-                    <button type="button" class="btn btn-save" data-field="OilTreeWisdomNotInvestment" style="display: none;">✅</button>
+                    <button type="button" class="btn btn-edit" data-field="OilTreeWisdomNotInvestment"><i class="fas fa-edit"></i></button>
+                    <button type="button" class="btn btn-save" data-field="OilTreeWisdomNotInvestment" style="display: none;"><i class="fas fa-check"></i></button>
                 </div>
             </div>
 
@@ -370,8 +441,8 @@
                     <option value="log">Logarithmic (log)</option>
                 </select>
                 <div class="field-controls">
-                    <button type="button" class="btn btn-edit" data-field="OilTreeWisdomInvestmentFunction">✏️</button>
-                    <button type="button" class="btn btn-save" data-field="OilTreeWisdomInvestmentFunction" style="display: none;">✅</button>
+                    <button type="button" class="btn btn-edit" data-field="OilTreeWisdomInvestmentFunction"><i class="fas fa-edit"></i></button>
+                    <button type="button" class="btn btn-save" data-field="OilTreeWisdomInvestmentFunction" style="display: none;"><i class="fas fa-check"></i></button>
                 </div>
             </div>
 
@@ -379,8 +450,8 @@
                 <label class="field-label">Safe Path Wisdom:</label>
                 <input type="number" id="SafePathWisdom" class="field-input" readonly>
                 <div class="field-controls">
-                    <button type="button" class="btn btn-edit" data-field="SafePathWisdom">✏️</button>
-                    <button type="button" class="btn btn-save" data-field="SafePathWisdom" style="display: none;">✅</button>
+                    <button type="button" class="btn btn-edit" data-field="SafePathWisdom"><i class="fas fa-edit"></i></button>
+                    <button type="button" class="btn btn-save" data-field="SafePathWisdom" style="display: none;"><i class="fas fa-check"></i></button>
                 </div>
             </div>
 
@@ -388,8 +459,8 @@
                 <label class="field-label">Uncertain Path Wisdom:</label>
                 <input type="number" id="UncertainPathWisdom" class="field-input" readonly>
                 <div class="field-controls">
-                    <button type="button" class="btn btn-edit" data-field="UncertainPathWisdom">✏️</button>
-                    <button type="button" class="btn btn-save" data-field="UncertainPathWisdom" style="display: none;">✅</button>
+                    <button type="button" class="btn btn-edit" data-field="UncertainPathWisdom"><i class="fas fa-edit"></i></button>
+                    <button type="button" class="btn btn-save" data-field="UncertainPathWisdom" style="display: none;"><i class="fas fa-check"></i></button>
                 </div>
             </div>
 
@@ -397,8 +468,8 @@
                 <label class="field-label">Uncertain Path Wisdom Small Plank:</label>
                 <input type="number" id="UncertainPathWisdomSmallPlank" class="field-input" readonly>
                 <div class="field-controls">
-                    <button type="button" class="btn btn-edit" data-field="UncertainPathWisdomSmallPlank">✏️</button>
-                    <button type="button" class="btn btn-save" data-field="UncertainPathWisdomSmallPlank" style="display: none;">✅</button>
+                    <button type="button" class="btn btn-edit" data-field="UncertainPathWisdomSmallPlank"><i class="fas fa-edit"></i></button>
+                    <button type="button" class="btn btn-save" data-field="UncertainPathWisdomSmallPlank" style="display: none;"><i class="fas fa-check"></i></button>
                 </div>
             </div>
 
@@ -406,8 +477,8 @@
                 <label class="field-label">Uncertain Path Wisdom Medium Plank:</label>
                 <input type="number" id="UncertainPathWisdomMediumPlank" class="field-input" readonly>
                 <div class="field-controls">
-                    <button type="button" class="btn btn-edit" data-field="UncertainPathWisdomMediumPlank">✏️</button>
-                    <button type="button" class="btn btn-save" data-field="UncertainPathWisdomMediumPlank" style="display: none;">✅</button>
+                    <button type="button" class="btn btn-edit" data-field="UncertainPathWisdomMediumPlank"><i class="fas fa-edit"></i></button>
+                    <button type="button" class="btn btn-save" data-field="UncertainPathWisdomMediumPlank" style="display: none;"><i class="fas fa-check"></i></button>
                 </div>
             </div>
 
@@ -415,8 +486,8 @@
                 <label class="field-label">Uncertain Path Wisdom Big Plank:</label>
                 <input type="number" id="UncertainPathWisdomBigPlank" class="field-input" readonly>
                 <div class="field-controls">
-                    <button type="button" class="btn btn-edit" data-field="UncertainPathWisdomBigPlank">✏️</button>
-                    <button type="button" class="btn btn-save" data-field="UncertainPathWisdomBigPlank" style="display: none;">✅</button>
+                    <button type="button" class="btn btn-edit" data-field="UncertainPathWisdomBigPlank"><i class="fas fa-edit"></i></button>
+                    <button type="button" class="btn btn-save" data-field="UncertainPathWisdomBigPlank" style="display: none;"><i class="fas fa-check"></i></button>
                 </div>
             </div>
         </form>
@@ -505,7 +576,7 @@
                 });
                 
                 // Update button states
-                globalEditBtn.textContent = '🔒 Lock All Fields';
+                globalEditBtn.innerHTML = '<i class="fas fa-lock"></i> Lock All Fields';
                 globalEditBtn.className = 'btn btn-global btn-global-edit';
                 globalSaveBtn.disabled = false;
                 
@@ -525,7 +596,7 @@
                 });
                 
                 // Update button states
-                globalEditBtn.textContent = '✏️ Edit All Fields';
+                globalEditBtn.innerHTML = '<i class="fas fa-edit"></i> Edit All Fields';
                 globalEditBtn.className = 'btn btn-global btn-global-edit';
                 globalSaveBtn.disabled = true;
                 
@@ -633,7 +704,7 @@
                 // Re-enable save button and remove loading
                 globalSaveBtn.disabled = false;
                 globalSaveBtn.classList.remove('loading');
-                globalSaveBtn.textContent = '✅ Save All Changes';
+                globalSaveBtn.innerHTML = '<i class="fas fa-save"></i> Save All Changes';
             }
         }
 
