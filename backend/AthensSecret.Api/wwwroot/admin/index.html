@@ -309,6 +309,106 @@
             color: #721c24;
         }
 
+        /* Login Modal Styles */
+        .login-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+        }
+
+        .login-form {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+        }
+
+        .login-title {
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 1.8em;
+            font-weight: 600;
+            background: linear-gradient(135deg, #c9941a, #f4d03f, #d4af37);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .login-input-container {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .login-input {
+            width: 100%;
+            padding: 15px 50px 15px 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .login-input:focus {
+            outline: none;
+            border-color: #c9941a;
+            box-shadow: 0 0 0 3px rgba(201, 148, 26, 0.1);
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #666;
+            cursor: pointer;
+            font-size: 18px;
+            padding: 5px;
+            transition: color 0.3s ease;
+        }
+
+        .password-toggle:hover {
+            color: #c9941a;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #c9941a, #d4af37);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(201, 148, 26, 0.3);
+        }
+
+        .login-error {
+            color: #dc3545;
+            margin-top: 15px;
+            font-weight: 500;
+        }
+
         /* Custom Scrollbar Styling - Very Discrete */
         .admin-container::-webkit-scrollbar {
             width: 4px;
@@ -375,6 +475,24 @@
     </style>
 </head>
 <body>
+    <!-- Login Modal -->
+    <div id="loginModal" class="login-modal">
+        <div class="login-form">
+            <h2 class="login-title"><i class="fas fa-shield-alt"></i> Admin Access</h2>
+            <p style="margin-bottom: 20px; color: #666;">Εισάγετε το admin key για πρόσβαση:</p>
+            <div class="login-input-container">
+                <input type="password" id="adminKeyInput" class="login-input" placeholder="Admin Key" autocomplete="off">
+                <button type="button" id="passwordToggle" class="password-toggle" title="Εμφάνιση/Απόκρυψη κωδικού">
+                    <i class="fas fa-eye"></i>
+                </button>
+            </div>
+            <button id="loginBtn" class="login-btn">
+                <i class="fas fa-key"></i> Σύνδεση
+            </button>
+            <div id="loginError" class="login-error" style="display: none;"></div>
+        </div>
+    </div>
+
     <div class="admin-container">
         <h1 class="admin-title"><i class="fas fa-cog"></i> Game Configuration Panel</h1>
         
@@ -500,20 +618,103 @@
     <script>
         let currentConfig = {};
         let isGlobalEditMode = false;
+        let adminKey = '';
 
         // DOM elements
         const globalEditBtn = document.getElementById('globalEditBtn');
         const globalSaveBtn = document.getElementById('globalSaveBtn');
         const resultSection = document.getElementById('resultSection');
         const resultText = document.getElementById('resultText');
+        const loginModal = document.getElementById('loginModal');
+        const adminKeyInput = document.getElementById('adminKeyInput');
+        const loginBtn = document.getElementById('loginBtn');
+        const loginError = document.getElementById('loginError');
+        const passwordToggle = document.getElementById('passwordToggle');
 
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
-            loadConfiguration();
+            checkAuthentication();
             setupEventListeners();
         });
 
+        function checkAuthentication() {
+            // Check if admin key exists in localStorage
+            adminKey = localStorage.getItem('adminKey');
+            if (adminKey) {
+                hideLoginModal();
+                loadConfiguration();
+            } else {
+                showLoginModal();
+            }
+        }
+
+        function showLoginModal() {
+            loginModal.style.display = 'flex';
+            adminKeyInput.focus();
+        }
+
+        function hideLoginModal() {
+            loginModal.style.display = 'none';
+        }
+
+        function handleLogin() {
+            const enteredKey = adminKeyInput.value.trim();
+            if (!enteredKey) {
+                showLoginError('Παρακαλώ εισάγετε το admin key');
+                return;
+            }
+
+            // Save key and try to load configuration
+            adminKey = enteredKey;
+            localStorage.setItem('adminKey', adminKey);
+            hideLoginModal();
+            loadConfiguration();
+        }
+
+        function showLoginError(message) {
+            loginError.textContent = message;
+            loginError.style.display = 'block';
+            setTimeout(() => {
+                loginError.style.display = 'none';
+            }, 5000);
+        }
+
+        function logout() {
+            localStorage.removeItem('adminKey');
+            adminKey = '';
+            showLoginModal();
+            adminKeyInput.value = '';
+        }
+
+        function togglePasswordVisibility() {
+            const passwordInput = adminKeyInput;
+            const eyeIcon = passwordToggle.querySelector('i');
+            
+            if (passwordInput.type === 'password') {
+                // Show password
+                passwordInput.type = 'text';
+                eyeIcon.className = 'fas fa-eye-slash';
+                passwordToggle.title = 'Απόκρυψη κωδικού';
+            } else {
+                // Hide password
+                passwordInput.type = 'password';
+                eyeIcon.className = 'fas fa-eye';
+                passwordToggle.title = 'Εμφάνιση κωδικού';
+            }
+        }
+
         function setupEventListeners() {
+            // Login controls
+            loginBtn.addEventListener('click', handleLogin);
+            adminKeyInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    handleLogin();
+                }
+            });
+
+            // Password toggle functionality
+            passwordToggle.addEventListener('click', togglePasswordVisibility);
+
             // Global controls
             globalEditBtn.addEventListener('click', toggleGlobalEdit);
             globalSaveBtn.addEventListener('click', saveAllChanges);
@@ -533,11 +734,26 @@
                     saveFieldChanges(fieldName);
                 });
             });
+
+            // Add logout functionality (double-click on title)
+            document.querySelector('.admin-title').addEventListener('dblclick', logout);
         }
 
         async function loadConfiguration() {
             try {
-                const response = await fetch('/api/admin/configuration');
+                const response = await fetch('/api/admin/configuration', {
+                    headers: {
+                        'X-Admin-Key': adminKey
+                    }
+                });
+                
+                if (response.status === 401) {
+                    // Invalid admin key
+                    showLoginError('Λανθασμένο admin key!');
+                    logout();
+                    return;
+                }
+                
                 if (response.ok) {
                     currentConfig = await response.json();
                     populateForm(currentConfig);
@@ -679,11 +895,19 @@
                 const response = await fetch('/api/admin/configuration', {
                     method: 'PUT',
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+                        'X-Admin-Key': adminKey
                     },
                     body: JSON.stringify(formData)
                 });
 
+                if (response.status === 401) {
+                    // Invalid admin key
+                    showResult('Λανθασμένο admin key! Παρακαλώ συνδεθείτε ξανά.', 'error');
+                    logout();
+                    return;
+                }
+                
                 if (response.ok) {
                     currentConfig = await response.json();
                     showResult('Configuration saved successfully!', 'success');

@@ -1,4 +1,5 @@
 using AthensSecret.Api.Data;
+using AthensSecret.Api.Middleware;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -21,6 +22,9 @@ if (connectionString?.StartsWith("postgresql://") == true)
 
 builder.Services.AddDbContext<ApiDbContext>(options =>
     options.UseNpgsql(connectionString));
+
+// Configure admin security
+builder.Services.Configure<AdminSecurityOptions>(builder.Configuration.GetSection(AdminSecurityOptions.SectionName));
 
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
@@ -102,7 +106,7 @@ app.Use(async (context, next) =>
     if (!app.Environment.IsDevelopment())
     {
         context.Response.Headers["Content-Security-Policy"] = 
-            "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'";
+            "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; font-src 'self' https://cdnjs.cloudflare.com; img-src 'self' data:";
     }
     
     await next();
@@ -110,6 +114,9 @@ app.Use(async (context, next) =>
 
 // Use CORS policy
 app.UseCors("AllowedOrigins");
+
+// Enable admin security middleware
+app.UseAdminSecurity();
 
 // Enable rate limiting
 app.UseRateLimiter();
