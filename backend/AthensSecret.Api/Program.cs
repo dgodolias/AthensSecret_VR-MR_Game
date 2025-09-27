@@ -4,11 +4,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
-var builder = WebApplication.CreateBuilder(new WebApplicationOptions
-{
-    Args = args,
-    WebRootPath = null // Disable default wwwroot behavior
-});
+var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container
 var connectionString = Environment.GetEnvironmentVariable("DATABASE_URL") 
@@ -69,42 +65,6 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
-// Enable static files from multiple locations
-var contentRoot = builder.Environment.ContentRootPath;
-
-// Paths work both locally (../../) and in Docker (direct paths)
-var registrationFormPath = Directory.Exists(Path.Combine(contentRoot, "..", "..", "registration_form"))
-    ? Path.Combine(contentRoot, "..", "..", "registration_form")
-    : Path.Combine(contentRoot, "registration_form");
-
-var frontendV2Path = Directory.Exists(Path.Combine(contentRoot, "..", "..", "frontend_v2"))
-    ? Path.Combine(contentRoot, "..", "..", "frontend_v2")
-    : Path.Combine(contentRoot, "frontend_v2");
-
-// Set default files BEFORE UseStaticFiles
-app.UseDefaultFiles(new DefaultFilesOptions
-{
-    FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(
-        Path.GetFullPath(registrationFormPath)),
-    DefaultFileNames = new List<string> { "registration_form.html" }
-});
-
-// Serve registration form at root path
-app.UseStaticFiles(new StaticFileOptions
-{
-    FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(
-        Path.GetFullPath(registrationFormPath)),
-    RequestPath = ""
-});
-
-// Serve frontend_v2 at /frontend_v2 path
-app.UseStaticFiles(new StaticFileOptions
-{
-    FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(
-        Path.GetFullPath(frontendV2Path)),
-    RequestPath = "/frontend_v2"
-});
-
 // Only use HTTPS redirection in production
 if (!app.Environment.IsDevelopment())
 {
@@ -113,6 +73,10 @@ if (!app.Environment.IsDevelopment())
 
 // Use CORS policy
 app.UseCors("SameOrigin");
+
+// Enable static files and default files
+app.UseDefaultFiles();
+app.UseStaticFiles();
 
 app.MapControllers();
 
