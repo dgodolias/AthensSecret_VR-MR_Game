@@ -57,7 +57,7 @@ public class ApiDbContext : DbContext
             entity.Property(gc => gc.Id).HasColumnName("id");
             entity.Property(gc => gc.StartingWisdom).HasColumnName("startingwisdom");
             entity.Property(gc => gc.MirrorWisdomIfWaits).HasColumnName("mirrorwisdomifwaits");
-            entity.Property(gc => gc.MirrorWisdomIfRisksCorrectly).HasColumnName("mirrorwisdomifrisksorrectly");
+            entity.Property(gc => gc.MirrorWisdomIfRisksCorrectly).HasColumnName("mirrorwisdomifriskscorrectly");
             entity.Property(gc => gc.MirrorWisdomIfRisksFalsely).HasColumnName("mirrorwisdomifrisksfalsely");
             entity.Property(gc => gc.OilTreeWisdomNotInvestment).HasColumnName("oiltreewisdomnotinvestment");
             entity.Property(gc => gc.OilTreeWisdomInvestmentFunction).HasColumnName("oiltreewisdominvestmentfunction").HasMaxLength(20).IsRequired();

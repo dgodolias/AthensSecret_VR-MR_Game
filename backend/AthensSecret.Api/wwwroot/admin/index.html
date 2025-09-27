@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Athens Secret - Admin Panel</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+            position: relative;
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            filter: brightness(0.7);
+            z-index: -2;
+            animation: backgroundMove 20s ease-in-out infinite;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, 
+                rgba(102, 126, 234, 0.3) 0%, 
+                rgba(118, 75, 162, 0.3) 50%,
+                rgba(102, 126, 234, 0.2) 100%);
+            z-index: -1;
+            animation: gradientShift 15s ease-in-out infinite;
+        }
+
+        @keyframes backgroundMove {
+            0%, 100% { transform: scale(1) rotate(0deg); }
+            25% { transform: scale(1.05) rotate(0.5deg); }
+            50% { transform: scale(1.02) rotate(-0.3deg); }
+            75% { transform: scale(1.07) rotate(0.2deg); }
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { 
+                background: linear-gradient(135deg, 
+                    rgba(102, 126, 234, 0.3) 0%, 
+                    rgba(118, 75, 162, 0.3) 50%,
+                    rgba(102, 126, 234, 0.2) 100%);
+            }
+            33% { 
+                background: linear-gradient(225deg, 
+                    rgba(118, 75, 162, 0.4) 0%, 
+                    rgba(102, 126, 234, 0.2) 50%,
+                    rgba(118, 75, 162, 0.3) 100%);
+            }
+            66% { 
+                background: linear-gradient(45deg, 
+                    rgba(102, 126, 234, 0.2) 0%, 
+                    rgba(118, 75, 162, 0.4) 50%,
+                    rgba(102, 126, 234, 0.3) 100%);
+            }
+        }
+
+        .admin-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2), 
+                        0 5px 15px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            width: 100%;
+            max-width: 900px;
+            max-height: 90vh;
+            position: relative;
+            overflow-y: auto;
+            overflow-x: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            animation: cardFloat 6s ease-in-out infinite;
+            margin: 10px 0;
+        }
+
+        @keyframes cardFloat {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            25% { transform: translateY(-2px) rotate(0.1deg); }
+            50% { transform: translateY(0px) rotate(-0.1deg); }
+            75% { transform: translateY(-1px) rotate(0.05deg); }
+        }
+
+        .admin-title {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2.2em;
+            font-weight: 600;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .global-controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 12px;
+            border: 1px solid rgba(102, 126, 234, 0.2);
+        }
+
+        .config-form {
+            display: grid;
+            gap: 20px;
+        }
+
+        .field-group {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 12px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .field-group:hover {
+            background: rgba(255, 255, 255, 0.7);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .field-label {
+            flex: 1;
+            font-weight: 600;
+            color: #444;
+            min-width: 200px;
+        }
+
+        .field-input {
+            flex: 1;
+            padding: 10px 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        .field-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .field-input:read-only {
+            background: rgba(240, 240, 240, 0.8);
+            cursor: not-allowed;
+        }
+
+        .field-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn-edit {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-edit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-save {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+        }
+
+        .btn-save:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+        }
+
+        .btn-global {
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .btn-global-edit {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-global-save {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .loading {
+            opacity: 0.7;
+        }
+
+        .loading::after {
+            content: '';
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top: 2px solid white;
+            animation: spin 1s linear infinite;
+            margin-left: 8px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .result-section {
+            display: none;
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .result-section.success {
+            background: linear-gradient(135deg, rgba(40, 167, 69, 0.1), rgba(32, 201, 151, 0.1));
+            border: 1px solid rgba(40, 167, 69, 0.3);
+            color: #155724;
+        }
+
+        .result-section.error {
+            background: linear-gradient(135deg, rgba(220, 53, 69, 0.1), rgba(255, 107, 107, 0.1));
+            border: 1px solid rgba(220, 53, 69, 0.3);
+            color: #721c24;
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .field-group {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 10px;
+            }
+
+            .field-label {
+                min-width: auto;
+            }
+
+            .field-controls {
+                justify-content: center;
+            }
+
+            .global-controls {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <h1 class="admin-title">🎮 Game Configuration Panel</h1>
+        
+        <div class="global-controls">
+            <button id="globalEditBtn" class="btn btn-global btn-global-edit">
+                ✏️ Edit All Fields
+            </button>
+            <button id="globalSaveBtn" class="btn btn-global btn-global-save" disabled>
+                ✅ Save All Changes
+            </button>
+        </div>
+
+        <form id="configForm" class="config-form">
+            <div class="field-group">
+                <label class="field-label">Starting Wisdom:</label>
+                <input type="number" id="StartingWisdom" class="field-input" readonly>
+                <div class="field-controls">
+                    <button type="button" class="btn btn-edit" data-field="StartingWisdom">✏️</button>
+                    <button type="button" class="btn btn-save" data-field="StartingWisdom" style="display: none;">✅</button>
+                </div>
+            </div>
+
+            <div class="field-group">
+                <label class="field-label">Mirror Wisdom If Waits:</label>
+                <input type="number" id="MirrorWisdomIfWaits" class="field-input" readonly>
+                <div class="field-controls">
+                    <button type="button" class="btn btn-edit" data-field="MirrorWisdomIfWaits">✏️</button>
+                    <button type="button" class="btn btn-save" data-field="MirrorWisdomIfWaits" style="display: none;">✅</button>
+                </div>
+            </div>
+
+            <div class="field-group">
+                <label class="field-label">Mirror Wisdom If Risks Correctly:</label>
+                <input type="number" id="MirrorWisdomIfRisksCorrectly" class="field-input" readonly>
+                <div class="field-controls">
+                    <button type="button" class="btn btn-edit" data-field="MirrorWisdomIfRisksCorrectly">✏️</button>
+                    <button type="button" class="btn btn-save" data-field="MirrorWisdomIfRisksCorrectly" style="display: none;">✅</button>
+                </div>
+            </div>
+
+            <div class="field-group">
+                <label class="field-label">Mirror Wisdom If Risks Falsely:</label>
+                <input type="number" id="MirrorWisdomIfRisksFalsely" class="field-input" readonly>
+                <div class="field-controls">
+                    <button type="button" class="btn btn-edit" data-field="MirrorWisdomIfRisksFalsely">✏️</button>
+                    <button type="button" class="btn btn-save" data-field="MirrorWisdomIfRisksFalsely" style="display: none;">✅</button>
+                </div>
+            </div>
+
+            <div class="field-group">
+                <label class="field-label">Oil Tree Wisdom Not Investment:</label>
+                <input type="number" id="OilTreeWisdomNotInvestment" class="field-input" readonly>
+                <div class="field-controls">
+                    <button type="button" class="btn btn-edit" data-field="OilTreeWisdomNotInvestment">✏️</button>
+                    <button type="button" class="btn btn-save" data-field="OilTreeWisdomNotInvestment" style="display: none;">✅</button>
+                </div>
+            </div>
+
+            <div class="field-group">
+                <label class="field-label">Oil Tree Wisdom Investment Function:</label>
+                <select id="OilTreeWisdomInvestmentFunction" class="field-input" disabled>
+                    <option value="sqrt">Square Root (sqrt)</option>
+                    <option value="linear">Linear</option>
+                    <option value="log">Logarithmic (log)</option>
+                </select>
+                <div class="field-controls">
+                    <button type="button" class="btn btn-edit" data-field="OilTreeWisdomInvestmentFunction">✏️</button>
+                    <button type="button" class="btn btn-save" data-field="OilTreeWisdomInvestmentFunction" style="display: none;">✅</button>
+                </div>
+            </div>
+
+            <div class="field-group">
+                <label class="field-label">Safe Path Wisdom:</label>
+                <input type="number" id="SafePathWisdom" class="field-input" readonly>
+                <div class="field-controls">
+                    <button type="button" class="btn btn-edit" data-field="SafePathWisdom">✏️</button>
+                    <button type="button" class="btn btn-save" data-field="SafePathWisdom" style="display: none;">✅</button>
+                </div>
+            </div>
+
+            <div class="field-group">
+                <label class="field-label">Uncertain Path Wisdom:</label>
+                <input type="number" id="UncertainPathWisdom" class="field-input" readonly>
+                <div class="field-controls">
+                    <button type="button" class="btn btn-edit" data-field="UncertainPathWisdom">✏️</button>
+                    <button type="button" class="btn btn-save" data-field="UncertainPathWisdom" style="display: none;">✅</button>
+                </div>
+            </div>
+
+            <div class="field-group">
+                <label class="field-label">Uncertain Path Wisdom Small Plank:</label>
+                <input type="number" id="UncertainPathWisdomSmallPlank" class="field-input" readonly>
+                <div class="field-controls">
+                    <button type="button" class="btn btn-edit" data-field="UncertainPathWisdomSmallPlank">✏️</button>
+                    <button type="button" class="btn btn-save" data-field="UncertainPathWisdomSmallPlank" style="display: none;">✅</button>
+                </div>
+            </div>
+
+            <div class="field-group">
+                <label class="field-label">Uncertain Path Wisdom Medium Plank:</label>
+                <input type="number" id="UncertainPathWisdomMediumPlank" class="field-input" readonly>
+                <div class="field-controls">
+                    <button type="button" class="btn btn-edit" data-field="UncertainPathWisdomMediumPlank">✏️</button>
+                    <button type="button" class="btn btn-save" data-field="UncertainPathWisdomMediumPlank" style="display: none;">✅</button>
+                </div>
+            </div>
+
+            <div class="field-group">
+                <label class="field-label">Uncertain Path Wisdom Big Plank:</label>
+                <input type="number" id="UncertainPathWisdomBigPlank" class="field-input" readonly>
+                <div class="field-controls">
+                    <button type="button" class="btn btn-edit" data-field="UncertainPathWisdomBigPlank">✏️</button>
+                    <button type="button" class="btn btn-save" data-field="UncertainPathWisdomBigPlank" style="display: none;">✅</button>
+                </div>
+            </div>
+        </form>
+
+        <div id="resultSection" class="result-section">
+            <div id="resultText"></div>
+        </div>
+    </div>
+
+    <script>
+        let currentConfig = {};
+        let isGlobalEditMode = false;
+
+        // DOM elements
+        const globalEditBtn = document.getElementById('globalEditBtn');
+        const globalSaveBtn = document.getElementById('globalSaveBtn');
+        const resultSection = document.getElementById('resultSection');
+        const resultText = document.getElementById('resultText');
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadConfiguration();
+            setupEventListeners();
+        });
+
+        function setupEventListeners() {
+            // Global controls
+            globalEditBtn.addEventListener('click', toggleGlobalEdit);
+            globalSaveBtn.addEventListener('click', saveAllChanges);
+
+            // Individual field edit buttons
+            document.querySelectorAll('.btn-edit').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const fieldName = this.dataset.field;
+                    toggleFieldEdit(fieldName);
+                });
+            });
+
+            // Individual field save buttons
+            document.querySelectorAll('.btn-save').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const fieldName = this.dataset.field;
+                    saveFieldChanges(fieldName);
+                });
+            });
+        }
+
+        async function loadConfiguration() {
+            try {
+                const response = await fetch('/api/admin/configuration');
+                if (response.ok) {
+                    currentConfig = await response.json();
+                    populateForm(currentConfig);
+                    showResult('Configuration loaded successfully!', 'success');
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+            } catch (error) {
+                console.error('Failed to load configuration:', error);
+                showResult(`Failed to load configuration: ${error.message}`, 'error');
+            }
+        }
+
+        function populateForm(config) {
+            Object.keys(config).forEach(key => {
+                if (key !== 'id') {
+                    const element = document.getElementById(key);
+                    if (element) {
+                        element.value = config[key];
+                    }
+                }
+            });
+        }
+
+        function toggleGlobalEdit() {
+            isGlobalEditMode = !isGlobalEditMode;
+            
+            if (isGlobalEditMode) {
+                // Enable all fields
+                document.querySelectorAll('.field-input').forEach(input => {
+                    if (input.type === 'number') {
+                        input.readOnly = false;
+                    } else {
+                        input.disabled = false;
+                    }
+                });
+                
+                // Update button states
+                globalEditBtn.textContent = '🔒 Lock All Fields';
+                globalEditBtn.className = 'btn btn-global btn-global-edit';
+                globalSaveBtn.disabled = false;
+                
+                // Hide individual buttons
+                document.querySelectorAll('.btn-edit, .btn-save').forEach(btn => {
+                    btn.style.display = 'none';
+                });
+                
+            } else {
+                // Disable all fields (back to read-only)
+                document.querySelectorAll('.field-input').forEach(input => {
+                    if (input.type === 'number') {
+                        input.readOnly = true;
+                    } else {
+                        input.disabled = true;
+                    }
+                });
+                
+                // Update button states
+                globalEditBtn.textContent = '✏️ Edit All Fields';
+                globalEditBtn.className = 'btn btn-global btn-global-edit';
+                globalSaveBtn.disabled = true;
+                
+                // Show individual edit buttons
+                document.querySelectorAll('.btn-edit').forEach(btn => {
+                    btn.style.display = 'flex';
+                });
+                document.querySelectorAll('.btn-save').forEach(btn => {
+                    btn.style.display = 'none';
+                });
+            }
+        }
+
+        function toggleFieldEdit(fieldName) {
+            const input = document.getElementById(fieldName);
+            const editBtn = document.querySelector(`[data-field="${fieldName}"].btn-edit`);
+            const saveBtn = document.querySelector(`[data-field="${fieldName}"].btn-save`);
+            
+            if (input.readOnly || input.disabled) {
+                // Enable field
+                if (input.type === 'number') {
+                    input.readOnly = false;
+                } else {
+                    input.disabled = false;
+                }
+                editBtn.style.display = 'none';
+                saveBtn.style.display = 'flex';
+            } else {
+                // Disable field
+                if (input.type === 'number') {
+                    input.readOnly = true;
+                } else {
+                    input.disabled = true;
+                }
+                editBtn.style.display = 'flex';
+                saveBtn.style.display = 'none';
+            }
+        }
+
+        async function saveFieldChanges(fieldName) {
+            await saveAllChanges();
+            
+            // Return field to read-only after save
+            const input = document.getElementById(fieldName);
+            const editBtn = document.querySelector(`[data-field="${fieldName}"].btn-edit`);
+            const saveBtn = document.querySelector(`[data-field="${fieldName}"].btn-save`);
+            
+            if (input.type === 'number') {
+                input.readOnly = true;
+            } else {
+                input.disabled = true;
+            }
+            editBtn.style.display = 'flex';
+            saveBtn.style.display = 'none';
+        }
+
+        async function saveAllChanges() {
+            try {
+                // Collect all current form values
+                const formData = {
+                    id: currentConfig.id,
+                    StartingWisdom: parseInt(document.getElementById('StartingWisdom').value),
+                    MirrorWisdomIfWaits: parseInt(document.getElementById('MirrorWisdomIfWaits').value),
+                    MirrorWisdomIfRisksCorrectly: parseInt(document.getElementById('MirrorWisdomIfRisksCorrectly').value),
+                    MirrorWisdomIfRisksFalsely: parseInt(document.getElementById('MirrorWisdomIfRisksFalsely').value),
+                    OilTreeWisdomNotInvestment: parseInt(document.getElementById('OilTreeWisdomNotInvestment').value),
+                    OilTreeWisdomInvestmentFunction: document.getElementById('OilTreeWisdomInvestmentFunction').value,
+                    SafePathWisdom: parseInt(document.getElementById('SafePathWisdom').value),
+                    UncertainPathWisdom: parseInt(document.getElementById('UncertainPathWisdom').value),
+                    UncertainPathWisdomSmallPlank: parseInt(document.getElementById('UncertainPathWisdomSmallPlank').value),
+                    UncertainPathWisdomMediumPlank: parseInt(document.getElementById('UncertainPathWisdomMediumPlank').value),
+                    UncertainPathWisdomBigPlank: parseInt(document.getElementById('UncertainPathWisdomBigPlank').value)
+                };
+
+                // Disable save button and show loading
+                globalSaveBtn.disabled = true;
+                globalSaveBtn.classList.add('loading');
+                globalSaveBtn.textContent = 'Saving...';
+
+                const response = await fetch('/api/admin/configuration', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                if (response.ok) {
+                    currentConfig = await response.json();
+                    showResult('Configuration saved successfully!', 'success');
+                    
+                    // If in global edit mode, return to read-only mode
+                    if (isGlobalEditMode) {
+                        toggleGlobalEdit();
+                    }
+                } else {
+                    const error = await response.json();
+                    throw new Error(error.message || `HTTP ${response.status}: ${response.statusText}`);
+                }
+
+            } catch (error) {
+                console.error('Failed to save configuration:', error);
+                showResult(`Failed to save configuration: ${error.message}`, 'error');
+            } finally {
+                // Re-enable save button and remove loading
+                globalSaveBtn.disabled = false;
+                globalSaveBtn.classList.remove('loading');
+                globalSaveBtn.textContent = '✅ Save All Changes';
+            }
+        }
+
+        function showResult(message, type) {
+            resultSection.className = `result-section ${type}`;
+            resultText.textContent = message;
+            resultSection.style.display = 'block';
+            resultSection.scrollIntoView({ behavior: 'smooth' });
+
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+                resultSection.style.display = 'none';
+            }, 5000);
+        }
+    </script>
+</body>
+</html>

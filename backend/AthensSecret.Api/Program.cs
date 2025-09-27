@@ -22,7 +22,12 @@ if (connectionString?.StartsWith("postgresql://") == true)
 builder.Services.AddDbContext<ApiDbContext>(options =>
     options.UseNpgsql(connectionString));
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        // Keep PascalCase property names in JSON responses
+        options.JsonSerializerOptions.PropertyNamingPolicy = null;
+    });
 
 // Add rate limiting
 builder.Services.AddRateLimiter(options =>
