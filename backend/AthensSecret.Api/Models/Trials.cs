@@ -11,7 +11,7 @@ public class MirrorsTrial
     public virtual GameSession? GameSession { get; set; }
 }
 
-public class OilTreeTrial
+public class OliveTreeTrial
 {
     public int GameSessionId { get; set; }
     public DateTime StartTime { get; set; }

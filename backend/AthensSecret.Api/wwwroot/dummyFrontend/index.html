@@ -245,10 +245,10 @@
         <button onclick="startMirrorsTrial()">Start Mirrors Trial</button>
         <button onclick="endMirrorsTrial()" id="endMirrorsBtn" disabled>End Mirrors Trial</button>
         
-        <h3>🌳 Oil Tree Trial</h3>
-        <button onclick="startOilTreeTrial()">Start Oil Tree Trial</button>
-        <button onclick="setOilTreeInvestment()" id="investBtn" disabled>Set Investment</button>
-        <button onclick="endOilTreeTrial()" id="endOilTreeBtn" disabled>End Oil Tree Trial</button>
+        <h3>🌳 Olive Tree Trial</h3>
+        <button onclick="startOliveTreeTrial()">Start Olive Tree Trial</button>
+        <button onclick="setOliveTreeInvestment()" id="investBtn" disabled>Set Investment</button>
+        <button onclick="endOliveTreeTrial()" id="endOliveTreeBtn" disabled>End Olive Tree Trial</button>
         
         <h3>🛤️ Path Trial</h3>
         <button onclick="startPathTrial()">Start Path Trial</button>
@@ -332,8 +332,8 @@
                 const playerResult = await playerResponse.json();
                 document.getElementById('playerResponse').textContent = JSON.stringify(playerResult, null, 2);
                 
-                if (playerResponse.ok && playerResult.playerId) {
-                    currentPlayerId = playerResult.playerId;
+                if (playerResponse.ok && playerResult.PlayerId) {
+                    currentPlayerId = playerResult.PlayerId;
                     document.getElementById('playerId').value = currentPlayerId;
                     document.getElementById('trialPlayerId').value = currentPlayerId;
                     document.getElementById('userIdDisplay').textContent = `🆔 Player ID: ${currentPlayerId}`;
@@ -450,13 +450,13 @@
             await endTrial('mirrors', { totalGainedWisdom: Math.floor(Math.random() * 100) + 1 });
         }
 
-        async function startOilTreeTrial() {
-            await startTrial('oiltree', 'investBtn');
+        async function startOliveTreeTrial() {
+            await startTrial('olivetree', 'investBtn');
             // Also enable the end button so user can end without investment
-            document.getElementById('endOilTreeBtn').disabled = false;
+            document.getElementById('endOliveTreeBtn').disabled = false;
         }
 
-        async function setOilTreeInvestment() {
+        async function setOliveTreeInvestment() {
             const sessionId = document.getElementById('sessionId').value;
             const playerId = document.getElementById('trialPlayerId').value;
             
@@ -466,7 +466,7 @@
             }
             
             const apiUrl = getApiUrl();
-            const url = `${apiUrl}/api/game/oiltree/invest?sessionId=${sessionId}&playerId=${playerId}`;
+            const url = `${apiUrl}/api/game/olivetree/invest?sessionId=${sessionId}&playerId=${playerId}`;
             
             try {
                 document.getElementById('trialRequest').textContent = `POST ${url}`;
@@ -479,7 +479,7 @@
                 document.getElementById('trialResponse').textContent = JSON.stringify(result, null, 2);
                 
                 if (response.ok) {
-                    document.getElementById('endOilTreeBtn').disabled = false;
+                    document.getElementById('endOliveTreeBtn').disabled = false;
                 }
                 
             } catch (error) {
@@ -489,8 +489,8 @@
             document.getElementById('trialResponseSection').style.display = 'block';
         }
 
-        async function endOilTreeTrial() {
-            await endTrial('oiltree', {
+        async function endOliveTreeTrial() {
+            await endTrial('olivetree', {
                 totalGainedWisdom: Math.floor(Math.random() * 100) + 1
             });
         }

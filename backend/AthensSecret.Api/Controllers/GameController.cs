@@ -205,9 +205,9 @@ public class GameController : ControllerBase
         });
     }
 
-    // OIL TREE TRIAL endpoints
-    [HttpPost("oiltree/start")]
-    public async Task<IActionResult> StartOilTreeTrial([FromQuery] int sessionId, [FromQuery] int playerId)
+    // OLIVE TREE TRIAL endpoints
+    [HttpPost("olivetree/start")]
+    public async Task<IActionResult> StartOliveTreeTrial([FromQuery] int sessionId, [FromQuery] int playerId)
     {
         // Verify session belongs to player and is active
         var gameSession = await _context.GameSessions
@@ -218,16 +218,16 @@ public class GameController : ControllerBase
             return NotFound("Active game session not found");
         }
 
-        // Check if oil tree trial already exists
-        var existingTrial = await _context.OilTreeTrials
+        // Check if olive tree trial already exists
+        var existingTrial = await _context.OliveTreeTrials
             .FirstOrDefaultAsync(ot => ot.GameSessionId == sessionId);
 
         if (existingTrial != null)
         {
-            return BadRequest("Oil tree trial already exists for this session");
+            return BadRequest("Olive tree trial already exists for this session");
         }
 
-        var oilTreeTrial = new OilTreeTrial
+        var oliveTreeTrial = new OliveTreeTrial
         {
             GameSessionId = sessionId,
             StartTime = DateTime.UtcNow,
@@ -236,18 +236,18 @@ public class GameController : ControllerBase
             InvestmentStartTime = null // Will be set if player chooses to invest
         };
 
-        _context.OilTreeTrials.Add(oilTreeTrial);
+        _context.OliveTreeTrials.Add(oliveTreeTrial);
         await _context.SaveChangesAsync();
 
         return Ok(new
         {
             sessionId = sessionId,
-            startTime = oilTreeTrial.StartTime
+            startTime = oliveTreeTrial.StartTime
         });
     }
 
-    [HttpPost("oiltree/invest")]
-    public async Task<IActionResult> SetOilTreeInvestment([FromQuery] int sessionId, [FromQuery] int playerId)
+    [HttpPost("olivetree/invest")]
+    public async Task<IActionResult> SetOliveTreeInvestment([FromQuery] int sessionId, [FromQuery] int playerId)
     {
         // Verify session belongs to player and is active
         var gameSession = await _context.GameSessions
@@ -258,26 +258,26 @@ public class GameController : ControllerBase
             return NotFound("Active game session not found");
         }
 
-        var oilTreeTrial = await _context.OilTreeTrials
+        var oliveTreeTrial = await _context.OliveTreeTrials
             .FirstOrDefaultAsync(ot => ot.GameSessionId == sessionId);
 
-        if (oilTreeTrial == null)
+        if (oliveTreeTrial == null)
         {
-            return NotFound("Oil tree trial not found");
+            return NotFound("Olive tree trial not found");
         }
 
-        oilTreeTrial.InvestmentStartTime = DateTime.UtcNow;
+        oliveTreeTrial.InvestmentStartTime = DateTime.UtcNow;
         await _context.SaveChangesAsync();
 
         return Ok(new
         {
             sessionId = sessionId,
-            investmentStartTime = oilTreeTrial.InvestmentStartTime
+            investmentStartTime = oliveTreeTrial.InvestmentStartTime
         });
     }
 
-    [HttpPost("oiltree/end")]
-    public async Task<IActionResult> EndOilTreeTrial([FromQuery] int sessionId, [FromQuery] int playerId, [FromBody] OilTreeTrialEndRequest request)
+    [HttpPost("olivetree/end")]
+    public async Task<IActionResult> EndOliveTreeTrial([FromQuery] int sessionId, [FromQuery] int playerId, [FromBody] OliveTreeTrialEndRequest request)
     {
         // Verify session belongs to player and is active
         var gameSession = await _context.GameSessions
@@ -288,26 +288,26 @@ public class GameController : ControllerBase
             return NotFound("Active game session not found");
         }
 
-        var oilTreeTrial = await _context.OilTreeTrials
+        var oliveTreeTrial = await _context.OliveTreeTrials
             .FirstOrDefaultAsync(ot => ot.GameSessionId == sessionId);
 
-        if (oilTreeTrial == null)
+        if (oliveTreeTrial == null)
         {
-            return NotFound("Oil tree trial not found");
+            return NotFound("Olive tree trial not found");
         }
 
-        oilTreeTrial.EndTime = DateTime.UtcNow;
-        oilTreeTrial.TotalGainedWisdom = request.TotalGainedWisdom;
+        oliveTreeTrial.EndTime = DateTime.UtcNow;
+        oliveTreeTrial.TotalGainedWisdom = request.TotalGainedWisdom;
 
         await _context.SaveChangesAsync();
 
         return Ok(new
         {
             sessionId = sessionId,
-            startTime = oilTreeTrial.StartTime,
-            endTime = oilTreeTrial.EndTime,
-            investmentStartTime = oilTreeTrial.InvestmentStartTime,
-            totalGainedWisdom = oilTreeTrial.TotalGainedWisdom
+            startTime = oliveTreeTrial.StartTime,
+            endTime = oliveTreeTrial.EndTime,
+            investmentStartTime = oliveTreeTrial.InvestmentStartTime,
+            totalGainedWisdom = oliveTreeTrial.TotalGainedWisdom
         });
     }
 
@@ -404,7 +404,7 @@ public class GameController : ControllerBase
         var mirrors = await _context.MirrorsTrials
             .FirstOrDefaultAsync(mt => mt.GameSessionId == sessionId);
 
-        var oilTree = await _context.OilTreeTrials
+        var oliveTree = await _context.OliveTreeTrials
             .FirstOrDefaultAsync(ot => ot.GameSessionId == sessionId);
 
         var path = await _context.PathTrials
@@ -419,12 +419,12 @@ public class GameController : ControllerBase
                 endTime = mirrors.EndTime,
                 totalGainedWisdom = mirrors.TotalGainedWisdom
             } : null,
-            oilTree = oilTree != null ? new
+            oliveTree = oliveTree != null ? new
             {
-                startTime = oilTree.StartTime,
-                endTime = oilTree.EndTime,
-                totalGainedWisdom = oilTree.TotalGainedWisdom,
-                investmentStartTime = oilTree.InvestmentStartTime
+                startTime = oliveTree.StartTime,
+                endTime = oliveTree.EndTime,
+                totalGainedWisdom = oliveTree.TotalGainedWisdom,
+                investmentStartTime = oliveTree.InvestmentStartTime
             } : null,
             path = path != null ? new
             {
@@ -518,7 +518,7 @@ public class MirrorsTrialEndRequest
     public int TotalGainedWisdom { get; set; }
 }
 
-public class OilTreeTrialEndRequest
+public class OliveTreeTrialEndRequest
 {
     public int TotalGainedWisdom { get; set; }
 }

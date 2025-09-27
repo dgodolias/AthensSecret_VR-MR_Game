@@ -14,7 +14,7 @@ public class ApiDbContext : DbContext
     public DbSet<GameConfiguration> GameConfigurations { get; set; }
     public DbSet<GameSession> GameSessions { get; set; }
     public DbSet<MirrorsTrial> MirrorsTrials { get; set; }
-    public DbSet<OilTreeTrial> OilTreeTrials { get; set; }
+    public DbSet<OliveTreeTrial> OliveTreeTrials { get; set; }
     public DbSet<PathTrial> PathTrials { get; set; }
     public DbSet<ResponsesStatistics> ResponsesStatistics { get; set; }
 
@@ -59,8 +59,8 @@ public class ApiDbContext : DbContext
             entity.Property(gc => gc.MirrorWisdomIfWaits).HasColumnName("mirrorwisdomifwaits");
             entity.Property(gc => gc.MirrorWisdomIfRisksCorrectly).HasColumnName("mirrorwisdomifriskscorrectly");
             entity.Property(gc => gc.MirrorWisdomIfRisksFalsely).HasColumnName("mirrorwisdomifrisksfalsely");
-            entity.Property(gc => gc.OilTreeWisdomNotInvestment).HasColumnName("oiltreewisdomnotinvestment");
-            entity.Property(gc => gc.OilTreeWisdomInvestmentFunction).HasColumnName("oiltreewisdominvestmentfunction").HasMaxLength(20).IsRequired();
+            entity.Property(gc => gc.OliveTreeWisdomNotInvestment).HasColumnName("olivetreewisdomnotinvestment");
+            entity.Property(gc => gc.OliveTreeWisdomInvestmentFunction).HasColumnName("olivetreewisdominvestmentfunction").HasMaxLength(20).IsRequired();
             entity.Property(gc => gc.SafePathWisdom).HasColumnName("safepathwisdom");
             entity.Property(gc => gc.UncertainPathWisdom).HasColumnName("uncertainpathwisdom");
             entity.Property(gc => gc.UncertainPathWisdomSmallPlank).HasColumnName("uncertainpathwisdomsmallplank");
@@ -100,10 +100,10 @@ public class ApiDbContext : DbContext
                   .OnDelete(DeleteBehavior.Cascade);
         });
 
-        // Configure OilTreeTrial - map to oil_tree_trial table
-        modelBuilder.Entity<OilTreeTrial>(entity =>
+        // Configure OliveTreeTrial - map to olive_tree_trial table
+        modelBuilder.Entity<OliveTreeTrial>(entity =>
         {
-            entity.ToTable("oil_tree_trial");
+            entity.ToTable("olive_tree_trial");
             entity.HasKey(ott => ott.GameSessionId);
             entity.Property(ott => ott.GameSessionId).HasColumnName("game_session_id");
             entity.Property(ott => ott.StartTime).HasColumnName("start_time");
@@ -111,8 +111,8 @@ public class ApiDbContext : DbContext
             entity.Property(ott => ott.TotalGainedWisdom).HasColumnName("total_gained_wisdom");
             entity.Property(ott => ott.InvestmentStartTime).HasColumnName("investment_start_time");
             entity.HasOne(ott => ott.GameSession)
-                  .WithOne(gs => gs.OilTreeTrial)
-                  .HasForeignKey<OilTreeTrial>(ott => ott.GameSessionId)
+                  .WithOne(gs => gs.OliveTreeTrial)
+                  .HasForeignKey<OliveTreeTrial>(ott => ott.GameSessionId)
                   .OnDelete(DeleteBehavior.Cascade);
         });
 

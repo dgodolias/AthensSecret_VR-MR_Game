@@ -20,7 +20,7 @@ public class ConfigController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetConfiguration()
     {
-        var config = await _context.GameConfigurations.FirstOrDefaultAsync();
+        var config = await _context.GameConfigurations.OrderBy(c => c.Id).FirstOrDefaultAsync();
 
         if (config == null)
         {
@@ -34,8 +34,8 @@ public class ConfigController : ControllerBase
             mirrorWisdomIfWaits = config.MirrorWisdomIfWaits,
             mirrorWisdomIfRisksCorrectly = config.MirrorWisdomIfRisksCorrectly,
             mirrorWisdomIfRisksFalsely = config.MirrorWisdomIfRisksFalsely,
-            oilTreeWisdomNotInvestment = config.OilTreeWisdomNotInvestment,
-            oilTreeWisdomInvestmentFunction = config.OilTreeWisdomInvestmentFunction,
+            oliveTreeWisdomNotInvestment = config.OliveTreeWisdomNotInvestment,
+            oliveTreeWisdomInvestmentFunction = config.OliveTreeWisdomInvestmentFunction,
             safePathWisdom = config.SafePathWisdom,
             uncertainPathWisdom = config.UncertainPathWisdom,
             uncertainPathWisdomSmallPlank = config.UncertainPathWisdomSmallPlank,
@@ -62,8 +62,8 @@ public class ConfigController : ControllerBase
             mirrorWisdomIfWaits = config.MirrorWisdomIfWaits,
             mirrorWisdomIfRisksCorrectly = config.MirrorWisdomIfRisksCorrectly,
             mirrorWisdomIfRisksFalsely = config.MirrorWisdomIfRisksFalsely,
-            oilTreeWisdomNotInvestment = config.OilTreeWisdomNotInvestment,
-            oilTreeWisdomInvestmentFunction = config.OilTreeWisdomInvestmentFunction,
+            oliveTreeWisdomNotInvestment = config.OliveTreeWisdomNotInvestment,
+            oliveTreeWisdomInvestmentFunction = config.OliveTreeWisdomInvestmentFunction,
             safePathWisdom = config.SafePathWisdom,
             uncertainPathWisdom = config.UncertainPathWisdom,
             uncertainPathWisdomSmallPlank = config.UncertainPathWisdomSmallPlank,
@@ -82,8 +82,8 @@ public class ConfigController : ControllerBase
             MirrorWisdomIfWaits = request.MirrorWisdomIfWaits,
             MirrorWisdomIfRisksCorrectly = request.MirrorWisdomIfRisksCorrectly,
             MirrorWisdomIfRisksFalsely = request.MirrorWisdomIfRisksFalsely,
-            OilTreeWisdomNotInvestment = request.OilTreeWisdomNotInvestment,
-            OilTreeWisdomInvestmentFunction = request.OilTreeWisdomInvestmentFunction,
+            OliveTreeWisdomNotInvestment = request.OliveTreeWisdomNotInvestment,
+            OliveTreeWisdomInvestmentFunction = request.OliveTreeWisdomInvestmentFunction,
             SafePathWisdom = request.SafePathWisdom,
             UncertainPathWisdom = request.UncertainPathWisdom,
             UncertainPathWisdomSmallPlank = request.UncertainPathWisdomSmallPlank,
@@ -101,8 +101,8 @@ public class ConfigController : ControllerBase
             mirrorWisdomIfWaits = config.MirrorWisdomIfWaits,
             mirrorWisdomIfRisksCorrectly = config.MirrorWisdomIfRisksCorrectly,
             mirrorWisdomIfRisksFalsely = config.MirrorWisdomIfRisksFalsely,
-            oilTreeWisdomNotInvestment = config.OilTreeWisdomNotInvestment,
-            oilTreeWisdomInvestmentFunction = config.OilTreeWisdomInvestmentFunction,
+            oliveTreeWisdomNotInvestment = config.OliveTreeWisdomNotInvestment,
+            oliveTreeWisdomInvestmentFunction = config.OliveTreeWisdomInvestmentFunction,
             safePathWisdom = config.SafePathWisdom,
             uncertainPathWisdom = config.UncertainPathWisdom,
             uncertainPathWisdomSmallPlank = config.UncertainPathWisdomSmallPlank,
@@ -126,8 +126,8 @@ public class ConfigController : ControllerBase
         config.MirrorWisdomIfWaits = request.MirrorWisdomIfWaits;
         config.MirrorWisdomIfRisksCorrectly = request.MirrorWisdomIfRisksCorrectly;
         config.MirrorWisdomIfRisksFalsely = request.MirrorWisdomIfRisksFalsely;
-        config.OilTreeWisdomNotInvestment = request.OilTreeWisdomNotInvestment;
-        config.OilTreeWisdomInvestmentFunction = request.OilTreeWisdomInvestmentFunction;
+        config.OliveTreeWisdomNotInvestment = request.OliveTreeWisdomNotInvestment;
+        config.OliveTreeWisdomInvestmentFunction = request.OliveTreeWisdomInvestmentFunction;
         config.SafePathWisdom = request.SafePathWisdom;
         config.UncertainPathWisdom = request.UncertainPathWisdom;
         config.UncertainPathWisdomSmallPlank = request.UncertainPathWisdomSmallPlank;
@@ -143,8 +143,8 @@ public class ConfigController : ControllerBase
             mirrorWisdomIfWaits = config.MirrorWisdomIfWaits,
             mirrorWisdomIfRisksCorrectly = config.MirrorWisdomIfRisksCorrectly,
             mirrorWisdomIfRisksFalsely = config.MirrorWisdomIfRisksFalsely,
-            oilTreeWisdomNotInvestment = config.OilTreeWisdomNotInvestment,
-            oilTreeWisdomInvestmentFunction = config.OilTreeWisdomInvestmentFunction,
+            oliveTreeWisdomNotInvestment = config.OliveTreeWisdomNotInvestment,
+            oliveTreeWisdomInvestmentFunction = config.OliveTreeWisdomInvestmentFunction,
             safePathWisdom = config.SafePathWisdom,
             uncertainPathWisdom = config.UncertainPathWisdom,
             uncertainPathWisdomSmallPlank = config.UncertainPathWisdomSmallPlank,
@@ -182,8 +182,8 @@ public class ConfigController : ControllerBase
                 mirrorWisdomIfWaits = c.MirrorWisdomIfWaits,
                 mirrorWisdomIfRisksCorrectly = c.MirrorWisdomIfRisksCorrectly,
                 mirrorWisdomIfRisksFalsely = c.MirrorWisdomIfRisksFalsely,
-                oilTreeWisdomNotInvestment = c.OilTreeWisdomNotInvestment,
-                oilTreeWisdomInvestmentFunction = c.OilTreeWisdomInvestmentFunction,
+                oliveTreeWisdomNotInvestment = c.OliveTreeWisdomNotInvestment,
+                oliveTreeWisdomInvestmentFunction = c.OliveTreeWisdomInvestmentFunction,
                 safePathWisdom = c.SafePathWisdom,
                 uncertainPathWisdom = c.UncertainPathWisdom,
                 uncertainPathWisdomSmallPlank = c.UncertainPathWisdomSmallPlank,
@@ -203,8 +203,8 @@ public class GameConfigurationRequest
     public int MirrorWisdomIfWaits { get; set; }
     public int MirrorWisdomIfRisksCorrectly { get; set; }
     public int MirrorWisdomIfRisksFalsely { get; set; }
-    public int OilTreeWisdomNotInvestment { get; set; }
-    public string OilTreeWisdomInvestmentFunction { get; set; } = string.Empty;
+    public int OliveTreeWisdomNotInvestment { get; set; }
+    public string OliveTreeWisdomInvestmentFunction { get; set; } = string.Empty;
     public int SafePathWisdom { get; set; }
     public int UncertainPathWisdom { get; set; }
     public int UncertainPathWisdomSmallPlank { get; set; }

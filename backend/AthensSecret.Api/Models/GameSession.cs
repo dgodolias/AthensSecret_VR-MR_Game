@@ -10,6 +10,6 @@ public class GameSession
     // Navigation properties - exactly as per relationships.md
     public virtual Player? Player { get; set; }
     public virtual MirrorsTrial? MirrorsTrial { get; set; }
-    public virtual OilTreeTrial? OilTreeTrial { get; set; }
+    public virtual OliveTreeTrial? OliveTreeTrial { get; set; }
     public virtual PathTrial? PathTrial { get; set; }
 }

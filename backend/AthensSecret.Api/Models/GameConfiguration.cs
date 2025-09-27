@@ -9,8 +9,8 @@ public class GameConfiguration
     public int MirrorWisdomIfWaits { get; set; }
     public int MirrorWisdomIfRisksCorrectly { get; set; }
     public int MirrorWisdomIfRisksFalsely { get; set; }
-    public int OilTreeWisdomNotInvestment { get; set; }
-    public required string OilTreeWisdomInvestmentFunction { get; set; }
+    public int OliveTreeWisdomNotInvestment { get; set; }
+    public required string OliveTreeWisdomInvestmentFunction { get; set; }
     public int SafePathWisdom { get; set; }
     public int UncertainPathWisdom { get; set; }
     public int UncertainPathWisdomSmallPlank { get; set; }

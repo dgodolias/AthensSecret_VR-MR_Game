@@ -143,7 +143,7 @@ public class PlayerController : ControllerBase
     {
         try
         {
-            var player = await _context.Players.FirstOrDefaultAsync(p => p.Id == request.PlayerId);
+            var player = await _context.Players.OrderBy(p => p.Id).FirstOrDefaultAsync(p => p.Id == request.PlayerId);
             
             if (player == null)
             {

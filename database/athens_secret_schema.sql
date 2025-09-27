@@ -32,8 +32,8 @@ CREATE TABLE GAME_CONFIGURATION (
     MirrorWisdomIfWaits INTEGER NOT NULL,
     MirrorWisdomIfRisksCorrectly INTEGER NOT NULL,
     MirrorWisdomIfRisksFalsely INTEGER NOT NULL,
-    OilTreeWisdomNotInvestment INTEGER NOT NULL,
-    OilTreeWisdomInvestmentFunction VARCHAR(20) NOT NULL,
+    OliveTreeWisdomNotInvestment INTEGER NOT NULL,
+    OliveTreeWisdomInvestmentFunction VARCHAR(20) NOT NULL,
     SafePathWisdom INTEGER NOT NULL,
     UncertainPathWisdom INTEGER NOT NULL,
     UncertainPathWisdomSmallPlank INTEGER NOT NULL,
@@ -66,9 +66,9 @@ CREATE TABLE MIRRORS_TRIAL (
 );
 
 -- ====================================================================================
--- 6. OIL_TREE_TRIAL TABLE (Exactly as per relationships.md)
+-- 6. OLIVE_TREE_TRIAL TABLE (Exactly as per relationships.md)
 -- ====================================================================================
-CREATE TABLE OIL_TREE_TRIAL (
+CREATE TABLE OLIVE_TREE_TRIAL (
     game_session_id INTEGER PRIMARY KEY,
     start_time TIMESTAMP NOT NULL,
     end_time TIMESTAMP NULL,
@@ -101,7 +101,7 @@ CREATE INDEX idx_player_email ON PLAYER(email);
 -- default data
 INSERT INTO GAME_CONFIGURATION (
     StartingWisdom, MirrorWisdomIfWaits, MirrorWisdomIfRisksCorrectly,
-    MirrorWisdomIfRisksFalsely, OilTreeWisdomNotInvestment, OilTreeWisdomInvestmentFunction,
+    MirrorWisdomIfRisksFalsely, OliveTreeWisdomNotInvestment, OliveTreeWisdomInvestmentFunction,
     SafePathWisdom, UncertainPathWisdom, UncertainPathWisdomSmallPlank,
     UncertainPathWisdomMediumPlank, UncertainPathWisdomBigPlank
 ) VALUES (
@@ -136,10 +136,18 @@ INSERT INTO RESPONSES_STATISTICS (age, patience, risk) VALUES
 --delete all data in tables--
 DELETE FROM RESPONSES;
 DELETE FROM PATH_TRIAL;
-DELETE FROM OIL_TREE_TRIAL;
+DELETE FROM OLIVE_TREE_TRIAL;
 DELETE FROM MIRRORS_TRIAL;
 DELETE FROM GAME_SESSIONS;
 DELETE FROM PLAYER;
 DELETE FROM GAME_CONFIGURATION;
 DELETE FROM RESPONSES_STATISTICS;
+
+--delete all data from temp tables--
+DELETE FROM public.game_sessions;
+DELETE FROM public.mirrors_trial;
+delete FROM public.olive_tree_trial;
+delete FROM public.path_trial;
+delete FROM public.player;
+delete FROM public.responses;
 

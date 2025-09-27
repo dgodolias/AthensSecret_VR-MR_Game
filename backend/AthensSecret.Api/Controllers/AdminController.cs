@@ -44,8 +44,8 @@ public class AdminController : ControllerBase
                     MirrorWisdomIfWaits = 50,
                     MirrorWisdomIfRisksCorrectly = 75,
                     MirrorWisdomIfRisksFalsely = 25,
-                    OilTreeWisdomNotInvestment = 50,
-                    OilTreeWisdomInvestmentFunction = "sqrt",
+                    OliveTreeWisdomNotInvestment = 50,
+                    OliveTreeWisdomInvestmentFunction = "sqrt",
                     SafePathWisdom = 10,
                     UncertainPathWisdom = 25,
                     UncertainPathWisdomSmallPlank = 15,
@@ -92,7 +92,7 @@ public class AdminController : ControllerBase
             // Validate wisdom values are positive
             if (request.StartingWisdom < 0 || request.MirrorWisdomIfWaits < 0 || 
                 request.MirrorWisdomIfRisksCorrectly < 0 || request.MirrorWisdomIfRisksFalsely < 0 ||
-                request.OilTreeWisdomNotInvestment < 0 || request.SafePathWisdom < 0 ||
+                request.OliveTreeWisdomNotInvestment < 0 || request.SafePathWisdom < 0 ||
                 request.UncertainPathWisdom < 0 || request.UncertainPathWisdomSmallPlank < 0 ||
                 request.UncertainPathWisdomMediumPlank < 0 || request.UncertainPathWisdomBigPlank < 0)
             {
@@ -101,14 +101,14 @@ public class AdminController : ControllerBase
 
             // Validate investment function
             var validFunctions = new[] { "sqrt", "linear", "log" };
-            if (string.IsNullOrWhiteSpace(request.OilTreeWisdomInvestmentFunction) || 
-                !validFunctions.Contains(request.OilTreeWisdomInvestmentFunction.ToLower()))
+            if (string.IsNullOrWhiteSpace(request.OliveTreeWisdomInvestmentFunction) || 
+                !validFunctions.Contains(request.OliveTreeWisdomInvestmentFunction.ToLower()))
             {
                 return BadRequest(new { message = "Invalid investment function. Must be: sqrt, linear, or log" });
             }
 
             // Find existing configuration
-            var existingConfig = await _context.GameConfigurations.FirstOrDefaultAsync();
+            var existingConfig = await _context.GameConfigurations.OrderBy(c => c.Id).FirstOrDefaultAsync();
             
             if (existingConfig == null)
             {
@@ -119,8 +119,8 @@ public class AdminController : ControllerBase
                     MirrorWisdomIfWaits = request.MirrorWisdomIfWaits,
                     MirrorWisdomIfRisksCorrectly = request.MirrorWisdomIfRisksCorrectly,
                     MirrorWisdomIfRisksFalsely = request.MirrorWisdomIfRisksFalsely,
-                    OilTreeWisdomNotInvestment = request.OilTreeWisdomNotInvestment,
-                    OilTreeWisdomInvestmentFunction = request.OilTreeWisdomInvestmentFunction?.ToLower() ?? "sqrt",
+                    OliveTreeWisdomNotInvestment = request.OliveTreeWisdomNotInvestment,
+                    OliveTreeWisdomInvestmentFunction = request.OliveTreeWisdomInvestmentFunction?.ToLower() ?? "sqrt",
                     SafePathWisdom = request.SafePathWisdom,
                     UncertainPathWisdom = request.UncertainPathWisdom,
                     UncertainPathWisdomSmallPlank = request.UncertainPathWisdomSmallPlank,
@@ -141,8 +141,8 @@ public class AdminController : ControllerBase
                 existingConfig.MirrorWisdomIfWaits = request.MirrorWisdomIfWaits;
                 existingConfig.MirrorWisdomIfRisksCorrectly = request.MirrorWisdomIfRisksCorrectly;
                 existingConfig.MirrorWisdomIfRisksFalsely = request.MirrorWisdomIfRisksFalsely;
-                existingConfig.OilTreeWisdomNotInvestment = request.OilTreeWisdomNotInvestment;
-                existingConfig.OilTreeWisdomInvestmentFunction = request.OilTreeWisdomInvestmentFunction?.ToLower() ?? "sqrt";
+                existingConfig.OliveTreeWisdomNotInvestment = request.OliveTreeWisdomNotInvestment;
+                existingConfig.OliveTreeWisdomInvestmentFunction = request.OliveTreeWisdomInvestmentFunction?.ToLower() ?? "sqrt";
                 existingConfig.SafePathWisdom = request.SafePathWisdom;
                 existingConfig.UncertainPathWisdom = request.UncertainPathWisdom;
                 existingConfig.UncertainPathWisdomSmallPlank = request.UncertainPathWisdomSmallPlank;
@@ -181,7 +181,7 @@ public class AdminController : ControllerBase
             _logger.LogInformation("Configuration RESET request from IP: {ClientIP}", 
                 HttpContext.Connection.RemoteIpAddress?.ToString());
 
-            var existingConfig = await _context.GameConfigurations.FirstOrDefaultAsync();
+            var existingConfig = await _context.GameConfigurations.OrderBy(c => c.Id).FirstOrDefaultAsync();
             
             if (existingConfig == null)
             {
@@ -193,8 +193,8 @@ public class AdminController : ControllerBase
             existingConfig.MirrorWisdomIfWaits = 50;
             existingConfig.MirrorWisdomIfRisksCorrectly = 75;
             existingConfig.MirrorWisdomIfRisksFalsely = 25;
-            existingConfig.OilTreeWisdomNotInvestment = 50;
-            existingConfig.OilTreeWisdomInvestmentFunction = "sqrt";
+            existingConfig.OliveTreeWisdomNotInvestment = 50;
+            existingConfig.OliveTreeWisdomInvestmentFunction = "sqrt";
             existingConfig.SafePathWisdom = 10;
             existingConfig.UncertainPathWisdom = 25;
             existingConfig.UncertainPathWisdomSmallPlank = 15;
