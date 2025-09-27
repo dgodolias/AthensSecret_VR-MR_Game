@@ -4,7 +4,11 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
-var builder = WebApplication.CreateBuilder(args);
+var builder = WebApplication.CreateBuilder(new WebApplicationOptions
+{
+    Args = args,
+    WebRootPath = null // Disable default wwwroot behavior
+});
 
 // Add services to the container
 var connectionString = Environment.GetEnvironmentVariable("DATABASE_URL") 
@@ -47,6 +51,14 @@ builder.Services.AddCors(options =>
               .AllowAnyMethod()
               .AllowAnyHeader();
     });
+    
+    options.AddPolicy("SameOrigin", policy =>
+    {
+        policy.AllowAnyMethod()
+              .AllowAnyHeader()
+              .SetIsOriginAllowed(origin => true)
+              .AllowCredentials();
+    });
 });
 
 var app = builder.Build();
@@ -57,17 +69,39 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
+// Enable static files from multiple locations
+var contentRoot = builder.Environment.ContentRootPath;
+var registrationFormPath = Path.Combine(contentRoot, "..", "..", "registration_form");
+var frontendV2Path = Path.Combine(contentRoot, "..", "..", "frontend_v2");
+
+// Set default files BEFORE UseStaticFiles
+app.UseDefaultFiles(new DefaultFilesOptions
+{
+    FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(
+        Path.GetFullPath(registrationFormPath)),
+    DefaultFileNames = new List<string> { "registration_form.html" }
+});
+
+// Serve registration form at root path
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(
+        Path.GetFullPath(registrationFormPath)),
+    RequestPath = ""
+});
+
+// Serve frontend_v2 at /frontend_v2 path
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(
+        Path.GetFullPath(frontendV2Path)),
+    RequestPath = "/frontend_v2"
+});
+
 app.UseHttpsRedirection();
 
-// Use different CORS policy based on environment
-if (app.Environment.IsDevelopment())
-{
-    app.UseCors("AllowAll");
-}
-else
-{
-    app.UseCors("AllowAllOrigins");
-}
+// Use CORS policy
+app.UseCors("SameOrigin");
 
 app.MapControllers();
 
