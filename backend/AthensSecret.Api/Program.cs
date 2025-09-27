@@ -71,8 +71,15 @@ if (app.Environment.IsDevelopment())
 
 // Enable static files from multiple locations
 var contentRoot = builder.Environment.ContentRootPath;
-var registrationFormPath = Path.Combine(contentRoot, "..", "..", "registration_form");
-var frontendV2Path = Path.Combine(contentRoot, "..", "..", "frontend_v2");
+
+// Paths work both locally (../../) and in Docker (direct paths)
+var registrationFormPath = Directory.Exists(Path.Combine(contentRoot, "..", "..", "registration_form"))
+    ? Path.Combine(contentRoot, "..", "..", "registration_form")
+    : Path.Combine(contentRoot, "registration_form");
+
+var frontendV2Path = Directory.Exists(Path.Combine(contentRoot, "..", "..", "frontend_v2"))
+    ? Path.Combine(contentRoot, "..", "..", "frontend_v2")
+    : Path.Combine(contentRoot, "frontend_v2");
 
 // Set default files BEFORE UseStaticFiles
 app.UseDefaultFiles(new DefaultFilesOptions
