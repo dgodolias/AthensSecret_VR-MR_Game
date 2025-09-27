@@ -725,7 +725,7 @@
             submitBtn.textContent = 'Υποβολή...';
             
             try {
-                const response = await fetch('http://localhost:5182/api/player/register', {
+                const response = await fetch('/api/player/register', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
