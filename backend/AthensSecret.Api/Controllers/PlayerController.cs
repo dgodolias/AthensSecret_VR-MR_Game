@@ -24,8 +24,9 @@ public class PlayerController : ControllerBase
     {
         try
         {
-            // Check if email already exists
-            if (await _context.Players.AnyAsync(p => p.Email == request.Email))
+            // Check if email already exists (only if email is provided)
+            if (!string.IsNullOrWhiteSpace(request.Email) && 
+                await _context.Players.AnyAsync(p => p.Email == request.Email))
             {
                 return BadRequest(new { message = "Email already exists" });
             }
@@ -35,7 +36,7 @@ public class PlayerController : ControllerBase
             {
                 FirstName = request.FirstName,
                 LastName = request.LastName,
-                Email = request.Email,
+                Email = string.IsNullOrWhiteSpace(request.Email) ? null : request.Email,
                 Age = request.Age
             };
 

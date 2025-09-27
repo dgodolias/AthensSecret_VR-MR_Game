@@ -5,7 +5,7 @@ public class PlayerRegistrationRequest
 {
     public required string FirstName { get; set; }
     public required string LastName { get; set; }
-    public required string Email { get; set; }
+    public string? Email { get; set; }  // Email is now optional
     public int Age { get; set; }
     public int Q1 { get; set; }  // Patience (1-10)
     public int Q2 { get; set; }  // Risk tolerance (1-10)
@@ -16,7 +16,7 @@ public class PlayerRegistrationResponse
     public int PlayerId { get; set; }
     public required string FirstName { get; set; }
     public required string LastName { get; set; }
-    public required string Email { get; set; }
+    public string? Email { get; set; }  // Email is now optional
     public int Age { get; set; }
     public string Message { get; set; } = "Registration successful";
 }

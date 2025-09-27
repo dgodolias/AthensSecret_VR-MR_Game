@@ -543,8 +543,8 @@
 
             <div class="form-row">
                 <div class="form-group">
-                    <label for="email">Email <span class="required">*</span></label>
-                    <input type="email" id="email" name="email" required>
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email">
                     <div class="error-message">Παρακαλώ εισάγετε έγκυρο email</div>
                 </div>
                 
@@ -705,10 +705,11 @@
             }
             
             // Prepare data
+            const emailValue = document.getElementById('email').value.trim();
             const formData = {
                 firstName: document.getElementById('firstName').value.trim(),
                 lastName: document.getElementById('lastName').value.trim(),
-                email: document.getElementById('email').value.trim(),
+                email: emailValue || null,  // Send null if email is empty
                 age: parseInt(document.getElementById('age').value),
                 q1: parseInt(document.getElementById('q1').value),  // Patience
                 q2: parseInt(document.getElementById('q2').value)   // Risk tolerance

@@ -5,7 +5,7 @@ public class Player
     public int Id { get; set; }
     public required string FirstName { get; set; }
     public required string LastName { get; set; }
-    public required string Email { get; set; }
+    public string? Email { get; set; }  // Email is now optional
     public int Age { get; set; }
     
     // Navigation properties
