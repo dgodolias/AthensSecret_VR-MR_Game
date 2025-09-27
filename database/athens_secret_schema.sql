@@ -11,12 +11,12 @@ CREATE TABLE PLAYER (
 
 -- ====================================================================================
 -- 2. RESPONSES TABLE (One-to-One with PLAYER)
+-- Q1 = Patience, Q2 = Risk (mapped to ResponsesStatistics table)
 -- ====================================================================================
 CREATE TABLE RESPONSES (
     player_id INTEGER PRIMARY KEY,
-    Q1 INTEGER NOT NULL,
-    Q2 INTEGER NOT NULL,
-    Q3 INTEGER NOT NULL,
+    Q1 INTEGER NOT NULL,    -- Patience (1-10)
+    Q2 INTEGER NOT NULL,    -- Risk tolerance (1-10)
     
     FOREIGN KEY (player_id) REFERENCES PLAYER(id) ON DELETE CASCADE
 );
@@ -141,4 +141,5 @@ DELETE FROM MIRRORS_TRIAL;
 DELETE FROM GAME_SESSIONS;
 DELETE FROM PLAYER;
 DELETE FROM GAME_CONFIGURATION;
+DELETE FROM RESPONSES_STATISTICS;
 

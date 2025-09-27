@@ -41,9 +41,8 @@ public class ApiDbContext : DbContext
             entity.ToTable("responses");
             entity.HasKey(r => r.PlayerId);
             entity.Property(r => r.PlayerId).HasColumnName("player_id");
-            entity.Property(r => r.Q1).HasColumnName("q1");
-            entity.Property(r => r.Q2).HasColumnName("q2");
-            entity.Property(r => r.Q3).HasColumnName("q3");
+            entity.Property(r => r.Q1).HasColumnName("q1");  // Patience
+            entity.Property(r => r.Q2).HasColumnName("q2");  // Risk tolerance
             entity.HasOne(r => r.Player)
                   .WithOne(p => p.Response)
                   .HasForeignKey<Response>(r => r.PlayerId)

@@ -456,8 +456,7 @@ public class GameController : ControllerBase
             playerResponses = new
             {
                 Q1_Patience = response.Q1,
-                Q2_Risk = response.Q2,
-                Q3 = response.Q3
+                Q2_Risk = response.Q2
             },
             expectedForAge = new
             {

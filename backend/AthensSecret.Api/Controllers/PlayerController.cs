@@ -46,9 +46,8 @@ public class PlayerController : ControllerBase
             var response = new Response
             {
                 PlayerId = player.Id,
-                Q1 = request.Q1,
-                Q2 = request.Q2,
-                Q3 = request.Q3
+                Q1 = request.Q1,  // Patience
+                Q2 = request.Q2   // Risk tolerance
             };
 
             _context.Responses.Add(response);
@@ -133,9 +132,8 @@ public class PlayerController : ControllerBase
                 TotalSessions = player.GameSessions.Count,
                 Responses = player.Response != null ? new
                 {
-                    Q1 = player.Response.Q1,
-                    Q2 = player.Response.Q2,
-                    Q3 = player.Response.Q3
+                    Q1_Patience = player.Response.Q1,
+                    Q2_Risk = player.Response.Q2
                 } : null
             });
         }

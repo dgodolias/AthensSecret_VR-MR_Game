@@ -7,9 +7,8 @@ public class PlayerRegistrationRequest
     public required string LastName { get; set; }
     public required string Email { get; set; }
     public int Age { get; set; }
-    public int Q1 { get; set; }
-    public int Q2 { get; set; }
-    public int Q3 { get; set; }
+    public int Q1 { get; set; }  // Patience (1-10)
+    public int Q2 { get; set; }  // Risk tolerance (1-10)
 }
 
 public class PlayerRegistrationResponse
