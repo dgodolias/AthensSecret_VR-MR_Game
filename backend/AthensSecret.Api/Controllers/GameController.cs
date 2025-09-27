@@ -2,6 +2,7 @@ using AthensSecret.Api.Data;
 using AthensSecret.Api.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace AthensSecret.Api.Controllers;
 
@@ -10,22 +11,38 @@ namespace AthensSecret.Api.Controllers;
 public class GameController : ControllerBase
 {
     private readonly ApiDbContext _context;
+    private readonly ILogger<GameController> _logger;
 
-    public GameController(ApiDbContext context)
+    public GameController(ApiDbContext context, ILogger<GameController> logger)
     {
         _context = context;
+        _logger = logger;
     }
 
     // Start a new game session
     [HttpPost("start")]
+    [EnableRateLimiting("ApiPolicy")]
     public async Task<IActionResult> StartGame([FromQuery] int playerId)
     {
-        // Check if player exists
-        var player = await _context.Players.FindAsync(playerId);
-        if (player == null)
+        try
         {
-            return NotFound(new { message = "Player not found" });
-        }
+            _logger.LogInformation("Game start attempt for PlayerId: {PlayerId} from IP: {ClientIP}", 
+                playerId, HttpContext.Connection.RemoteIpAddress?.ToString());
+
+            // Validate player ID
+            if (playerId <= 0)
+            {
+                _logger.LogWarning("Invalid PlayerId provided: {PlayerId}", playerId);
+                return BadRequest(new { message = "Invalid Player ID" });
+            }
+
+            // Check if player exists
+            var player = await _context.Players.FindAsync(playerId);
+            if (player == null)
+            {
+                _logger.LogWarning("Player not found: {PlayerId}", playerId);
+                return NotFound(new { message = "Player not found" });
+            }
 
         // Check if player already has an active session (EndedAt is null)
         var activeSession = await _context.GameSessions
@@ -44,19 +61,29 @@ public class GameController : ControllerBase
             EndedAt = null
         };
 
-        _context.GameSessions.Add(gameSession);
-        await _context.SaveChangesAsync();
+            _context.GameSessions.Add(gameSession);
+            await _context.SaveChangesAsync();
 
-        return Ok(new
+            _logger.LogInformation("Game session started successfully: SessionId={SessionId}, PlayerId={PlayerId}", 
+                gameSession.Id, playerId);
+
+            return Ok(new
+            {
+                sessionId = gameSession.Id,
+                playerId = gameSession.PlayerId,
+                startedAt = gameSession.StartedAt
+            });
+        }
+        catch (Exception ex)
         {
-            sessionId = gameSession.Id,
-            playerId = gameSession.PlayerId,
-            startedAt = gameSession.StartedAt
-        });
+            _logger.LogError(ex, "Failed to start game session for PlayerId: {PlayerId}", playerId);
+            return StatusCode(500, new { message = "Failed to start game session" });
+        }
     }
 
     // End a game session
     [HttpPost("end")]
+    [EnableRateLimiting("ApiPolicy")]
     public async Task<IActionResult> EndGame([FromQuery] int sessionId, [FromQuery] int playerId)
     {
         var gameSession = await _context.GameSessions
@@ -81,6 +108,7 @@ public class GameController : ControllerBase
 
     // Get game session info
     [HttpGet("session/{sessionId}")]
+    [EnableRateLimiting("ApiPolicy")]
     public async Task<IActionResult> GetGameSession(int sessionId, [FromQuery] int playerId)
     {
         var gameSession = await _context.GameSessions

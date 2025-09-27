@@ -2,6 +2,7 @@ using AthensSecret.Api.Data;
 using AthensSecret.Api.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace AthensSecret.Api.Controllers;
 
@@ -10,20 +11,67 @@ namespace AthensSecret.Api.Controllers;
 public class PlayerController : ControllerBase
 {
     private readonly ApiDbContext _context;
+    private readonly ILogger<PlayerController> _logger;
 
-    public PlayerController(ApiDbContext context)
+    public PlayerController(ApiDbContext context, ILogger<PlayerController> logger)
     {
         _context = context;
+        _logger = logger;
     }
 
     /// <summary>
     /// Register a new player with webform data (no password needed)
     /// </summary>
     [HttpPost("register")]
+    [EnableRateLimiting("ApiPolicy")]
     public async Task<IActionResult> RegisterPlayer([FromBody] PlayerRegistrationRequest request)
     {
         try
         {
+            _logger.LogInformation("Player registration attempt from IP: {ClientIP}", 
+                HttpContext.Connection.RemoteIpAddress?.ToString());
+
+            // Input validation
+            if (request == null)
+            {
+                _logger.LogWarning("Invalid registration request: null request data");
+                return BadRequest(new { message = "Invalid request data" });
+            }
+
+            // Validate required fields
+            if (string.IsNullOrWhiteSpace(request.FirstName))
+                return BadRequest(new { message = "First name is required" });
+            
+            if (string.IsNullOrWhiteSpace(request.LastName))
+                return BadRequest(new { message = "Last name is required" });
+            
+            if (request.Age < 18 || request.Age > 120)
+                return BadRequest(new { message = "Age must be between 18 and 120" });
+            
+            if (request.Q1 < 1 || request.Q1 > 10)
+                return BadRequest(new { message = "Q1 must be between 1 and 10" });
+            
+            if (request.Q2 < 1 || request.Q2 > 10)
+                return BadRequest(new { message = "Q2 must be between 1 and 10" });
+
+            // Validate string lengths
+            if (request.FirstName.Length > 100)
+                return BadRequest(new { message = "First name too long" });
+            
+            if (request.LastName.Length > 100)
+                return BadRequest(new { message = "Last name too long" });
+
+            // Validate email format if provided
+            if (!string.IsNullOrWhiteSpace(request.Email))
+            {
+                var emailRegex = new System.Text.RegularExpressions.Regex(@"^[^\s@]+@[^\s@]+\.[^\s@]+$");
+                if (!emailRegex.IsMatch(request.Email))
+                    return BadRequest(new { message = "Invalid email format" });
+                
+                if (request.Email.Length > 200)
+                    return BadRequest(new { message = "Email too long" });
+            }
+
             // Check if email already exists (only if email is provided)
             if (!string.IsNullOrWhiteSpace(request.Email) && 
                 await _context.Players.AnyAsync(p => p.Email == request.Email))
@@ -31,12 +79,17 @@ public class PlayerController : ControllerBase
                 return BadRequest(new { message = "Email already exists" });
             }
 
+            // Sanitize input to prevent injection attacks
+            var sanitizedFirstName = request.FirstName.Trim();
+            var sanitizedLastName = request.LastName.Trim();
+            var sanitizedEmail = string.IsNullOrWhiteSpace(request.Email) ? null : request.Email.Trim().ToLowerInvariant();
+
             // Create new player
             var player = new Player
             {
-                FirstName = request.FirstName,
-                LastName = request.LastName,
-                Email = string.IsNullOrWhiteSpace(request.Email) ? null : request.Email,
+                FirstName = sanitizedFirstName,
+                LastName = sanitizedLastName,
+                Email = sanitizedEmail,
                 Age = request.Age
             };
 
@@ -54,6 +107,9 @@ public class PlayerController : ControllerBase
             _context.Responses.Add(response);
             await _context.SaveChangesAsync();
 
+            _logger.LogInformation("Player registration successful: PlayerId={PlayerId}, Email={Email}", 
+                player.Id, sanitizedEmail ?? "none");
+
             return Ok(new PlayerRegistrationResponse
             {
                 PlayerId = player.Id,
@@ -66,7 +122,16 @@ public class PlayerController : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(500, new { message = "Internal server error", details = ex.Message });
+            _logger.LogError(ex, "Player registration failed for IP: {ClientIP}", 
+                HttpContext.Connection.RemoteIpAddress?.ToString());
+
+            // Log the error but don't expose internal details in production
+            if (HttpContext.RequestServices.GetService<IWebHostEnvironment>()?.IsDevelopment() == true)
+            {
+                return StatusCode(500, new { message = $"Registration failed: {ex.Message}" });
+            }
+            
+            return StatusCode(500, new { message = "Registration failed. Please try again later." });
         }
     }
 
@@ -140,7 +205,11 @@ public class PlayerController : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(500, new { message = "Internal server error", details = ex.Message });
+            // Log the actual exception for debugging (in real app, use proper logging)
+            Console.WriteLine($"GetPlayer error: {ex.Message}");
+            
+            // Hide sensitive details in production
+            return StatusCode(500, new { message = "Internal server error" });
         }
     }
 }

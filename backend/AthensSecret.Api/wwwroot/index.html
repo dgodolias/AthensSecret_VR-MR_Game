@@ -737,11 +737,25 @@
                 
                 if (response.ok) {
                     resultSection.classList.remove('error');
-                    resultText.innerHTML = `
-                        <strong>Επιτυχής εγγραφή!</strong><br>
-                        Το Player ID σας είναι: <strong>${result.playerId}</strong><br>
-                        Παρακαλώ σημειώστε αυτό τον αριθμό για να συνδεθείτε στο παιχνίδι.
-                    `;
+                    // Use safe DOM manipulation instead of innerHTML
+                    resultText.innerHTML = ''; // Clear first
+                    
+                    const successMsg = document.createElement('div');
+                    successMsg.innerHTML = '<strong>Επιτυχής εγγραφή!</strong><br>';
+                    
+                    const idMsg = document.createElement('div');
+                    idMsg.innerHTML = 'Το Player ID σας είναι: ';
+                    const idSpan = document.createElement('strong');
+                    idSpan.textContent = result.playerId; // Safe text content
+                    idMsg.appendChild(idSpan);
+                    idMsg.innerHTML += '<br>';
+                    
+                    const noteMsg = document.createElement('div');
+                    noteMsg.textContent = 'Παρακαλώ σημειώστε αυτό τον αριθμό για να συνδεθείτε στο παιχνίδι.';
+                    
+                    resultText.appendChild(successMsg);
+                    resultText.appendChild(idMsg);
+                    resultText.appendChild(noteMsg);
                     
                     // Reset form
                     document.getElementById('registrationForm').reset();
@@ -755,10 +769,15 @@
                 
             } catch (error) {
                 resultSection.classList.add('error');
-                resultText.innerHTML = `
-                    <strong>Σφάλμα:</strong> ${error.message}<br>
-                    Παρακαλώ δοκιμάστε ξανά ή επικοινωνήστε με τον διαχειριστή.
-                `;
+                // Safe error message handling
+                resultText.innerHTML = '';
+                const errorDiv = document.createElement('div');
+                errorDiv.innerHTML = '<strong>Σφάλμα:</strong> ';
+                const errorMsg = document.createElement('span');
+                errorMsg.textContent = error.message;
+                errorDiv.appendChild(errorMsg);
+                errorDiv.innerHTML += '<br>Παρακαλώ δοκιμάστε ξανά ή επικοινωνήστε με τον διαχειριστή.';
+                resultText.appendChild(errorDiv);
             } finally {
                 submitBtn.disabled = false;
                 submitBtn.classList.remove('loading');
