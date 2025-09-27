@@ -98,7 +98,11 @@ app.UseStaticFiles(new StaticFileOptions
     RequestPath = "/frontend_v2"
 });
 
-app.UseHttpsRedirection();
+// Only use HTTPS redirection in production
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 
 // Use CORS policy
 app.UseCors("SameOrigin");
