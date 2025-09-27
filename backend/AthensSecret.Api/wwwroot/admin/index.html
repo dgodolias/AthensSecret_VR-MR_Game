@@ -481,11 +481,12 @@
             <h2 class="login-title"><i class="fas fa-shield-alt"></i> Admin Access</h2>
             <p style="margin-bottom: 20px; color: #666;">Εισάγετε το admin key για πρόσβαση:</p>
             <div class="login-input-container">
-                <input type="password" id="adminKeyInput" class="login-input" placeholder="Admin Key" autocomplete="off">
+                <input type="password" id="adminKeyInput" class="login-input" placeholder="Admin Key (English only)" autocomplete="off">
                 <button type="button" id="passwordToggle" class="password-toggle" title="Εμφάνιση/Απόκρυψη κωδικού">
                     <i class="fas fa-eye"></i>
                 </button>
             </div>
+            <p style="margin-bottom: 15px; color: #999; font-size: 12px;">Μόνο αγγλικοί χαρακτήρες, αριθμοί και σύμβολα _ -</p>
             <button id="loginBtn" class="login-btn">
                 <i class="fas fa-key"></i> Σύνδεση
             </button>
@@ -664,6 +665,12 @@
                 return;
             }
 
+            // Validate that key contains only ASCII characters (English only)
+            if (!/^[a-zA-Z0-9_\-]+$/.test(enteredKey)) {
+                showLoginError('Το admin key πρέπει να περιέχει μόνο αγγλικούς χαρακτήρες, αριθμούς και _ -');
+                return;
+            }
+
             // Save key and try to load configuration
             adminKey = enteredKey;
             localStorage.setItem('adminKey', adminKey);
@@ -709,6 +716,16 @@
             adminKeyInput.addEventListener('keypress', function(e) {
                 if (e.key === 'Enter') {
                     handleLogin();
+                }
+            });
+
+            // Prevent non-ASCII characters in admin key input
+            adminKeyInput.addEventListener('input', function(e) {
+                const value = e.target.value;
+                const validValue = value.replace(/[^a-zA-Z0-9_\-]/g, '');
+                if (value !== validValue) {
+                    e.target.value = validValue;
+                    showLoginError('Μόνο αγγλικοί χαρακτήρες, αριθμοί και _ - επιτρέπονται');
                 }
             });
 
