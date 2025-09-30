@@ -543,9 +543,9 @@
 
             <div class="form-row">
                 <div class="form-group">
-                    <label for="email">Email</label>
-                    <input type="email" id="email" name="email">
-                    <div class="error-message">Παρακαλώ εισάγετε έγκυρο email</div>
+                    <label for="email">Email (προαιρετικό)</label>
+                    <input type="email" id="email" name="email" placeholder="Προαιρετικό - αφήστε κενό αν δεν θέλετε">
+                    <div class="error-message">Παρακαλώ εισάγετε έγκυρο email ή αφήστε το κενό</div>
                 </div>
                 
                 <div class="form-group">
@@ -673,7 +673,7 @@
             
             // Validate form
             let isValid = true;
-            const requiredFields = ['firstName', 'lastName', 'email', 'age'];
+            const requiredFields = ['firstName', 'lastName', 'age']; // Email is now optional
             
             requiredFields.forEach(fieldId => {
                 const field = document.getElementById(fieldId);
@@ -685,10 +685,10 @@
                 }
             });
             
-            // Validate email format
+            // Validate email format only if provided
             const email = document.getElementById('email');
             const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (email.value && !emailPattern.test(email.value)) {
+            if (email.value.trim() && !emailPattern.test(email.value.trim())) {
                 email.closest('.form-group').classList.add('error');
                 isValid = false;
             }

@@ -174,8 +174,8 @@
             </div>
             
             <div class="form-group">
-                <label for="email">Email:</label>
-                <input type="email" id="email" value="johndoe@mail.com" required>
+                <label for="email">Email (προαιρετικό):</label>
+                <input type="email" id="email" value="" placeholder="Προαιρετικό - αφήστε κενό αν δεν θέλετε">
             </div>
             
             <div class="form-group">
@@ -340,10 +340,11 @@
             const q3 = parseInt(document.getElementById('q3').value);
             
             // Combine player data and responses in single request
+            // Send null for email if it's empty
             const registrationData = {
                 firstName: firstName,
                 lastName: lastName,
-                email: email,
+                email: email.trim() === '' ? null : email,
                 age: age,
                 q1: q1,
                 q2: q2,
