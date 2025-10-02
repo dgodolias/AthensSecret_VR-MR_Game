@@ -16,4 +16,5 @@ public class GameConfiguration
     public int UncertainPathWisdomSmallPlank { get; set; }
     public int UncertainPathWisdomMediumPlank { get; set; }
     public int UncertainPathWisdomBigPlank { get; set; }
+    public int UnlockWisdomHiddenRoom { get; set; }
 }

@@ -66,6 +66,7 @@ public class ApiDbContext : DbContext
             entity.Property(gc => gc.UncertainPathWisdomSmallPlank).HasColumnName("uncertainpathwisdomsmallplank");
             entity.Property(gc => gc.UncertainPathWisdomMediumPlank).HasColumnName("uncertainpathwisdommediumplank");
             entity.Property(gc => gc.UncertainPathWisdomBigPlank).HasColumnName("uncertainpathwisdombigplank");
+            entity.Property(gc => gc.UnlockWisdomHiddenRoom).HasColumnName("unlockwisdomhiddenroom");
         });
 
         // Configure GameSession - map to game_sessions table

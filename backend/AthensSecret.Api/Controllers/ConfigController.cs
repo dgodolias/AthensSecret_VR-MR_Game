@@ -40,7 +40,8 @@ public class ConfigController : ControllerBase
             uncertainPathWisdom = config.UncertainPathWisdom,
             uncertainPathWisdomSmallPlank = config.UncertainPathWisdomSmallPlank,
             uncertainPathWisdomMediumPlank = config.UncertainPathWisdomMediumPlank,
-            uncertainPathWisdomBigPlank = config.UncertainPathWisdomBigPlank
+            uncertainPathWisdomBigPlank = config.UncertainPathWisdomBigPlank,
+            unlockWisdomHiddenRoom = config.UnlockWisdomHiddenRoom
         });
     }
 
@@ -68,7 +69,8 @@ public class ConfigController : ControllerBase
             uncertainPathWisdom = config.UncertainPathWisdom,
             uncertainPathWisdomSmallPlank = config.UncertainPathWisdomSmallPlank,
             uncertainPathWisdomMediumPlank = config.UncertainPathWisdomMediumPlank,
-            uncertainPathWisdomBigPlank = config.UncertainPathWisdomBigPlank
+            uncertainPathWisdomBigPlank = config.UncertainPathWisdomBigPlank,
+            unlockWisdomHiddenRoom = config.UnlockWisdomHiddenRoom
         });
     }
 
@@ -88,7 +90,8 @@ public class ConfigController : ControllerBase
             UncertainPathWisdom = request.UncertainPathWisdom,
             UncertainPathWisdomSmallPlank = request.UncertainPathWisdomSmallPlank,
             UncertainPathWisdomMediumPlank = request.UncertainPathWisdomMediumPlank,
-            UncertainPathWisdomBigPlank = request.UncertainPathWisdomBigPlank
+            UncertainPathWisdomBigPlank = request.UncertainPathWisdomBigPlank,
+            UnlockWisdomHiddenRoom = request.UnlockWisdomHiddenRoom
         };
 
         _context.GameConfigurations.Add(config);
@@ -107,7 +110,8 @@ public class ConfigController : ControllerBase
             uncertainPathWisdom = config.UncertainPathWisdom,
             uncertainPathWisdomSmallPlank = config.UncertainPathWisdomSmallPlank,
             uncertainPathWisdomMediumPlank = config.UncertainPathWisdomMediumPlank,
-            uncertainPathWisdomBigPlank = config.UncertainPathWisdomBigPlank
+            uncertainPathWisdomBigPlank = config.UncertainPathWisdomBigPlank,
+            unlockWisdomHiddenRoom = config.UnlockWisdomHiddenRoom
         });
     }
 
@@ -133,6 +137,7 @@ public class ConfigController : ControllerBase
         config.UncertainPathWisdomSmallPlank = request.UncertainPathWisdomSmallPlank;
         config.UncertainPathWisdomMediumPlank = request.UncertainPathWisdomMediumPlank;
         config.UncertainPathWisdomBigPlank = request.UncertainPathWisdomBigPlank;
+        config.UnlockWisdomHiddenRoom = request.UnlockWisdomHiddenRoom;
 
         await _context.SaveChangesAsync();
 
@@ -149,7 +154,8 @@ public class ConfigController : ControllerBase
             uncertainPathWisdom = config.UncertainPathWisdom,
             uncertainPathWisdomSmallPlank = config.UncertainPathWisdomSmallPlank,
             uncertainPathWisdomMediumPlank = config.UncertainPathWisdomMediumPlank,
-            uncertainPathWisdomBigPlank = config.UncertainPathWisdomBigPlank
+            uncertainPathWisdomBigPlank = config.UncertainPathWisdomBigPlank,
+            unlockWisdomHiddenRoom = config.UnlockWisdomHiddenRoom
         });
     }
 
@@ -188,7 +194,8 @@ public class ConfigController : ControllerBase
                 uncertainPathWisdom = c.UncertainPathWisdom,
                 uncertainPathWisdomSmallPlank = c.UncertainPathWisdomSmallPlank,
                 uncertainPathWisdomMediumPlank = c.UncertainPathWisdomMediumPlank,
-                uncertainPathWisdomBigPlank = c.UncertainPathWisdomBigPlank
+                uncertainPathWisdomBigPlank = c.UncertainPathWisdomBigPlank,
+                unlockWisdomHiddenRoom = c.UnlockWisdomHiddenRoom
             })
             .ToListAsync();
 
@@ -210,4 +217,5 @@ public class GameConfigurationRequest
     public int UncertainPathWisdomSmallPlank { get; set; }
     public int UncertainPathWisdomMediumPlank { get; set; }
     public int UncertainPathWisdomBigPlank { get; set; }
+    public int UnlockWisdomHiddenRoom { get; set; }
 }

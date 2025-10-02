@@ -38,7 +38,8 @@ CREATE TABLE GAME_CONFIGURATION (
     UncertainPathWisdom INTEGER NOT NULL,
     UncertainPathWisdomSmallPlank INTEGER NOT NULL,
     UncertainPathWisdomMediumPlank INTEGER NOT NULL,
-    UncertainPathWisdomBigPlank INTEGER NOT NULL
+    UncertainPathWisdomBigPlank INTEGER NOT NULL,
+    UnlockWisdomHiddenRoom INTEGER NOT NULL
 );
 
 -- ====================================================================================
@@ -103,12 +104,12 @@ INSERT INTO GAME_CONFIGURATION (
     StartingWisdom, MirrorWisdomIfWaits, MirrorWisdomIfRisksCorrectly,
     MirrorWisdomIfRisksFalsely, OliveTreeWisdomNotInvestment, OliveTreeWisdomInvestmentFunction,
     SafePathWisdom, UncertainPathWisdom, UncertainPathWisdomSmallPlank,
-    UncertainPathWisdomMediumPlank, UncertainPathWisdomBigPlank
+    UncertainPathWisdomMediumPlank, UncertainPathWisdomBigPlank, UnlockWisdomHiddenRoom
 ) VALUES (
     50, 50, 75,
     25, 50, 'sqrt',
     10, 25, 15,
-    25, 40
+    25, 40, 100
 );
 
 -- ====================================================================================
@@ -150,4 +151,48 @@ delete FROM public.olive_tree_trial;
 delete FROM public.path_trial;
 delete FROM public.player;
 delete FROM public.responses;
+
+-- Complete game session details with all related tables
+SELECT 
+    -- Game Session Info
+    gs.id AS session_id,
+    gs.started_at,
+    gs.ended_at,
+    
+    -- Player Info
+    p.id AS player_id,
+    p.first_name,
+    p.last_name,
+    p.email,
+    p.age,
+    
+    -- Player Responses
+    r.q1 AS patience_response,
+    r.q2 AS risk_response,
+    
+    -- Mirrors Trial Info
+    mt.start_time AS mirrors_start,
+    mt.end_time AS mirrors_end,
+    mt.total_gained_wisdom AS mirrors_wisdom,
+    
+    -- Olive Tree Trial Info
+    ot.start_time AS olive_start,
+    ot.end_time AS olive_end,
+    ot.total_gained_wisdom AS olive_wisdom,
+    ot.investment_start_time AS olive_investment_time,
+    
+    -- Path Trial Info
+    pt.start_time AS path_start,
+    pt.end_time AS path_end,
+    pt.total_gained_wisdom AS path_wisdom,
+    pt.safe_path AS path_is_safe
+
+FROM game_sessions gs
+INNER JOIN player p ON gs.player_id = p.id
+LEFT JOIN responses r ON r.player_id = p.id
+LEFT JOIN mirrors_trial mt ON mt.game_session_id = gs.id
+LEFT JOIN olive_tree_trial ot ON ot.game_session_id = gs.id
+LEFT JOIN path_trial pt ON pt.game_session_id = gs.id
+
+WHERE gs.id = 52;
 

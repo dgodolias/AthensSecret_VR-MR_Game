@@ -50,7 +50,8 @@ public class AdminController : ControllerBase
                     UncertainPathWisdom = 25,
                     UncertainPathWisdomSmallPlank = 15,
                     UncertainPathWisdomMediumPlank = 25,
-                    UncertainPathWisdomBigPlank = 40
+                    UncertainPathWisdomBigPlank = 40,
+                    UnlockWisdomHiddenRoom = 100
                 };
                 
                 _context.GameConfigurations.Add(defaultConfig);
@@ -94,7 +95,8 @@ public class AdminController : ControllerBase
                 request.MirrorWisdomIfRisksCorrectly < 0 || request.MirrorWisdomIfRisksFalsely < 0 ||
                 request.OliveTreeWisdomNotInvestment < 0 || request.SafePathWisdom < 0 ||
                 request.UncertainPathWisdom < 0 || request.UncertainPathWisdomSmallPlank < 0 ||
-                request.UncertainPathWisdomMediumPlank < 0 || request.UncertainPathWisdomBigPlank < 0)
+                request.UncertainPathWisdomMediumPlank < 0 || request.UncertainPathWisdomBigPlank < 0 ||
+                request.UnlockWisdomHiddenRoom < 0)
             {
                 return BadRequest(new { message = "Wisdom values cannot be negative" });
             }
@@ -125,7 +127,8 @@ public class AdminController : ControllerBase
                     UncertainPathWisdom = request.UncertainPathWisdom,
                     UncertainPathWisdomSmallPlank = request.UncertainPathWisdomSmallPlank,
                     UncertainPathWisdomMediumPlank = request.UncertainPathWisdomMediumPlank,
-                    UncertainPathWisdomBigPlank = request.UncertainPathWisdomBigPlank
+                    UncertainPathWisdomBigPlank = request.UncertainPathWisdomBigPlank,
+                    UnlockWisdomHiddenRoom = request.UnlockWisdomHiddenRoom
                 };
 
                 _context.GameConfigurations.Add(newConfig);
@@ -148,6 +151,7 @@ public class AdminController : ControllerBase
                 existingConfig.UncertainPathWisdomSmallPlank = request.UncertainPathWisdomSmallPlank;
                 existingConfig.UncertainPathWisdomMediumPlank = request.UncertainPathWisdomMediumPlank;
                 existingConfig.UncertainPathWisdomBigPlank = request.UncertainPathWisdomBigPlank;
+                existingConfig.UnlockWisdomHiddenRoom = request.UnlockWisdomHiddenRoom;
 
                 await _context.SaveChangesAsync();
                 
@@ -200,6 +204,7 @@ public class AdminController : ControllerBase
             existingConfig.UncertainPathWisdomSmallPlank = 15;
             existingConfig.UncertainPathWisdomMediumPlank = 25;
             existingConfig.UncertainPathWisdomBigPlank = 40;
+            existingConfig.UnlockWisdomHiddenRoom = 100;
 
             await _context.SaveChangesAsync();
             

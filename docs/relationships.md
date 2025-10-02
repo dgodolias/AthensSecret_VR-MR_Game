@@ -65,6 +65,7 @@ erDiagram
     int UncertainPathWisdomSmallPlank
     int UncertainPathWisdomMediumPlank
     int UncertainPathWisdomBigPlank
+    int UnlockWisdomHiddenRoom
   }
 
   PLAYER ||--|| RESPONSES : "fills"
