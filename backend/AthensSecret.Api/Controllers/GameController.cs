@@ -76,8 +76,13 @@ public class GameController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to start game session for PlayerId: {PlayerId}", playerId);
-            return StatusCode(500, new { message = "Failed to start game session" });
+            _logger.LogError(ex, "Failed to start game session for PlayerId: {PlayerId}. Error: {ErrorMessage}", 
+                playerId, ex.Message);
+            return StatusCode(500, new { 
+                message = "Failed to start game session", 
+                error = ex.Message,
+                details = ex.InnerException?.Message 
+            });
         }
     }
 

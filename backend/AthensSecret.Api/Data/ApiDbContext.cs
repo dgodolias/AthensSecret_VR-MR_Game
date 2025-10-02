@@ -30,7 +30,7 @@ public class ApiDbContext : DbContext
             entity.Property(p => p.Id).HasColumnName("id");
             entity.Property(p => p.FirstName).HasColumnName("first_name").HasMaxLength(100).IsRequired();
             entity.Property(p => p.LastName).HasColumnName("last_name").HasMaxLength(100).IsRequired();
-            entity.Property(p => p.Email).HasColumnName("email").HasMaxLength(255).IsRequired();
+            entity.Property(p => p.Email).HasColumnName("email").HasMaxLength(255).IsRequired(false); // Email is optional
             entity.Property(p => p.Age).HasColumnName("age").IsRequired();
             entity.HasIndex(p => p.Email).IsUnique();
         });
