@@ -473,46 +473,40 @@ public class GameController : ControllerBase
         var player = gameSession.Player;
         var response = player.Response;
 
-        // Compare Q1 (patience) with expected patience for age
-        string q1Comparison = response.Q1 > ageStats.Patience ? "Higher" : 
-                             response.Q1 < ageStats.Patience ? "Lower" : "Equal";
+        // Generate Greek messages for Q1 (patience)
+        string q1Message;
+        if (response.Q1 > ageStats.Patience)
+        {
+            q1Message = $"Απαντησες {response.Q1}. Εισαι πανω απο τον μεσο ορο της υπομονης για την ηλικία σου!";
+        }
+        else if (response.Q1 < ageStats.Patience)
+        {
+            q1Message = $"Απαντησες {response.Q1}. Εισαι κατω απο τον μεσο ορο της υπομονης για την ηλικία σου!";
+        }
+        else
+        {
+            q1Message = $"Απαντησες {response.Q1}. Εισαι στον μεσο ορο της υπομονης για την ηλικία σου!";
+        }
 
-        // Compare Q2 (risk) with expected risk for age  
-        string q2Comparison = response.Q2 > ageStats.Risk ? "Higher" :
-                             response.Q2 < ageStats.Risk ? "Lower" : "Equal";
+        // Generate Greek messages for Q2 (risk)
+        string q2Message;
+        if (response.Q2 > ageStats.Risk)
+        {
+            q2Message = $"Απαντησες {response.Q2}. Εισαι πανω απο τον μεσο ορο του ρισκου για την ηλικία σου!";
+        }
+        else if (response.Q2 < ageStats.Risk)
+        {
+            q2Message = $"Απαντησες {response.Q2}. Εισαι κατω απο τον μεσο ορο του ρισκου για την ηλικία σου!";
+        }
+        else
+        {
+            q2Message = $"Απαντησες {response.Q2}. Εισαι στον μεσο ορο του ρισκου για την ηλικία σου!";
+        }
 
         return Ok(new
         {
-            sessionId = sessionId,
-            playerId = playerId,
-            playerAge = player.Age,
-            playerResponses = new
-            {
-                Q1_Patience = response.Q1,
-                Q2_Risk = response.Q2
-            },
-            expectedForAge = new
-            {
-                Patience = ageStats.Patience,
-                Risk = ageStats.Risk
-            },
-            comparison = new
-            {
-                Q1_vs_Expected_Patience = new
-                {
-                    PlayerValue = response.Q1,
-                    ExpectedValue = ageStats.Patience,
-                    Comparison = q1Comparison,
-                    Difference = response.Q1 - ageStats.Patience
-                },
-                Q2_vs_Expected_Risk = new
-                {
-                    PlayerValue = response.Q2,
-                    ExpectedValue = ageStats.Risk,
-                    Comparison = q2Comparison,
-                    Difference = response.Q2 - ageStats.Risk
-                }
-            }
+            patienceMessage = q1Message,
+            riskMessage = q2Message
         });
     }
 }
