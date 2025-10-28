@@ -17,6 +17,7 @@ public class ApiDbContext : DbContext
     public DbSet<OliveTreeTrial> OliveTreeTrials { get; set; }
     public DbSet<PathTrial> PathTrials { get; set; }
     public DbSet<ResponsesStatistics> ResponsesStatistics { get; set; }
+    public DbSet<VRParkUser> VRParkUsers { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -141,6 +142,19 @@ public class ApiDbContext : DbContext
             entity.Property(rs => rs.Age).HasColumnName("age");
             entity.Property(rs => rs.Patience).HasColumnName("patience").IsRequired();
             entity.Property(rs => rs.Risk).HasColumnName("risk").IsRequired();
+        });
+
+        // Configure VRParkUser - map to vrpark_users table
+        modelBuilder.Entity<VRParkUser>(entity =>
+        {
+            entity.ToTable("vrpark_users");
+            entity.HasKey(vp => vp.Id);
+            entity.Property(vp => vp.Id).HasColumnName("id");
+            entity.Property(vp => vp.FirstName).HasColumnName("first_name").HasMaxLength(100).IsRequired();
+            entity.Property(vp => vp.LastName).HasColumnName("last_name").HasMaxLength(100).IsRequired();
+            entity.Property(vp => vp.Email).HasColumnName("email").HasMaxLength(255).IsRequired(false);
+            entity.Property(vp => vp.Age).HasColumnName("age").IsRequired();
+            entity.Property(vp => vp.CreatedAt).HasColumnName("created_at");
         });
     }
 }

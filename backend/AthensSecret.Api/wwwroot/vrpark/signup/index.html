@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VR Park - Εγγραφή</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Blurred background image */
+        body::before {
+            content: '';
+            position: fixed;
+            top: -10px;
+            left: -10px;
+            right: -10px;
+            bottom: -10px;
+            background-image: url('/../../park.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            filter: blur(8px);
+            z-index: -2;
+        }
+
+        /* Overlay για καλύτερη αναγνωσιμότητα */
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            z-index: -1;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+        }
+
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #7f8c8d;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #2c3e50;
+            font-weight: 600;
+            font-size: 0.95em;
+        }
+
+        .optional {
+            color: #95a5a6;
+            font-weight: normal;
+            font-size: 0.85em;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #bdc3c7;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+
+        input:invalid:not(:placeholder-shown) {
+            border-color: #e74c3c;
+        }
+
+        input:valid:not(:placeholder-shown) {
+            border-color: #2ecc71;
+        }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+
+        button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            background: #95a5a6;
+            cursor: not-allowed;
+        }
+
+        .message {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: 500;
+            display: none;
+        }
+
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 2px solid #c3e6cb;
+        }
+
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 2px solid #f5c6cb;
+        }
+
+        .user-info {
+            margin-top: 15px;
+            padding: 15px;
+            padding-top: 10px;
+            background: #e8f4f8;
+            border-radius: 8px;
+            display: none;
+            position: relative;
+        }
+
+        .user-info .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: transparent;
+            border: none;
+            font-size: 24px;
+            color: #7f8c8d;
+            cursor: pointer;
+            width: 30px;
+            height: 30px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.2s ease;
+            line-height: 1;
+        }
+
+        .user-info .close-btn:hover {
+            background: rgba(0, 0, 0, 0.1);
+            color: #2c3e50;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .user-info h3 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+            padding-right: 30px;
+        }
+
+        .user-info p {
+            color: #34495e;
+            margin: 5px 0;
+        }
+
+        .user-info strong {
+            color: #2c3e50;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 30px 20px;
+            }
+
+            h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>VR Park</h1>
+        <p class="subtitle">Εγγραφή Χρήστη</p>
+
+        <form id="signupForm">
+            <div class="form-group">
+                <label for="firstName">Όνομα *</label>
+                <input 
+                    type="text" 
+                    id="firstName" 
+                    name="firstName" 
+                    placeholder="π.χ. Γιάννης"
+                    required 
+                    minlength="2"
+                    maxlength="100"
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="lastName">Επίθετο *</label>
+                <input 
+                    type="text" 
+                    id="lastName" 
+                    name="lastName" 
+                    placeholder="π.χ. Παπαδόπουλος"
+                    required 
+                    minlength="2"
+                    maxlength="100"
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email <span class="optional">(προαιρετικό)</span></label>
+                <input 
+                    type="email" 
+                    id="email" 
+                    name="email" 
+                    placeholder="π.χ. example@email.com"
+                    maxlength="255"
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="age">Ηλικία *</label>
+                <input 
+                    type="number" 
+                    id="age" 
+                    name="age" 
+                    placeholder="π.χ. 25"
+                    required 
+                    min="1"
+                    max="120"
+                >
+            </div>
+
+            <button type="submit" id="submitBtn">Εγγραφή</button>
+        </form>
+
+        <div id="message" class="message"></div>
+        <div id="userInfo" class="user-info"></div>
+    </div>
+
+    <script>
+        const form = document.getElementById('signupForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const messageDiv = document.getElementById('message');
+        const userInfoDiv = document.getElementById('userInfo');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            // Get form data
+            const formData = {
+                firstName: document.getElementById('firstName').value.trim(),
+                lastName: document.getElementById('lastName').value.trim(),
+                email: document.getElementById('email').value.trim() || null,
+                age: parseInt(document.getElementById('age').value)
+            };
+
+            // Validate
+            if (!formData.firstName || !formData.lastName || !formData.age) {
+                showMessage('Παρακαλώ συμπληρώστε όλα τα υποχρεωτικά πεδία', 'error');
+                return;
+            }
+
+            // Disable button
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Εγγραφή σε εξέλιξη...';
+
+            try {
+                const response = await fetch('/api/vrpark/signup', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showMessage(data.message || 'Η εγγραφή σας ολοκληρώθηκε επιτυχώς!', 'success');
+                    showUserInfo(data);
+                    form.reset();
+                } else {
+                    showMessage(data.message || 'Σφάλμα κατά την εγγραφή', 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showMessage('Σφάλμα σύνδεσης με τον server', 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Εγγραφή';
+            }
+        });
+
+        function showMessage(text, type) {
+            messageDiv.textContent = text;
+            messageDiv.className = `message ${type}`;
+            messageDiv.style.display = 'block';
+            
+            // Auto hide after 5 seconds
+            setTimeout(() => {
+                messageDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        function showUserInfo(data) {
+            // Handle both camelCase and lowercase property names
+            const userId = data.userId || data.userid || data.UserId;
+            const firstName = data.firstName || data.firstname || data.FirstName;
+            const lastName = data.lastName || data.lastname || data.LastName;
+            const email = data.email || data.Email;
+            const age = data.age || data.Age;
+
+            console.log('Response data:', data); // Debug log
+
+            userInfoDiv.innerHTML = `
+                <button class="close-btn" onclick="closeUserInfo()" title="Κλείσιμο">&times;</button>
+                <h3> Επιτυχής Εγγραφή!</h3>
+                <p><strong>User ID:</strong> ${userId}</p>
+                <p><strong>Όνομα:</strong> ${firstName} ${lastName}</p>
+                ${email ? `<p><strong>Email:</strong> ${email}</p>` : ''}
+                <p><strong>Ηλικία:</strong> ${age} ετών</p>
+            `;
+            userInfoDiv.style.display = 'block';
+        }
+
+        function closeUserInfo() {
+            userInfoDiv.style.display = 'none';
+        }
+    </script>
+</body>
+</html>
