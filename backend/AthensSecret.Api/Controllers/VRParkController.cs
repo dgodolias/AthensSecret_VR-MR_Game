@@ -134,4 +134,140 @@ public class VRParkController : ControllerBase
             return StatusCode(500, new { message = "Σφάλμα επαλήθευσης χρήστη" });
         }
     }
+
+    // Start a new game session
+    [HttpPost("session/start")]
+    [EnableRateLimiting("ApiPolicy")]
+    public async Task<IActionResult> StartGameSession([FromBody] VRParkStartSessionRequest request)
+    {
+        try
+        {
+            _logger.LogInformation("VR Park session start attempt: UserId={UserId}", request.UserId);
+
+            // Validate model
+            if (!ModelState.IsValid)
+            {
+                var errors = ModelState.Values
+                    .SelectMany(v => v.Errors)
+                    .Select(e => e.ErrorMessage)
+                    .ToList();
+                
+                _logger.LogWarning("VR Park session start validation failed: {Errors}", string.Join(", ", errors));
+                return BadRequest(new { message = "Μη έγκυρα δεδομένα", errors });
+            }
+
+            // Verify user exists
+            var userExists = await _context.VRParkUsers.AnyAsync(u => u.Id == request.UserId);
+            if (!userExists)
+            {
+                _logger.LogWarning("VR Park session start failed: User not found - UserId={UserId}", request.UserId);
+                return NotFound(new { message = "Ο χρήστης δεν βρέθηκε" });
+            }
+
+            // Create new game session
+            var gameSession = new VRParkGameSession
+            {
+                UserId = request.UserId,
+                StartedAt = DateTime.UtcNow,
+                EyetrackingSequence = null,
+                EndedAt = null
+            };
+
+            _context.VRParkGameSessions.Add(gameSession);
+            await _context.SaveChangesAsync();
+
+            _logger.LogInformation("VR Park session started successfully: SessionId={SessionId}, UserId={UserId}", 
+                gameSession.Id, gameSession.UserId);
+
+            return Ok(new VRParkStartSessionResponse
+            {
+                SessionId = gameSession.Id,
+                UserId = gameSession.UserId,
+                StartedAt = gameSession.StartedAt,
+                Message = "Το session ξεκίνησε επιτυχώς!"
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "VR Park session start failed: {ErrorMessage}", ex.Message);
+            return StatusCode(500, new
+            {
+                message = "Αποτυχία εκκίνησης session",
+                error = ex.Message
+            });
+        }
+    }
+
+    // End a game session and update with eye tracking data
+    [HttpPost("session/end")]
+    [EnableRateLimiting("ApiPolicy")]
+    public async Task<IActionResult> EndGameSession([FromBody] VRParkEndSessionRequest request)
+    {
+        try
+        {
+            _logger.LogInformation("VR Park session end attempt: SessionId={SessionId}, UserId={UserId}", 
+                request.SessionId, request.UserId);
+
+            // Validate model
+            if (!ModelState.IsValid)
+            {
+                var errors = ModelState.Values
+                    .SelectMany(v => v.Errors)
+                    .Select(e => e.ErrorMessage)
+                    .ToList();
+                
+                _logger.LogWarning("VR Park session end validation failed: {Errors}", string.Join(", ", errors));
+                return BadRequest(new { message = "Μη έγκυρα δεδομένα", errors });
+            }
+
+            // Find the session and verify it belongs to the user
+            var gameSession = await _context.VRParkGameSessions
+                .FirstOrDefaultAsync(gs => gs.Id == request.SessionId && gs.UserId == request.UserId);
+
+            if (gameSession == null)
+            {
+                _logger.LogWarning("VR Park session not found or user mismatch: SessionId={SessionId}, UserId={UserId}", 
+                    request.SessionId, request.UserId);
+                return NotFound(new { message = "Το session δεν βρέθηκε ή δεν ανήκει στον χρήστη" });
+            }
+
+            // Check if session is already ended
+            if (gameSession.EndedAt != null)
+            {
+                _logger.LogWarning("VR Park session already ended: SessionId={SessionId}", request.SessionId);
+                return BadRequest(new { message = "Το session έχει ήδη ολοκληρωθεί" });
+            }
+
+            // Update session
+            gameSession.EndedAt = DateTime.UtcNow;
+            gameSession.EyetrackingSequence = request.EyetrackingSequence;
+
+            await _context.SaveChangesAsync();
+
+            var duration = gameSession.EndedAt.Value - gameSession.StartedAt;
+
+            _logger.LogInformation("VR Park session ended successfully: SessionId={SessionId}, Duration={Duration}s", 
+                gameSession.Id, duration.TotalSeconds);
+
+            return Ok(new VRParkEndSessionResponse
+            {
+                SessionId = gameSession.Id,
+                UserId = gameSession.UserId,
+                EyetrackingSequence = gameSession.EyetrackingSequence,
+                StartedAt = gameSession.StartedAt,
+                EndedAt = gameSession.EndedAt.Value,
+                Duration = duration,
+                Message = "Το session ολοκληρώθηκε επιτυχώς!"
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "VR Park session end failed: {ErrorMessage}", ex.Message);
+            return StatusCode(500, new
+            {
+                message = "Αποτυχία ολοκλήρωσης session",
+                error = ex.Message
+            });
+        }
+    }
 }

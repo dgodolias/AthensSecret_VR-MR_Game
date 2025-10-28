@@ -18,6 +18,7 @@ public class ApiDbContext : DbContext
     public DbSet<PathTrial> PathTrials { get; set; }
     public DbSet<ResponsesStatistics> ResponsesStatistics { get; set; }
     public DbSet<VRParkUser> VRParkUsers { get; set; }
+    public DbSet<VRParkGameSession> VRParkGameSessions { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -155,6 +156,24 @@ public class ApiDbContext : DbContext
             entity.Property(vp => vp.Email).HasColumnName("email").HasMaxLength(255).IsRequired(false);
             entity.Property(vp => vp.Age).HasColumnName("age").IsRequired();
             entity.Property(vp => vp.CreatedAt).HasColumnName("created_at");
+        });
+
+        // Configure VRParkGameSession - map to vrpark_gamesessions table
+        modelBuilder.Entity<VRParkGameSession>(entity =>
+        {
+            entity.ToTable("vrpark_gamesessions");
+            entity.HasKey(vgs => vgs.Id);
+            entity.Property(vgs => vgs.Id).HasColumnName("id");
+            entity.Property(vgs => vgs.UserId).HasColumnName("user_id").IsRequired();
+            entity.Property(vgs => vgs.EyetrackingSequence).HasColumnName("eyetracking_sequence").IsRequired(false);
+            entity.Property(vgs => vgs.StartedAt).HasColumnName("started_at").IsRequired();
+            entity.Property(vgs => vgs.EndedAt).HasColumnName("ended_at").IsRequired(false);
+
+            // Configure foreign key relationship
+            entity.HasOne(vgs => vgs.User)
+                  .WithMany()
+                  .HasForeignKey(vgs => vgs.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }
