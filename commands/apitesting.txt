@@ -10,10 +10,3 @@ Invoke-WebRequest -Uri ".../api/vrpark/signup" -Method POST -Body $body -Content
 
 # 2. GET Request (Verify)
 Invoke-WebRequest -Uri ".../api/vrpark/verify/1" -Method GET # for user with id 1
-
-
-# 3. GET Request (Get All Users)
-Invoke-WebRequest -Uri ".../api/vrpark/users" -Method GET
-
-# 4. GET Request (Get Count)
-Invoke-WebRequest -Uri ".../api/vrpark/count" -Method GET
