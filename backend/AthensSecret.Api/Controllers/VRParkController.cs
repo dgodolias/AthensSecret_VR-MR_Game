@@ -91,47 +91,47 @@ public class VRParkController : ControllerBase
         }
     }
 
-    // Get all VR Park users (optional - για admin purposes)
-    [HttpGet("users")]
-    public async Task<IActionResult> GetAllUsers()
+    // Verify user exists by ID
+    [HttpGet("verify/{userId}")]
+    [EnableRateLimiting("ApiPolicy")]
+    public async Task<IActionResult> VerifyUser(int userId)
     {
         try
         {
-            var users = await _context.VRParkUsers
-                .OrderByDescending(u => u.CreatedAt)
-                .Select(u => new
-                {
-                    u.Id,
-                    u.FirstName,
-                    u.LastName,
-                    u.Email,
-                    u.Age,
-                    u.CreatedAt
-                })
-                .ToListAsync();
+            _logger.LogInformation("VR Park user verification attempt: UserId={UserId}", userId);
 
-            return Ok(users);
+            if (userId <= 0)
+            {
+                _logger.LogWarning("Invalid UserId provided: {UserId}", userId);
+                return BadRequest(new { message = "Μη έγκυρο User ID" });
+            }
+
+            var user = await _context.VRParkUsers.FindAsync(userId);
+
+            if (user == null)
+            {
+                _logger.LogWarning("VR Park user not found: UserId={UserId}", userId);
+                return NotFound(new { message = "Ο χρήστης δεν βρέθηκε" });
+            }
+
+            _logger.LogInformation("VR Park user verified successfully: UserId={UserId}, Name={FirstName} {LastName}", 
+                user.Id, user.FirstName, user.LastName);
+
+            return Ok(new
+            {
+                userId = user.Id,
+                firstName = user.FirstName,
+                lastName = user.LastName,
+                email = user.Email,
+                age = user.Age,
+                createdAt = user.CreatedAt,
+                message = $"Καλώς ήρθες, {user.FirstName}!"
+            });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to retrieve VR Park users: {ErrorMessage}", ex.Message);
-            return StatusCode(500, new { message = "Αποτυχία ανάκτησης χρηστών" });
-        }
-    }
-
-    // Get user count
-    [HttpGet("count")]
-    public async Task<IActionResult> GetUserCount()
-    {
-        try
-        {
-            var count = await _context.VRParkUsers.CountAsync();
-            return Ok(new { totalUsers = count });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to get VR Park user count: {ErrorMessage}", ex.Message);
-            return StatusCode(500, new { message = "Αποτυχία" });
+            _logger.LogError(ex, "VR Park user verification failed: {ErrorMessage}", ex.Message);
+            return StatusCode(500, new { message = "Σφάλμα επαλήθευσης χρήστη" });
         }
     }
 }

@@ -1,0 +1,19 @@
+# 1. POST Request (Signup)
+$body = @{
+    firstName = "Όνομα"
+    lastName = "Επίθετο"
+    email = "email@example.com"
+    age = 25
+} | ConvertTo-Json
+
+Invoke-WebRequest -Uri ".../api/vrpark/signup" -Method POST -Body $body -ContentType "application/json"
+
+# 2. GET Request (Verify)
+Invoke-WebRequest -Uri ".../api/vrpark/verify/7" -Method GET # for user with id 7
+
+
+# 3. GET Request (Get All Users)
+Invoke-WebRequest -Uri ".../api/vrpark/users" -Method GET
+
+# 4. GET Request (Get Count)
+Invoke-WebRequest -Uri ".../api/vrpark/count" -Method GET
