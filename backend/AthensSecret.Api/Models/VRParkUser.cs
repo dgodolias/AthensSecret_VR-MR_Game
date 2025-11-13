@@ -28,6 +28,11 @@ public class VRParkUser
     [Column("age")]
     public int Age { get; set; }
 
+    [Required]
+    [Column("video")]
+    [Range(1, 4)]
+    public int Video { get; set; }
+
     [Column("created_at")]
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
@@ -60,5 +65,6 @@ public class VRParkSignupResponse
     public string LastName { get; set; } = string.Empty;
     public string? Email { get; set; }
     public int Age { get; set; }
+    public int Video { get; set; }
     public string Message { get; set; } = string.Empty;
 }

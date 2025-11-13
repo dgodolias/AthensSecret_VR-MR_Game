@@ -55,20 +55,24 @@ public class VRParkController : ControllerBase
             }
 
             // Create new VR Park user
+            var random = new Random();
+            var randomVideo = random.Next(1, 5); // Random number between 1 and 4
+
             var vrParkUser = new VRParkUser
             {
                 FirstName = request.FirstName.Trim(),
                 LastName = request.LastName.Trim(),
                 Email = string.IsNullOrWhiteSpace(request.Email) ? null : request.Email.Trim(),
                 Age = request.Age,
+                Video = randomVideo,
                 CreatedAt = DateTime.UtcNow
             };
 
             _context.VRParkUsers.Add(vrParkUser);
             await _context.SaveChangesAsync();
 
-            _logger.LogInformation("VR Park user created successfully: UserId={UserId}, Name={FirstName} {LastName}", 
-                vrParkUser.Id, vrParkUser.FirstName, vrParkUser.LastName);
+            _logger.LogInformation("VR Park user created successfully: UserId={UserId}, Name={FirstName} {LastName}, Video={Video}", 
+                vrParkUser.Id, vrParkUser.FirstName, vrParkUser.LastName, vrParkUser.Video);
 
             return Ok(new VRParkSignupResponse
             {
@@ -77,6 +81,7 @@ public class VRParkController : ControllerBase
                 LastName = vrParkUser.LastName,
                 Email = vrParkUser.Email,
                 Age = vrParkUser.Age,
+                Video = vrParkUser.Video,
                 Message = "Η εγγραφή σας ολοκληρώθηκε επιτυχώς!"
             });
         }
@@ -114,8 +119,8 @@ public class VRParkController : ControllerBase
                 return NotFound(new { message = "Ο χρήστης δεν βρέθηκε" });
             }
 
-            _logger.LogInformation("VR Park user verified successfully: UserId={UserId}, Name={FirstName} {LastName}", 
-                user.Id, user.FirstName, user.LastName);
+            _logger.LogInformation("VR Park user verified successfully: UserId={UserId}, Name={FirstName} {LastName}, Video={Video}", 
+                user.Id, user.FirstName, user.LastName, user.Video);
 
             return Ok(new
             {
@@ -124,6 +129,7 @@ public class VRParkController : ControllerBase
                 lastName = user.LastName,
                 email = user.Email,
                 age = user.Age,
+                video = user.Video,
                 createdAt = user.CreatedAt,
                 message = $"Καλώς ήρθες, {user.FirstName}!"
             });

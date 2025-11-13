@@ -155,6 +155,7 @@ public class ApiDbContext : DbContext
             entity.Property(vp => vp.LastName).HasColumnName("last_name").HasMaxLength(100).IsRequired();
             entity.Property(vp => vp.Email).HasColumnName("email").HasMaxLength(255).IsRequired(false);
             entity.Property(vp => vp.Age).HasColumnName("age").IsRequired();
+            entity.Property(vp => vp.Video).HasColumnName("video").IsRequired();
             entity.Property(vp => vp.CreatedAt).HasColumnName("created_at");
         });
 

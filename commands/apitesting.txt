@@ -1,12 +1,29 @@
-# 1. POST Request (Signup)
+
+
+################## localhost testing ######################
+
+# UTF8 encoded request for Greek characters
 $body = @{
     firstName = "Όνομα"
     lastName = "Επίθετο"
-    email = "email@example.com"
+    email = "email@example2.com"
     age = 25
 } | ConvertTo-Json
-
-Invoke-WebRequest -Uri ".../api/vrpark/signup" -Method POST -Body $body -ContentType "application/json"
+Invoke-WebRequest -Uri "http://localhost:5182/api/vrpark/signup" -Method POST -Body ([System.Text.Encoding]::UTF8.GetBytes($body)) -ContentType "application/json; charset=utf-8" 
 
 # 2. GET Request (Verify)
-Invoke-WebRequest -Uri ".../api/vrpark/verify/1" -Method GET # for user with id 1
+Invoke-WebRequest -Uri "http://localhost:5182/api/vrpark/verify/1" -Method GET # for user with id 1
+
+######################### server testing ########################
+# UTF8 encoded request for Greek characters
+$body = @{
+    firstName = "Όνομα"
+    lastName = "Επίθετο"
+    email = "email@example2.com"
+    age = 25
+} | ConvertTo-Json
+Invoke-WebRequest -Uri "https://athens-secret-api.onrender.com/api/vrpark/signup" -Method POST -Body ([System.Text.Encoding]::UTF8.GetBytes($body)) -ContentType "application/json; charset=utf-8" 
+
+# 2. GET Request (Verify)
+Invoke-WebRequest -Uri "https://athens-secret-api.onrender.com/api/vrpark/verify/1" -Method GET # for user with id 1
+

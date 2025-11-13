@@ -43,9 +43,14 @@ https://athens-secret-api.onrender.com
   "lastName": "Παπαδόπουλος",
   "email": "user@example.com",
   "age": 25,
+  "video": 3,
   "message": "Η εγγραφή σας ολοκληρώθηκε επιτυχώς!"
 }
 ```
+
+**Notes:**
+- `video` is a random integer between 1-4, assigned automatically during signup
+- This video ID determines which video the user will watch
 
 **Error Response (400):**
 ```json
@@ -70,10 +75,14 @@ https://athens-secret-api.onrender.com
   "lastName": "Παπαδόπουλος",
   "email": "user@example.com",
   "age": 25,
+  "video": 3,
   "createdAt": "2025-10-28T10:30:00Z",
   "message": "Καλώς ήρθες, Γιάννης!"
 }
 ```
+
+**Notes:**
+- `video` field indicates which video (1-4) was assigned to this user during signup
 
 **Error Response (404):**
 ```json
