@@ -1,7 +1,7 @@
 
-
 ################## localhost testing ######################
 
+# 1. POST Request (Signup)
 # UTF8 encoded request for Greek characters
 $body = @{
     firstName = "Όνομα"
@@ -14,16 +14,58 @@ Invoke-WebRequest -Uri "http://localhost:5182/api/vrpark/signup" -Method POST -B
 # 2. GET Request (Verify)
 Invoke-WebRequest -Uri "http://localhost:5182/api/vrpark/verify/1" -Method GET # for user with id 1
 
+# 3. POST Request (Start Session)
+$sessionBody = @{
+    userId = 1
+} | ConvertTo-Json
+Invoke-WebRequest -Uri "http://localhost:5182/api/vrpark/session/start" -Method POST -Body ([System.Text.Encoding]::UTF8.GetBytes($sessionBody)) -ContentType "application/json; charset=utf-8"
+
+# 4. POST Request (End Session)
+$endSessionBody = @{
+    sessionId = 2
+    userId = 1
+    eyetrackingSequence = "000000000011111101100111111111111111111111111100000011111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111110000000000000000000000000000000001111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111"
+} | ConvertTo-Json
+Invoke-WebRequest -Uri "http://localhost:5182/api/vrpark/session/end" -Method POST -Body ([System.Text.Encoding]::UTF8.GetBytes($endSessionBody)) -ContentType "application/json; charset=utf-8"
+
+# 5. GET Request (Database Users) - Requires admin key
+Invoke-WebRequest -Uri "http://localhost:5182/api/vrpark/database/users" -Method GET -Headers @{"X-Admin-Key"="DIOIKITO_VR_2025"}
+
+# 6. GET Request (Database Sessions) - Requires admin key
+Invoke-WebRequest -Uri "http://localhost:5182/api/vrpark/database/sessions" -Method GET -Headers @{"X-Admin-Key"="DIOIKITO_VR_2025"}
+
 ######################### server testing ########################
+# 1. POST Request (Signup)
 # UTF8 encoded request for Greek characters
 $body = @{
-    firstName = "Όνομα"
-    lastName = "Επίθετο"
-    email = "email@example2.com"
+    firstName = "Όνομα3"
+    lastName = "Επίθετο3"
+    email = "email@example3.com"
     age = 25
 } | ConvertTo-Json
 Invoke-WebRequest -Uri "https://athens-secret-api.onrender.com/api/vrpark/signup" -Method POST -Body ([System.Text.Encoding]::UTF8.GetBytes($body)) -ContentType "application/json; charset=utf-8" 
 
 # 2. GET Request (Verify)
-Invoke-WebRequest -Uri "https://athens-secret-api.onrender.com/api/vrpark/verify/1" -Method GET # for user with id 1
+Invoke-WebRequest -Uri "https://athens-secret-api.onrender.com/api/vrpark/verify/5" -Method GET # for user with id 5
+
+# 3. POST Request (Start Session)
+$sessionBody = @{
+    userId = 5
+} | ConvertTo-Json
+Invoke-WebRequest -Uri "https://athens-secret-api.onrender.com/api/vrpark/session/start" -Method POST -Body ([System.Text.Encoding]::UTF8.GetBytes($sessionBody)) -ContentType "application/json; charset=utf-8"
+
+# 4. POST Request (End Session)
+$endSessionBody = @{
+    sessionId = 1
+    userId = 5
+    eyetrackingSequence = "LRLRLRLRLRLR"
+} | ConvertTo-Json
+Invoke-WebRequest -Uri "https://athens-secret-api.onrender.com/api/vrpark/session/end" -Method POST -Body ([System.Text.Encoding]::UTF8.GetBytes($endSessionBody)) -ContentType "application/json; charset=utf-8"
+
+# 5. GET Request (Database Users) - Requires admin key
+Invoke-WebRequest -Uri "https://athens-secret-api.onrender.com/api/vrpark/database/users" -Method GET -Headers @{"X-Admin-Key"="DIOIKITO_VR_2025"}
+
+# 6. GET Request (Database Sessions) - Requires admin key
+Invoke-WebRequest -Uri "https://athens-secret-api.onrender.com/api/vrpark/database/sessions" -Method GET -Headers @{"X-Admin-Key"="DIOIKITO_VR_2025"}
+
 

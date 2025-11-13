@@ -3,6 +3,8 @@ using AthensSecret.Api.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
+using AthensSecret.Api.Middleware;
 
 namespace AthensSecret.Api.Controllers;
 
@@ -12,11 +14,13 @@ public class VRParkController : ControllerBase
 {
     private readonly ApiDbContext _context;
     private readonly ILogger<VRParkController> _logger;
+    private readonly AdminSecurityOptions _adminOptions;
 
-    public VRParkController(ApiDbContext context, ILogger<VRParkController> logger)
+    public VRParkController(ApiDbContext context, ILogger<VRParkController> logger, IOptions<AdminSecurityOptions> adminOptions)
     {
         _context = context;
         _logger = logger;
+        _adminOptions = adminOptions.Value;
     }
 
     // Signup endpoint for VR Park users
@@ -274,6 +278,100 @@ public class VRParkController : ControllerBase
                 message = "Αποτυχία ολοκλήρωσης session",
                 error = ex.Message
             });
+        }
+    }
+
+    // Database viewer endpoint - Get all VR Park users
+    [HttpGet("database/users")]
+    [EnableRateLimiting("ApiPolicy")]
+    public async Task<IActionResult> GetAllUsers()
+    {
+        try
+        {
+            // Check admin key from header
+            if (!Request.Headers.TryGetValue("X-Admin-Key", out var adminKey) || string.IsNullOrWhiteSpace(adminKey))
+            {
+                _logger.LogWarning("VR Park database users access denied: Missing admin key");
+                return Unauthorized(new { message = "Admin key is required" });
+            }
+
+            // Validate admin key from AdminSettings
+            if (adminKey != _adminOptions.ApiKey)
+            {
+                _logger.LogWarning("VR Park database users access denied: Invalid admin key");
+                return StatusCode(403, new { message = "Invalid admin key" });
+            }
+
+            _logger.LogInformation("VR Park database users fetch: Authorized");
+
+            var users = await _context.VRParkUsers
+                .OrderByDescending(u => u.CreatedAt)
+                .Select(u => new
+                {
+                    UserId = u.Id,
+                    FirstName = u.FirstName,
+                    LastName = u.LastName,
+                    Email = u.Email,
+                    Age = u.Age,
+                    Video = u.Video,
+                    CreatedAt = u.CreatedAt
+                })
+                .ToListAsync();
+
+            _logger.LogInformation("VR Park database users fetched: Count={Count}", users.Count);
+
+            return Ok(users);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "VR Park database users fetch failed: {ErrorMessage}", ex.Message);
+            return StatusCode(500, new { message = "Σφάλμα ανάκτησης δεδομένων" });
+        }
+    }
+
+    // Database viewer endpoint - Get all VR Park game sessions
+    [HttpGet("database/sessions")]
+    [EnableRateLimiting("ApiPolicy")]
+    public async Task<IActionResult> GetAllSessions()
+    {
+        try
+        {
+            // Check admin key from header
+            if (!Request.Headers.TryGetValue("X-Admin-Key", out var adminKey) || string.IsNullOrWhiteSpace(adminKey))
+            {
+                _logger.LogWarning("VR Park database sessions access denied: Missing admin key");
+                return Unauthorized(new { message = "Admin key is required" });
+            }
+
+            // Validate admin key from AdminSettings
+            if (adminKey != _adminOptions.ApiKey)
+            {
+                _logger.LogWarning("VR Park database sessions access denied: Invalid admin key");
+                return StatusCode(403, new { message = "Invalid admin key" });
+            }
+
+            _logger.LogInformation("VR Park database sessions fetch: Authorized");
+
+            var sessions = await _context.VRParkGameSessions
+                .OrderByDescending(s => s.StartedAt)
+                .Select(s => new
+                {
+                    SessionId = s.Id,
+                    UserId = s.UserId,
+                    StartedAt = s.StartedAt,
+                    EndedAt = s.EndedAt,
+                    EyetrackingSequence = s.EyetrackingSequence
+                })
+                .ToListAsync();
+
+            _logger.LogInformation("VR Park database sessions fetched: Count={Count}", sessions.Count);
+
+            return Ok(sessions);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "VR Park database sessions fetch failed: {ErrorMessage}", ex.Message);
+            return StatusCode(500, new { message = "Σφάλμα ανάκτησης δεδομένων" });
         }
     }
 }

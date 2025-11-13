@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VR Park - Database Viewer</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Login Modal */
+        .login-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .login-box {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            max-width: 400px;
+            width: 100%;
+        }
+
+        .login-title {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 1.8em;
+            font-weight: 600;
+        }
+
+        .login-input-group {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .login-input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .login-input:focus {
+            outline: none;
+            border-color: #4a90e2;
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #666;
+            font-size: 18px;
+            padding: 5px;
+        }
+
+        .password-toggle:hover {
+            color: #333;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 12px;
+            background: #4a90e2;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .login-btn:hover {
+            background: #357abd;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3);
+        }
+
+        .login-error {
+            color: #e74c3c;
+            text-align: center;
+            margin-top: 15px;
+            font-size: 14px;
+            display: none;
+        }
+
+        /* Header */
+        .header {
+            background: white;
+            padding: 20px 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-title {
+            font-size: 1.8em;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .env-badge {
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .env-local {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .env-render {
+            background: #e3f2fd;
+            color: #1565c0;
+        }
+
+        .logout-btn {
+            padding: 8px 16px;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .logout-btn:hover {
+            background: #c0392b;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
+        }
+
+        /* Table Section */
+        .table-section {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .table-title {
+            font-size: 1.4em;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .table-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-refresh {
+            background: #4a90e2;
+            color: white;
+        }
+
+        .btn-refresh:hover {
+            background: #357abd;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3);
+        }
+
+        .btn-download {
+            background: #27ae60;
+            color: white;
+        }
+
+        .btn-download:hover {
+            background: #229954;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(39, 174, 96, 0.3);
+        }
+
+        .table-container {
+            max-height: 500px;
+            overflow-y: auto;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        thead {
+            position: sticky;
+            top: 0;
+            background: #f8f9fa;
+            z-index: 10;
+        }
+
+        th {
+            padding: 12px 15px;
+            text-align: left;
+            font-weight: 600;
+            color: #555;
+            border-bottom: 2px solid #dee2e6;
+            font-size: 14px;
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #e9ecef;
+            color: #333;
+            font-size: 14px;
+        }
+
+        tbody tr {
+            transition: background-color 0.2s ease;
+        }
+
+        tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+            font-size: 16px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            font-size: 16px;
+        }
+
+        .error {
+            background: #fee;
+            color: #c33;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+
+        /* Custom Scrollbar */
+        .table-container::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        .table-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        .table-container::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+
+        .table-container::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .table-header {
+                flex-direction: column;
+                gap: 15px;
+                align-items: flex-start;
+            }
+
+            .table-container {
+                overflow-x: auto;
+            }
+
+            table {
+                min-width: 600px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Modal -->
+    <div id="loginModal" class="login-modal">
+        <div class="login-box">
+            <h2 class="login-title">VR Park Database</h2>
+            <div class="login-input-group">
+                <input type="password" id="adminKeyInput" class="login-input" placeholder="Admin Key (English only)" autocomplete="off">
+                <button type="button" id="passwordToggle" class="password-toggle" title="Εμφάνιση/Απόκρυψη κωδικού">
+                    <i class="fas fa-eye"></i>
+                </button>
+            </div>
+            <button id="loginBtn" class="login-btn">Σύνδεση</button>
+            <div id="loginError" class="login-error"></div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container" style="display: none;" id="mainContent">
+        <!-- Header -->
+        <div class="header">
+            <h1 class="header-title">VR Park - Database Viewer</h1>
+            <div class="header-controls">
+                <span id="envBadge" class="env-badge">Local</span>
+                <button id="logoutBtn" class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i> Αποσύνδεση
+                </button>
+            </div>
+        </div>
+
+        <!-- VR Park Users Table -->
+        <div class="table-section">
+            <div class="table-header">
+                <h2 class="table-title">VR Park Users</h2>
+                <div class="table-controls">
+                    <button id="refreshUsersBtn" class="btn btn-refresh">
+                        <i class="fas fa-sync-alt"></i> Refresh
+                    </button>
+                    <button id="downloadUsersBtn" class="btn btn-download">
+                        <i class="fas fa-download"></i> Download CSV
+                    </button>
+                </div>
+            </div>
+            <div id="usersTableContainer" class="table-container">
+                <div class="loading">Φόρτωση δεδομένων...</div>
+            </div>
+            <div id="usersError" class="error" style="display: none;"></div>
+        </div>
+
+        <!-- VR Park Game Sessions Table -->
+        <div class="table-section">
+            <div class="table-header">
+                <h2 class="table-title">VR Park Game Sessions</h2>
+                <div class="table-controls">
+                    <button id="refreshSessionsBtn" class="btn btn-refresh">
+                        <i class="fas fa-sync-alt"></i> Refresh
+                    </button>
+                    <button id="downloadSessionsBtn" class="btn btn-download">
+                        <i class="fas fa-download"></i> Download CSV
+                    </button>
+                </div>
+            </div>
+            <div id="sessionsTableContainer" class="table-container">
+                <div class="loading">Φόρτωση δεδομένων...</div>
+            </div>
+            <div id="sessionsError" class="error" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const LOCAL_API = 'http://localhost:5182';
+        const RENDER_API = 'https://athens-secret-api.onrender.com';
+        
+        let currentAPI = LOCAL_API;
+        let adminKey = '';
+        let usersData = [];
+        let sessionsData = [];
+
+        // DOM Elements
+        const loginModal = document.getElementById('loginModal');
+        const adminKeyInput = document.getElementById('adminKeyInput');
+        const loginBtn = document.getElementById('loginBtn');
+        const loginError = document.getElementById('loginError');
+        const passwordToggle = document.getElementById('passwordToggle');
+        const mainContent = document.getElementById('mainContent');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const envBadge = document.getElementById('envBadge');
+        
+        const refreshUsersBtn = document.getElementById('refreshUsersBtn');
+        const downloadUsersBtn = document.getElementById('downloadUsersBtn');
+        const usersTableContainer = document.getElementById('usersTableContainer');
+        const usersError = document.getElementById('usersError');
+        
+        const refreshSessionsBtn = document.getElementById('refreshSessionsBtn');
+        const downloadSessionsBtn = document.getElementById('downloadSessionsBtn');
+        const sessionsTableContainer = document.getElementById('sessionsTableContainer');
+        const sessionsError = document.getElementById('sessionsError');
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuthentication();
+            setupEventListeners();
+            detectEnvironment();
+        });
+
+        function detectEnvironment() {
+            const hostname = window.location.hostname;
+            if (hostname === 'localhost' || hostname === '127.0.0.1') {
+                currentAPI = LOCAL_API;
+                envBadge.textContent = 'Local';
+                envBadge.className = 'env-badge env-local';
+            } else {
+                currentAPI = RENDER_API;
+                envBadge.textContent = 'Render';
+                envBadge.className = 'env-badge env-render';
+            }
+        }
+
+        function checkAuthentication() {
+            adminKey = localStorage.getItem('vrparkAdminKey');
+            if (adminKey) {
+                hideLoginModal();
+                loadAllData();
+            } else {
+                showLoginModal();
+            }
+        }
+
+        function showLoginModal() {
+            loginModal.style.display = 'flex';
+            mainContent.style.display = 'none';
+            adminKeyInput.focus();
+        }
+
+        function hideLoginModal() {
+            loginModal.style.display = 'none';
+            mainContent.style.display = 'block';
+        }
+
+        function handleLogin() {
+            const enteredKey = adminKeyInput.value.trim();
+            if (!enteredKey) {
+                showLoginError('Παρακαλώ εισάγετε το admin key');
+                return;
+            }
+
+            if (!/^[a-zA-Z0-9_\-]+$/.test(enteredKey)) {
+                showLoginError('Το admin key πρέπει να περιέχει μόνο αγγλικούς χαρακτήρες, αριθμούς και _ -');
+                return;
+            }
+
+            adminKey = enteredKey;
+            localStorage.setItem('vrparkAdminKey', adminKey);
+            hideLoginModal();
+            loadAllData();
+        }
+
+        function showLoginError(message) {
+            loginError.textContent = message;
+            loginError.style.display = 'block';
+            setTimeout(() => {
+                loginError.style.display = 'none';
+            }, 5000);
+        }
+
+        function logout() {
+            localStorage.removeItem('vrparkAdminKey');
+            adminKey = '';
+            usersData = [];
+            sessionsData = [];
+            showLoginModal();
+            adminKeyInput.value = '';
+        }
+
+        function togglePasswordVisibility() {
+            const eyeIcon = passwordToggle.querySelector('i');
+            if (adminKeyInput.type === 'password') {
+                adminKeyInput.type = 'text';
+                eyeIcon.className = 'fas fa-eye-slash';
+            } else {
+                adminKeyInput.type = 'password';
+                eyeIcon.className = 'fas fa-eye';
+            }
+        }
+
+        function setupEventListeners() {
+            loginBtn.addEventListener('click', handleLogin);
+            adminKeyInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') handleLogin();
+            });
+            adminKeyInput.addEventListener('input', function(e) {
+                const value = e.target.value;
+                const validValue = value.replace(/[^a-zA-Z0-9_\-]/g, '');
+                if (value !== validValue) {
+                    e.target.value = validValue;
+                    showLoginError('Μόνο αγγλικοί χαρακτήρες, αριθμοί και _ - επιτρέπονται');
+                }
+            });
+            passwordToggle.addEventListener('click', togglePasswordVisibility);
+            logoutBtn.addEventListener('click', logout);
+            
+            refreshUsersBtn.addEventListener('click', loadUsers);
+            downloadUsersBtn.addEventListener('click', downloadUsersCSV);
+            refreshSessionsBtn.addEventListener('click', loadSessions);
+            downloadSessionsBtn.addEventListener('click', downloadSessionsCSV);
+        }
+
+        function loadAllData() {
+            loadUsers();
+            loadSessions();
+        }
+
+        async function loadUsers() {
+            usersTableContainer.innerHTML = '<div class="loading">Φόρτωση δεδομένων...</div>';
+            usersError.style.display = 'none';
+            
+            try {
+                const response = await fetch(`${currentAPI}/api/vrpark/database/users`, {
+                    headers: {
+                        'X-Admin-Key': adminKey
+                    }
+                });
+
+                if (!response.ok) {
+                    if (response.status === 401 || response.status === 403) {
+                        throw new Error('Μη έγκυρο admin key');
+                    }
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                usersData = data;
+                renderUsersTable(data);
+            } catch (error) {
+                console.error('Error loading users:', error);
+                usersTableContainer.innerHTML = '<div class="no-data">Σφάλμα φόρτωσης δεδομένων</div>';
+                usersError.textContent = error.message;
+                usersError.style.display = 'block';
+                
+                if (error.message.includes('admin key')) {
+                    logout();
+                }
+            }
+        }
+
+        async function loadSessions() {
+            sessionsTableContainer.innerHTML = '<div class="loading">Φόρτωση δεδομένων...</div>';
+            sessionsError.style.display = 'none';
+            
+            try {
+                const response = await fetch(`${currentAPI}/api/vrpark/database/sessions`, {
+                    headers: {
+                        'X-Admin-Key': adminKey
+                    }
+                });
+
+                if (!response.ok) {
+                    if (response.status === 401 || response.status === 403) {
+                        throw new Error('Μη έγκυρο admin key');
+                    }
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                sessionsData = data;
+                renderSessionsTable(data);
+            } catch (error) {
+                console.error('Error loading sessions:', error);
+                sessionsTableContainer.innerHTML = '<div class="no-data">Σφάλμα φόρτωσης δεδομένων</div>';
+                sessionsError.textContent = error.message;
+                sessionsError.style.display = 'block';
+                
+                if (error.message.includes('admin key')) {
+                    logout();
+                }
+            }
+        }
+
+        function renderUsersTable(users) {
+            if (!users || users.length === 0) {
+                usersTableContainer.innerHTML = '<div class="no-data">Δεν υπάρχουν δεδομένα</div>';
+                return;
+            }
+
+            const table = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>First Name</th>
+                            <th>Last Name</th>
+                            <th>Email</th>
+                            <th>Age</th>
+                            <th>Video</th>
+                            <th>Created At</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${users.map(user => `
+                            <tr>
+                                <td>${user.UserId || user.userId || ''}</td>
+                                <td>${user.FirstName || user.firstName || ''}</td>
+                                <td>${user.LastName || user.lastName || ''}</td>
+                                <td>${user.Email || user.email || '-'}</td>
+                                <td>${user.Age || user.age || ''}</td>
+                                <td>${user.Video || user.video || ''}</td>
+                                <td>${formatDate(user.CreatedAt || user.createdAt)}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+            usersTableContainer.innerHTML = table;
+        }
+
+        function renderSessionsTable(sessions) {
+            if (!sessions || sessions.length === 0) {
+                sessionsTableContainer.innerHTML = '<div class="no-data">Δεν υπάρχουν δεδομένα</div>';
+                return;
+            }
+
+            const table = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Session ID</th>
+                            <th>User ID</th>
+                            <th>Started At</th>
+                            <th>Ended At</th>
+                            <th>Duration</th>
+                            <th>Eye Tracking (full sequence)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${sessions.map(session => {
+                            const duration = calculateDuration(
+                                session.StartedAt || session.startedAt,
+                                session.EndedAt || session.endedAt
+                            );
+
+                            return `
+                                <tr>
+                                    <td>${session.SessionId || session.sessionId || ''}</td>
+                                    <td>${session.UserId || session.userId || ''}</td>
+                                    <td>${formatDate(session.StartedAt || session.startedAt)}</td>
+                                    <td>${session.EndedAt || session.endedAt ? formatDate(session.EndedAt || session.endedAt) : '-'}</td>
+                                    <td>${duration}</td>
+                                    <td>${session.EyetrackingSequence || session.eyetrackingSequence || '-'}</td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            `;
+            sessionsTableContainer.innerHTML = table;
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return '-';
+            const date = new Date(dateString);
+            return date.toLocaleString('el-GR', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+        }
+
+        function calculateDuration(start, end) {
+            if (!start || !end) return '-';
+            const startDate = new Date(start);
+            const endDate = new Date(end);
+            const diffMs = endDate - startDate;
+            if (diffMs < 0) return '-';
+            
+            const diffSecs = Math.floor(diffMs / 1000);
+            const hours = Math.floor(diffSecs / 3600);
+            const minutes = Math.floor((diffSecs % 3600) / 60);
+            const seconds = diffSecs % 60;
+            
+            if (hours > 0) {
+                return `${hours}h ${minutes}m ${seconds}s`;
+            } else if (minutes > 0) {
+                return `${minutes}m ${seconds}s`;
+            } else {
+                return `${seconds}s`;
+            }
+        }
+
+        function downloadUsersCSV() {
+            if (!usersData || usersData.length === 0) {
+                alert('Δεν υπάρχουν δεδομένα για εξαγωγή');
+                return;
+            }
+
+            const headers = ['ID', 'First Name', 'Last Name', 'Email', 'Age', 'Video', 'Created At'];
+            const rows = usersData.map(user => [
+                user.UserId || user.userId || '',
+                user.FirstName || user.firstName || '',
+                user.LastName || user.lastName || '',
+                user.Email || user.email || '',
+                user.Age || user.age || '',
+                user.Video || user.video || '',
+                user.CreatedAt || user.createdAt || ''
+            ]);
+
+            downloadCSV('vrpark_users.csv', headers, rows);
+        }
+
+        function downloadSessionsCSV() {
+            if (!sessionsData || sessionsData.length === 0) {
+                alert('Δεν υπάρχουν δεδομένα για εξαγωγή');
+                return;
+            }
+
+            const headers = ['Session ID', 'User ID', 'Started At', 'Ended At', 'Duration', 'Eye Tracking Sequence'];
+            const rows = sessionsData.map(session => {
+                const duration = calculateDuration(
+                    session.StartedAt || session.startedAt,
+                    session.EndedAt || session.endedAt
+                );
+                return [
+                    session.SessionId || session.sessionId || '',
+                    session.UserId || session.userId || '',
+                    session.StartedAt || session.startedAt || '',
+                    session.EndedAt || session.endedAt || '',
+                    duration,
+                    session.EyetrackingSequence || session.eyetrackingSequence || ''
+                ];
+            });
+
+            downloadCSV('vrpark_sessions.csv', headers, rows);
+        }
+
+        function downloadCSV(filename, headers, rows) {
+            const csvContent = [
+                headers.join(','),
+                ...rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+            ].join('\n');
+
+            const BOM = '\uFEFF';
+            const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            
+            link.setAttribute('href', url);
+            link.setAttribute('download', filename);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    </script>
+</body>
+</html>
