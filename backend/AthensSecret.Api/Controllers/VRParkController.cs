@@ -63,10 +63,14 @@ public class VRParkController : ControllerBase
 
                 if (existingUser != null)
                 {
-                    _logger.LogWarning("VR Park signup failed: Email already exists - {Email}", request.Email);
+                    _logger.LogWarning("VR Park signup failed: Email already exists - {Email}, UserId: {UserId}", 
+                        request.Email, existingUser.Id);
                     
-                    // Use generic message to prevent email enumeration
-                    return BadRequest(new { message = "Η εγγραφή απέτυχε. Παρακαλώ ελέγξτε τα στοιχεία σας." });
+                    // Return user ID to handle re-verification
+                    return BadRequest(new { 
+                        message = $"Το email υπάρχει ήδη και αντιστοιχεί στον παίκτη με ID {existingUser.Id}",
+                        userId = existingUser.Id 
+                    });
                 }
             }
 

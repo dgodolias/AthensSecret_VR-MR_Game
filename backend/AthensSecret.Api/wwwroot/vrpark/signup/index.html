@@ -124,6 +124,39 @@
             background: white;
         }
 
+        /* Contenteditable fake inputs - Chrome can't autofill these */
+        .fake-input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #bdc3c7;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: white;
+            min-height: 44px;
+            cursor: text;
+            color: #2c3e50;
+        }
+
+        .fake-input:empty:before {
+            content: attr(data-placeholder);
+            color: #95a5a6;
+        }
+
+        .fake-input:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+
+        .fake-input.error {
+            border-color: #e74c3c;
+        }
+
+        .fake-input.valid {
+            border-color: #2ecc71;
+        }
+
         input:focus {
             outline: none;
             border-color: #3498db;
@@ -259,52 +292,55 @@
         <form id="signupForm">
             <div class="form-group">
                 <label for="firstName">Όνομα *</label>
-                <input 
-                    type="text" 
-                    id="firstName" 
-                    name="firstName" 
-                    placeholder="π.χ. Γιάννης"
-                    required 
-                    minlength="2"
-                    maxlength="100"
-                >
+                <div 
+                    id="firstName"
+                    class="fake-input"
+                    contenteditable="true"
+                    data-placeholder="π.χ. Γιάννης"
+                    data-required="true"
+                    data-minlength="2"
+                    data-maxlength="100"
+                ></div>
             </div>
 
             <div class="form-group">
                 <label for="lastName">Επίθετο *</label>
-                <input 
-                    type="text" 
-                    id="lastName" 
-                    name="lastName" 
-                    placeholder="π.χ. Παπαδόπουλος"
-                    required 
-                    minlength="2"
-                    maxlength="100"
-                >
+                <div 
+                    id="lastName"
+                    class="fake-input"
+                    contenteditable="true"
+                    data-placeholder="π.χ. Παπαδόπουλος"
+                    data-required="true"
+                    data-minlength="2"
+                    data-maxlength="100"
+                ></div>
             </div>
 
             <div class="form-group">
                 <label for="email">Email <span class="optional">(προαιρετικό)</span></label>
-                <input 
-                    type="email" 
-                    id="email" 
-                    name="email" 
-                    placeholder="π.χ. example@email.com"
-                    maxlength="255"
-                >
+                <div 
+                    id="email"
+                    class="fake-input"
+                    contenteditable="true"
+                    data-placeholder="π.χ. example@email.com"
+                    data-required="false"
+                    data-maxlength="255"
+                    data-type="email"
+                ></div>
             </div>
 
             <div class="form-group">
                 <label for="age">Ηλικία *</label>
-                <input 
-                    type="number" 
-                    id="age" 
-                    name="age" 
-                    placeholder="π.χ. 25"
-                    required 
-                    min="1"
-                    max="120"
-                >
+                <div 
+                    id="age"
+                    class="fake-input"
+                    contenteditable="true"
+                    data-placeholder="π.χ. 25"
+                    data-required="true"
+                    data-type="number"
+                    data-min="1"
+                    data-max="120"
+                ></div>
             </div>
 
             <button type="submit" id="submitBtn">Εγγραφή</button>
@@ -320,20 +356,136 @@
         const messageDiv = document.getElementById('message');
         const userInfoDiv = document.getElementById('userInfo');
 
+        // Handle contenteditable validation
+        const fakeInputs = document.querySelectorAll('.fake-input');
+        
+        fakeInputs.forEach(input => {
+            // Prevent pasting HTML
+            input.addEventListener('paste', (e) => {
+                e.preventDefault();
+                const text = e.clipboardData.getData('text/plain');
+                document.execCommand('insertText', false, text);
+            });
+
+            // Enforce maxlength
+            input.addEventListener('input', () => {
+                const maxLength = input.dataset.maxlength;
+                if (maxLength && input.textContent.length > maxLength) {
+                    input.textContent = input.textContent.substring(0, maxLength);
+                    // Move cursor to end
+                    const range = document.createRange();
+                    const sel = window.getSelection();
+                    range.selectNodeContents(input);
+                    range.collapse(false);
+                    sel.removeAllRanges();
+                    sel.addRange(range);
+                }
+
+                // Only allow numbers for age field
+                if (input.dataset.type === 'number') {
+                    input.textContent = input.textContent.replace(/[^0-9]/g, '');
+                }
+
+                // Validate and add visual feedback
+                validateField(input);
+            });
+
+            // Handle Enter key
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    form.dispatchEvent(new Event('submit'));
+                }
+            });
+        });
+
+        function validateField(field) {
+            const value = field.textContent.trim();
+            const required = field.dataset.required === 'true';
+            const minLength = field.dataset.minlength;
+            const maxLength = field.dataset.maxlength;
+            const type = field.dataset.type;
+            const min = field.dataset.min;
+            const max = field.dataset.max;
+
+            field.classList.remove('error', 'valid');
+
+            if (!value && required) {
+                field.classList.add('error');
+                return false;
+            }
+
+            if (value) {
+                if (minLength && value.length < minLength) {
+                    field.classList.add('error');
+                    return false;
+                }
+
+                if (type === 'email' && value) {
+                    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                    if (!emailRegex.test(value)) {
+                        field.classList.add('error');
+                        return false;
+                    }
+                }
+
+                if (type === 'number') {
+                    const numValue = parseInt(value);
+                    if (isNaN(numValue) || (min && numValue < min) || (max && numValue > max)) {
+                        field.classList.add('error');
+                        return false;
+                    }
+                }
+
+                field.classList.add('valid');
+            }
+
+            return true;
+        }
+
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            // Get form data
+            // Get form data from contenteditable divs
             const formData = {
-                firstName: document.getElementById('firstName').value.trim(),
-                lastName: document.getElementById('lastName').value.trim(),
-                email: document.getElementById('email').value.trim() || null,
-                age: parseInt(document.getElementById('age').value)
+                firstName: document.getElementById('firstName').textContent.trim(),
+                lastName: document.getElementById('lastName').textContent.trim(),
+                email: document.getElementById('email').textContent.trim() || null,
+                age: parseInt(document.getElementById('age').textContent.trim())
             };
 
-            // Validate
-            if (!formData.firstName || !formData.lastName || !formData.age) {
-                showMessage('Παρακαλώ συμπληρώστε όλα τα υποχρεωτικά πεδία', 'error');
+            // Validate all fields first
+            const fields = [
+                document.getElementById('firstName'),
+                document.getElementById('lastName'),
+                document.getElementById('age')
+            ];
+            
+            let isValid = true;
+            fields.forEach(field => {
+                if (!validateField(field)) {
+                    isValid = false;
+                }
+            });
+
+            if (!isValid) {
+                showMessage('Παρακαλώ συμπληρώστε σωστά όλα τα υποχρεωτικά πεδία', 'error');
+                return;
+            }
+
+            // Additional validation
+            if (!formData.firstName || !formData.lastName || !formData.age || isNaN(formData.age)) {
+                showMessage('Παρακαλώ συμπληρώστε όλα τα υποχρεωτικά πεδία σωστά', 'error');
+                return;
+            }
+
+            if (formData.age < 1 || formData.age > 120) {
+                showMessage('Η ηλικία πρέπει να είναι μεταξύ 1 και 120 ετών', 'error');
+                return;
+            }
+
+            if (formData.firstName.length < 2 || formData.lastName.length < 2) {
+                showMessage('Το όνομα και επίθετο πρέπει να έχουν τουλάχιστον 2 χαρακτήρες', 'error');
                 return;
             }
 
@@ -355,13 +507,24 @@
                 if (response.ok) {
                     showMessage(data.message || 'Η εγγραφή σας ολοκληρώθηκε επιτυχώς!', 'success');
                     showUserInfo(data);
-                    form.reset();
+                    // Clear contenteditable divs
+                    document.getElementById('firstName').textContent = '';
+                    document.getElementById('lastName').textContent = '';
+                    document.getElementById('email').textContent = '';
+                    document.getElementById('age').textContent = '';
+                    // Remove validation classes
+                    fakeInputs.forEach(input => input.classList.remove('error', 'valid'));
                 } else {
-                    showMessage(data.message || 'Σφάλμα κατά την εγγραφή', 'error');
+                    // Handle specific error with userId
+                    if (data.userId) {
+                        showMessage(data.message || 'Το email υπάρχει ήδη', 'error');
+                    } else {
+                        showMessage(data.message || 'Σφάλμα κατά την εγγραφή', 'error');
+                    }
                 }
             } catch (error) {
                 console.error('Error:', error);
-                showMessage('Σφάλμα σύνδεσης με τον server', 'error');
+                showMessage('Σφάλμα σύνδεσης με τον server. Παρακαλώ δοκιμάστε ξανά.', 'error');
             } finally {
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Εγγραφή';
@@ -386,8 +549,6 @@
             const lastName = data.lastName || data.lastname || data.LastName;
             const email = data.email || data.Email;
             const age = data.age || data.Age;
-
-            console.log('Response data:', data); // Debug log
 
             userInfoDiv.innerHTML = `
                 <button class="close-btn" onclick="closeUserInfo()" title="Κλείσιμο">&times;</button>
