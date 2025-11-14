@@ -33,6 +33,13 @@ public class VRParkController : ControllerBase
         _environment = environment;
     }
 
+    // Helper: Convert UTC to Greece time (UTC+2 standard, UTC+3 daylight saving)
+    private static DateTime ConvertToGreeceTime(DateTime utcTime)
+    {
+        var greeceTimeZone = TimeZoneInfo.FindSystemTimeZoneById("GTB Standard Time"); // Greece, Turkey, Bulgaria
+        return TimeZoneInfo.ConvertTimeFromUtc(utcTime, greeceTimeZone);
+    }
+
     // Signup endpoint for VR Park users
     [HttpPost("signup")]
     [EnableRateLimiting("ApiPolicy")]
@@ -364,9 +371,21 @@ public class VRParkController : ControllerBase
                 })
                 .ToListAsync();
 
+            // Convert UTC times to Greece time for display
+            var usersWithGreeceTime = users.Select(u => new
+            {
+                u.UserId,
+                u.FirstName,
+                u.LastName,
+                u.Email,
+                u.Age,
+                u.Video,
+                CreatedAt = ConvertToGreeceTime(u.CreatedAt)
+            }).ToList();
+
             _logger.LogInformation("VR Park database users fetched: Count={Count}", users.Count);
 
-            return Ok(users);
+            return Ok(usersWithGreeceTime);
         }
         catch (Exception ex)
         {
@@ -440,9 +459,19 @@ public class VRParkController : ControllerBase
                 })
                 .ToListAsync();
 
+            // Convert UTC times to Greece time for display
+            var sessionsWithGreeceTime = sessions.Select(s => new
+            {
+                s.SessionId,
+                s.UserId,
+                StartedAt = ConvertToGreeceTime(s.StartedAt),
+                EndedAt = s.EndedAt.HasValue ? ConvertToGreeceTime(s.EndedAt.Value) : (DateTime?)null,
+                s.EyetrackingSequence
+            }).ToList();
+
             _logger.LogInformation("VR Park database sessions fetched: Count={Count}", sessions.Count);
 
-            return Ok(sessions);
+            return Ok(sessionsWithGreeceTime);
         }
         catch (Exception ex)
         {

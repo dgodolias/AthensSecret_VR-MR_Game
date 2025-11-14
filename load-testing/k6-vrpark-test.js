@@ -263,7 +263,8 @@ export default function () {
         'session end returns duration': (r) => {
             try {
                 const body = r.json();
-                return body.durationMinutes !== undefined || body.DurationMinutes !== undefined;
+                // API returns "Duration" as TimeSpan string (e.g., "00:05:30")
+                return body.Duration !== undefined || body.duration !== undefined;
             } catch (e) {
                 return false;
             }
