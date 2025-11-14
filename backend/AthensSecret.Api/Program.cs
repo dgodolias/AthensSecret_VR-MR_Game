@@ -37,6 +37,9 @@ builder.Services.Configure<AdminSecurityOptions>(options =>
     }
 });
 
+// Register admin authentication tracker as singleton for brute force protection
+builder.Services.AddSingleton<AthensSecret.Api.Services.AdminAuthenticationTracker>();
+
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {

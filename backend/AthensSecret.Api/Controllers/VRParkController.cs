@@ -1,5 +1,6 @@
 using AthensSecret.Api.Data;
 using AthensSecret.Api.Models;
+using AthensSecret.Api.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
@@ -15,12 +16,21 @@ public class VRParkController : ControllerBase
     private readonly ApiDbContext _context;
     private readonly ILogger<VRParkController> _logger;
     private readonly AdminSecurityOptions _adminOptions;
+    private readonly AdminAuthenticationTracker _authTracker;
+    private readonly IWebHostEnvironment _environment;
 
-    public VRParkController(ApiDbContext context, ILogger<VRParkController> logger, IOptions<AdminSecurityOptions> adminOptions)
+    public VRParkController(
+        ApiDbContext context, 
+        ILogger<VRParkController> logger, 
+        IOptions<AdminSecurityOptions> adminOptions,
+        AdminAuthenticationTracker authTracker,
+        IWebHostEnvironment environment)
     {
         _context = context;
         _logger = logger;
         _adminOptions = adminOptions.Value;
+        _authTracker = authTracker;
+        _environment = environment;
     }
 
     // Signup endpoint for VR Park users
@@ -91,11 +101,12 @@ public class VRParkController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "VR Park signup failed: {ErrorMessage}", ex.Message);
+            _logger.LogError(ex, "VR Park signup failed");
+            
+            // Never expose exception details in production
             return StatusCode(500, new
             {
-                message = "Αποτυχία εγγραφής",
-                error = ex.Message
+                message = "Αποτυχία εγγραφής. Παρακαλώ δοκιμάστε ξανά."
             });
         }
     }
@@ -199,11 +210,11 @@ public class VRParkController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "VR Park session start failed: {ErrorMessage}", ex.Message);
+            _logger.LogError(ex, "VR Park session start failed");
+            
             return StatusCode(500, new
             {
-                message = "Αποτυχία εκκίνησης session",
-                error = ex.Message
+                message = "Αποτυχία εκκίνησης session. Παρακαλώ δοκιμάστε ξανά."
             });
         }
     }
@@ -272,11 +283,11 @@ public class VRParkController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "VR Park session end failed: {ErrorMessage}", ex.Message);
+            _logger.LogError(ex, "VR Park session end failed");
+            
             return StatusCode(500, new
             {
-                message = "Αποτυχία ολοκλήρωσης session",
-                error = ex.Message
+                message = "Αποτυχία ολοκλήρωσης session. Παρακαλώ δοκιμάστε ξανά."
             });
         }
     }
@@ -288,19 +299,48 @@ public class VRParkController : ControllerBase
     {
         try
         {
+            var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+
+            // Check if IP is locked out due to failed attempts
+            if (_authTracker.IsIpLocked(ipAddress))
+            {
+                var remainingTime = _authTracker.GetRemainingLockoutTime(ipAddress);
+                _logger.LogWarning(
+                    "VR Park database users access denied: IP {IpAddress} is locked out. Remaining time: {RemainingMinutes} minutes",
+                    ipAddress, remainingTime?.TotalMinutes ?? 0);
+                
+                return StatusCode(429, new 
+                { 
+                    message = "Too many failed attempts. Please try again later.",
+                    retryAfterMinutes = (int)Math.Ceiling(remainingTime?.TotalMinutes ?? 0)
+                });
+            }
+
             // Check admin key from header
             if (!Request.Headers.TryGetValue("X-Admin-Key", out var adminKey) || string.IsNullOrWhiteSpace(adminKey))
             {
-                _logger.LogWarning("VR Park database users access denied: Missing admin key");
+                _authTracker.RecordFailedAttempt(ipAddress);
+                _logger.LogWarning(
+                    "VR Park database users access denied: Missing admin key from IP {IpAddress}. Failed attempts: {Attempts}",
+                    ipAddress, _authTracker.GetFailedAttemptCount(ipAddress));
                 return Unauthorized(new { message = "Admin key is required" });
             }
 
             // Validate admin key from AdminSettings
             if (adminKey != _adminOptions.ApiKey)
             {
-                _logger.LogWarning("VR Park database users access denied: Invalid admin key");
+                _authTracker.RecordFailedAttempt(ipAddress);
+                var failedAttempts = _authTracker.GetFailedAttemptCount(ipAddress);
+                
+                _logger.LogWarning(
+                    "VR Park database users access denied: Invalid admin key from IP {IpAddress}. Failed attempts: {Attempts}",
+                    ipAddress, failedAttempts);
+                
                 return StatusCode(403, new { message = "Invalid admin key" });
             }
+
+            // Successful authentication - reset failed attempts
+            _authTracker.ResetFailedAttempts(ipAddress);
 
             _logger.LogInformation("VR Park database users fetch: Authorized");
 
@@ -324,7 +364,8 @@ public class VRParkController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "VR Park database users fetch failed: {ErrorMessage}", ex.Message);
+            _logger.LogError(ex, "VR Park database users fetch failed");
+            
             return StatusCode(500, new { message = "Σφάλμα ανάκτησης δεδομένων" });
         }
     }
@@ -336,19 +377,48 @@ public class VRParkController : ControllerBase
     {
         try
         {
+            var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+
+            // Check if IP is locked out due to failed attempts
+            if (_authTracker.IsIpLocked(ipAddress))
+            {
+                var remainingTime = _authTracker.GetRemainingLockoutTime(ipAddress);
+                _logger.LogWarning(
+                    "VR Park database sessions access denied: IP {IpAddress} is locked out. Remaining time: {RemainingMinutes} minutes",
+                    ipAddress, remainingTime?.TotalMinutes ?? 0);
+                
+                return StatusCode(429, new 
+                { 
+                    message = "Too many failed attempts. Please try again later.",
+                    retryAfterMinutes = (int)Math.Ceiling(remainingTime?.TotalMinutes ?? 0)
+                });
+            }
+
             // Check admin key from header
             if (!Request.Headers.TryGetValue("X-Admin-Key", out var adminKey) || string.IsNullOrWhiteSpace(adminKey))
             {
-                _logger.LogWarning("VR Park database sessions access denied: Missing admin key");
+                _authTracker.RecordFailedAttempt(ipAddress);
+                _logger.LogWarning(
+                    "VR Park database sessions access denied: Missing admin key from IP {IpAddress}. Failed attempts: {Attempts}",
+                    ipAddress, _authTracker.GetFailedAttemptCount(ipAddress));
                 return Unauthorized(new { message = "Admin key is required" });
             }
 
             // Validate admin key from AdminSettings
             if (adminKey != _adminOptions.ApiKey)
             {
-                _logger.LogWarning("VR Park database sessions access denied: Invalid admin key");
+                _authTracker.RecordFailedAttempt(ipAddress);
+                var failedAttempts = _authTracker.GetFailedAttemptCount(ipAddress);
+                
+                _logger.LogWarning(
+                    "VR Park database sessions access denied: Invalid admin key from IP {IpAddress}. Failed attempts: {Attempts}",
+                    ipAddress, failedAttempts);
+                
                 return StatusCode(403, new { message = "Invalid admin key" });
             }
+
+            // Successful authentication - reset failed attempts
+            _authTracker.ResetFailedAttempts(ipAddress);
 
             _logger.LogInformation("VR Park database sessions fetch: Authorized");
 
@@ -370,7 +440,8 @@ public class VRParkController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "VR Park database sessions fetch failed: {ErrorMessage}", ex.Message);
+            _logger.LogError(ex, "VR Park database sessions fetch failed");
+            
             return StatusCode(500, new { message = "Σφάλμα ανάκτησης δεδομένων" });
         }
     }
