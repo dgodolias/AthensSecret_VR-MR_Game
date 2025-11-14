@@ -426,11 +426,9 @@
     </div>
 
     <script>
-        // Configuration
-        const LOCAL_API = 'http://localhost:5182';
-        const RENDER_API = 'https://athens-secret-api.onrender.com';
+        // Configuration - Use relative URLs to work with CSP 'self' directive
+        const currentAPI = window.location.origin;
         
-        let currentAPI = LOCAL_API;
         let adminKey = '';
         let usersData = [];
         let sessionsData = [];
@@ -465,11 +463,9 @@
         function detectEnvironment() {
             const hostname = window.location.hostname;
             if (hostname === 'localhost' || hostname === '127.0.0.1') {
-                currentAPI = LOCAL_API;
                 envBadge.textContent = 'Local';
                 envBadge.className = 'env-badge env-local';
             } else {
-                currentAPI = RENDER_API;
                 envBadge.textContent = 'Render';
                 envBadge.className = 'env-badge env-render';
             }
