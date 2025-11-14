@@ -70,10 +70,10 @@ builder.Services.AddRateLimiter(options =>
 {
     options.AddFixedWindowLimiter("ApiPolicy", opt =>
     {
-        opt.PermitLimit = 10; // 10 requests
-        opt.Window = TimeSpan.FromMinutes(1); // per minute
+        opt.PermitLimit = 200; // 200 requests per minute (for load testing + production)
+        opt.Window = TimeSpan.FromMinutes(1);
         opt.QueueProcessingOrder = System.Threading.RateLimiting.QueueProcessingOrder.OldestFirst;
-        opt.QueueLimit = 2;
+        opt.QueueLimit = 50; // 50 queued = 250 total capacity
     });
 });
 
