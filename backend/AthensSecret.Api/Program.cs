@@ -4,6 +4,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using System.Text.Encodings.Web;
+using System.Text.Unicode;
 using Microsoft.AspNetCore.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -39,6 +41,14 @@ builder.Services.Configure<AdminSecurityOptions>(options =>
 
 // Register admin authentication tracker as singleton for brute force protection
 builder.Services.AddSingleton<AthensSecret.Api.Services.AdminAuthenticationTracker>();
+
+// Configure HtmlEncoder to support Greek characters (prevents XSS while allowing Greek text)
+builder.Services.AddSingleton<HtmlEncoder>(
+    HtmlEncoder.Create(allowedRanges: new[] { 
+        UnicodeRanges.BasicLatin,
+        UnicodeRanges.GreekandCoptic,
+        UnicodeRanges.GreekExtended
+    }));
 
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
