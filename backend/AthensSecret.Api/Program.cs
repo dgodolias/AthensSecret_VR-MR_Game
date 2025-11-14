@@ -97,8 +97,9 @@ builder.Services.AddCors(options =>
         {
             // Production: Restrict to deployed frontend origin
             policy.WithOrigins("https://athens-secret-api.onrender.com")
-                  .WithMethods("GET", "POST")
-                  .WithHeaders("Content-Type", "Authorization");
+                  .WithMethods("GET", "POST", "PUT", "DELETE")
+                  .WithHeaders("Content-Type", "Authorization", "X-Admin-Key")
+                  .AllowCredentials();
         }
     });
 });
