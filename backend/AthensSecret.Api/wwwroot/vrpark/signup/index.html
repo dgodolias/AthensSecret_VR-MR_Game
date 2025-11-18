@@ -367,23 +367,46 @@
                 document.execCommand('insertText', false, text);
             });
 
-            // Enforce maxlength
+            // Enforce maxlength and number-only validation
             input.addEventListener('input', () => {
-                const maxLength = input.dataset.maxlength;
-                if (maxLength && input.textContent.length > maxLength) {
-                    input.textContent = input.textContent.substring(0, maxLength);
-                    // Move cursor to end
-                    const range = document.createRange();
-                    const sel = window.getSelection();
-                    range.selectNodeContents(input);
-                    range.collapse(false);
-                    sel.removeAllRanges();
-                    sel.addRange(range);
-                }
+                // Save cursor position
+                const sel = window.getSelection();
+                const cursorPos = sel.rangeCount > 0 ? sel.getRangeAt(0).startOffset : 0;
+                
+                let text = input.textContent;
+                let newCursorPos = cursorPos;
 
                 // Only allow numbers for age field
                 if (input.dataset.type === 'number') {
-                    input.textContent = input.textContent.replace(/[^0-9]/g, '');
+                    const cleaned = text.replace(/[^0-9]/g, '');
+                    if (cleaned !== text) {
+                        text = cleaned;
+                        // Adjust cursor position if non-numbers were removed
+                        const beforeCursor = input.textContent.substring(0, cursorPos);
+                        newCursorPos = beforeCursor.replace(/[^0-9]/g, '').length;
+                    }
+                }
+
+                // Enforce maxlength
+                const maxLength = input.dataset.maxlength;
+                if (maxLength && text.length > maxLength) {
+                    text = text.substring(0, maxLength);
+                    newCursorPos = Math.min(newCursorPos, maxLength);
+                }
+
+                // Update text only if changed
+                if (input.textContent !== text) {
+                    input.textContent = text;
+                    
+                    // Restore cursor position
+                    if (input.firstChild) {
+                        const range = document.createRange();
+                        const selection = window.getSelection();
+                        range.setStart(input.firstChild, Math.min(newCursorPos, text.length));
+                        range.collapse(true);
+                        selection.removeAllRanges();
+                        selection.addRange(range);
+                    }
                 }
 
                 // Validate and add visual feedback
