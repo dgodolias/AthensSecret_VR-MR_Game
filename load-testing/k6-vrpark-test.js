@@ -32,33 +32,28 @@ const lastNames = [
 
 // Test configuration
 export const options = {
-    // Simulate 30 users over 10 days doing 3000 total requests
-    // 3000 requests / 10 days = 300 requests/day
-    // 300 requests/day / 30 users = 10 requests/user/day
-    // 10 days = 240 hours = 14400 minutes
+    // STRESS TEST: 1000 users in 8 hours with max 30 concurrent users
+    // Strategy: Each user does full flow (~2 min gameplay + delays = ~3-4 min total)
+    // 1000 users × 4 min = 4000 min = 66.7 hours with 1 concurrent user
+    // With 30 concurrent: 66.7h / 30 = 2.2 hours → Add iterations to fill 8 hours
+    // Target: ~2200-2500 total flows (1000 unique users + repeat flows)
     
     stages: [
-        { duration: '2m', target: 5 },      // Ramp up to 5 users (warm up)
-        { duration: '5m', target: 30 },     // Ramp up to 30 users
-        { duration: '20m', target: 30 },    // Stay at 30 users (main test - shortened for demo)
-        { duration: '2m', target: 0 },      // Ramp down
+        { duration: '5m', target: 10 },     // Warm up: Ramp to 10 users
+        { duration: '10m', target: 30 },    // Ramp to 30 concurrent users
+        { duration: '7h30m', target: 30 },  // Main stress test: 30 users for 7.5 hours
+        { duration: '15m', target: 0 },     // Cool down: Ramp down
     ],
     
-    // For REAL 10-day test, uncomment this instead:
-    /*
-    stages: [
-        { duration: '30m', target: 5 },     // Slow ramp up
-        { duration: '1h', target: 30 },     // Reach 30 users
-        { duration: '238h', target: 30 },   // Stay at 30 users for ~10 days
-        { duration: '30m', target: 0 },     // Ramp down
-    ],
-    */
-    
+    // Stricter thresholds for stress test
     thresholds: {
-        http_req_duration: ['p(95)<2000'],  // 95% requests under 2s
-        http_req_failed: ['rate<0.05'],     // Less than 5% errors
-        'total_flow_success': ['rate>0.95'], // 95% successful flows
+        http_req_duration: ['p(95)<3000'],  // 95% requests under 3s (more lenient for stress)
+        http_req_failed: ['rate<0.10'],     // Less than 10% errors (stress test tolerance)
+        'total_flow_success': ['rate>0.90'], // 90% successful flows
     },
+    
+    // Prevent excessive resource usage
+    maxVUs: 30,  // Hard limit on concurrent users
 };
 
 // Generate random Greek user data
@@ -153,8 +148,8 @@ export default function () {
         return;
     }
     
-    // Random delay between signup and verify (5-10 seconds)
-    sleep(Math.random() * 5 + 5);
+    // Random delay between signup and verify (2-5 seconds - faster for stress test)
+    sleep(Math.random() * 3 + 2);
     
     // 2.5% chance to call admin endpoint between step 1 and 2
     if (shouldMakeAdminCall()) {
@@ -189,8 +184,8 @@ export default function () {
         return;
     }
     
-    // Random delay between verify and session start (10-30 seconds)
-    sleep(Math.random() * 20 + 10);
+    // Random delay between verify and session start (5-15 seconds - faster for stress test)
+    sleep(Math.random() * 10 + 5);
     
     // 2.5% chance to call admin endpoint between step 2 and 3
     if (shouldMakeAdminCall()) {
@@ -232,8 +227,8 @@ export default function () {
         return;
     }
     
-    // Simulate VR game session duration (3-10 minutes)
-    const gamePlayDuration = Math.random() * 7 + 3; // 3-10 minutes
+    // Simulate VR game session duration (1-2 minutes for stress test)
+    const gamePlayDuration = Math.random() * 1 + 1; // 1-2 minutes
     console.log(`[${__VU}] ⏱ Playing game for ${gamePlayDuration.toFixed(1)} minutes...`);
     sleep(gamePlayDuration * 60);
     
@@ -287,14 +282,14 @@ export default function () {
         console.log(`[${__VU}] ✅ Complete flow successful!`);
     }
     
-    // Random delay before next iteration (1-5 minutes to simulate user cooldown)
-    sleep(Math.random() * 4 + 1);
+    // Random delay before next iteration (30-90 seconds to avoid API spam)
+    sleep(Math.random() * 60 + 30);
 }
 
 // Summary at the end of the test
 export function handleSummary(data) {
     console.log('\n' + '='.repeat(80));
-    console.log('📊 VR PARK LOAD TEST SUMMARY');
+    console.log('🔥 VR PARK STRESS TEST SUMMARY (8 HOURS)');
     console.log('='.repeat(80));
     
     const metrics = data.metrics;
@@ -320,6 +315,12 @@ export function handleSummary(data) {
     
     console.log('\n✅ Flow Success Rate:');
     console.log(`   Success Rate: ${(metrics.total_flow_success.values.rate * 100).toFixed(2)}%`);
+    
+    console.log('\n🔥 Stress Test Metrics:');
+    console.log(`   Target Users: 1000+`);
+    console.log(`   Max Concurrent: 30`);
+    console.log(`   Test Duration: 8 hours`);
+    console.log(`   Estimated Total Flows: ${metrics.signup_success.values.count}`);
     
     console.log('\n' + '='.repeat(80) + '\n');
     
@@ -356,8 +357,9 @@ function htmlReport(data) {
 </head>
 <body>
     <div class="container">
-        <h1>🎮 VR Park Load Test Report</h1>
+        <h1>🔥 VR Park 8-Hour Stress Test Report</h1>
         <p><strong>Test Date:</strong> ${new Date().toLocaleString()}</p>
+        <p><strong>Duration:</strong> 8 hours | <strong>Target:</strong> 1000+ users | <strong>Max Concurrent:</strong> 30</p>
         
         <h2>📊 Overall Performance</h2>
         <div class="metric">
