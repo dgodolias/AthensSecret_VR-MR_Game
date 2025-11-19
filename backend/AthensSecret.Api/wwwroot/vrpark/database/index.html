@@ -777,13 +777,20 @@
                     session.StartedAt || session.startedAt,
                     session.EndedAt || session.endedAt
                 );
+                
+                // Προσθήκη tab (\t) στην αρχή για να το αναγνωρίσει το Excel ως κείμενο
+                let sequence = session.EyetrackingSequence || session.eyetrackingSequence || '';
+                if (sequence) {
+                    sequence = `\t${sequence}`;
+                }
+
                 return [
                     session.SessionId || session.sessionId || '',
                     session.UserId || session.userId || '',
                     session.StartedAt || session.startedAt || '',
                     session.EndedAt || session.endedAt || '',
                     duration,
-                    session.EyetrackingSequence || session.eyetrackingSequence || ''
+                    sequence
                 ];
             });
 
