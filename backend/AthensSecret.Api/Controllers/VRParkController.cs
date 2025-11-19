@@ -82,8 +82,8 @@ public class VRParkController : ControllerBase
             }
 
             // Create new VR Park user
-            var random = new Random();
-            var randomVideo = random.Next(1, 5); // Random number between 1 and 4
+            // Use Random.Shared for thread-safe random number generation
+            var randomVideo = Random.Shared.Next(1, 5); // Random number between 1 and 4
 
             var vrParkUser = new VRParkUser
             {
