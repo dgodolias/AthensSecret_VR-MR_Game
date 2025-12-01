@@ -317,15 +317,14 @@
             </div>
 
             <div class="form-group">
-                <label for="email">Email <span class="optional">(προαιρετικό)</span></label>
+                <label for="email">Email / Τηλέφωνο <span class="optional">(προαιρετικό)</span></label>
                 <div 
                     id="email"
                     class="fake-input"
                     contenteditable="true"
-                    data-placeholder="π.χ. example@email.com"
+                    data-placeholder="π.χ. example@email.com ή 6912345678"
                     data-required="false"
                     data-maxlength="255"
-                    data-type="email"
                 ></div>
             </div>
 
@@ -442,14 +441,6 @@
                 if (minLength && value.length < minLength) {
                     field.classList.add('error');
                     return false;
-                }
-
-                if (type === 'email' && value) {
-                    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                    if (!emailRegex.test(value)) {
-                        field.classList.add('error');
-                        return false;
-                    }
                 }
 
                 if (type === 'number') {
