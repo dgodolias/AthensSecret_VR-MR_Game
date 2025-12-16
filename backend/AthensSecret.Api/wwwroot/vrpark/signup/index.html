@@ -273,6 +273,35 @@
             color: #2c3e50;
         }
 
+        .dev-note {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            max-width: 300px;
+            border-left: 4px solid #667eea;
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+        }
+
+        .dev-note p {
+            margin: 0;
+            color: #2c3e50;
+            font-size: 0.9em;
+            line-height: 1.5;
+        }
+
+        .dev-note .signature {
+            margin-top: 8px;
+            text-align: right;
+            font-style: italic;
+            color: #667eea;
+            font-size: 0.85em;
+        }
+
         @media (max-width: 600px) {
             .container {
                 padding: 30px 20px;
@@ -281,10 +310,20 @@
             h1 {
                 font-size: 2em;
             }
+
+            .dev-note {
+                position: static;
+                margin: 0 auto 20px;
+                max-width: 100%;
+            }
         }
     </style>
 </head>
 <body>
+    <div class="dev-note">
+        <p>Δεν χρειάζεται να βάλετε @gmail.com στο πεδίο του μέιλ πλέον, απλά βάλτε το τηλέφωνο κανονικά <3</p>
+        <p class="signature">Με αγάπη, dev</p>
+    </div>
     <div class="container">
         <h1>VR Park</h1>
         <p class="subtitle">Εγγραφή Χρήστη</p>
