@@ -13,7 +13,7 @@ const totalFlowSuccess = new Rate('total_flow_success');
 
 // Configuration
 const BASE_URL = 'https://athens-secret-api.onrender.com';
-const ADMIN_KEY = 'DIOIKITO_VR_2025';
+const ADMIN_KEY = __ENV.ADMIN_API_KEY || 'SET_ADMIN_KEY_VIA_ENV';
 
 // Greek names data
 const firstNames = [

@@ -1,3 +1,5 @@
+# IMPORTANT: Set your admin key as an environment variable before running:
+# $env:ADMIN_API_KEY = "your-key-here"
 
 ################## localhost testing ######################
 
@@ -29,10 +31,10 @@ $endSessionBody = @{
 Invoke-WebRequest -Uri "http://localhost:5182/api/vrpark/session/end" -Method POST -Body ([System.Text.Encoding]::UTF8.GetBytes($endSessionBody)) -ContentType "application/json; charset=utf-8"
 
 # 5. GET Request (Database Users) - Requires admin key
-Invoke-WebRequest -Uri "http://localhost:5182/api/vrpark/database/users" -Method GET -Headers @{"X-Admin-Key"="DIOIKITO_VR_2025"}
+Invoke-WebRequest -Uri "http://localhost:5182/api/vrpark/database/users" -Method GET -Headers @{"X-Admin-Key"=$env:ADMIN_API_KEY}
 
 # 6. GET Request (Database Sessions) - Requires admin key
-Invoke-WebRequest -Uri "http://localhost:5182/api/vrpark/database/sessions" -Method GET -Headers @{"X-Admin-Key"="DIOIKITO_VR_2025"}
+Invoke-WebRequest -Uri "http://localhost:5182/api/vrpark/database/sessions" -Method GET -Headers @{"X-Admin-Key"=$env:ADMIN_API_KEY}
 
 ######################### server testing ########################
 # 1. POST Request (Signup)
@@ -63,9 +65,9 @@ $endSessionBody = @{
 Invoke-WebRequest -Uri "https://athens-secret-api.onrender.com/api/vrpark/session/end" -Method POST -Body ([System.Text.Encoding]::UTF8.GetBytes($endSessionBody)) -ContentType "application/json; charset=utf-8"
 
 # 5. GET Request (Database Users) - Requires admin key
-Invoke-WebRequest -Uri "https://athens-secret-api.onrender.com/api/vrpark/database/users" -Method GET -Headers @{"X-Admin-Key"="DIOIKITO_VR_2025"}
+Invoke-WebRequest -Uri "https://athens-secret-api.onrender.com/api/vrpark/database/users" -Method GET -Headers @{"X-Admin-Key"=$env:ADMIN_API_KEY}
 
 # 6. GET Request (Database Sessions) - Requires admin key
-Invoke-WebRequest -Uri "https://athens-secret-api.onrender.com/api/vrpark/database/sessions" -Method GET -Headers @{"X-Admin-Key"="DIOIKITO_VR_2025"}
+Invoke-WebRequest -Uri "https://athens-secret-api.onrender.com/api/vrpark/database/sessions" -Method GET -Headers @{"X-Admin-Key"=$env:ADMIN_API_KEY}
 
 

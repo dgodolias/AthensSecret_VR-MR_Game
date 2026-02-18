@@ -126,7 +126,7 @@ public class VRParkController : ControllerBase
 
     // Verify user exists by ID
     [HttpGet("verify/{userId}")]
-    [EnableRateLimiting("ApiPolicy")]
+    [EnableRateLimiting("StrictPolicy")]
     public async Task<IActionResult> VerifyUser(int userId)
     {
         try
@@ -143,6 +143,8 @@ public class VRParkController : ControllerBase
 
             if (user == null)
             {
+                // Add random delay to prevent timing-based enumeration attacks
+                await Task.Delay(Random.Shared.Next(100, 300));
                 _logger.LogWarning("VR Park user not found: UserId={UserId}", userId);
                 return NotFound(new { message = "Ο χρήστης δεν βρέθηκε" });
             }
@@ -252,6 +254,16 @@ public class VRParkController : ControllerBase
                 
                 _logger.LogWarning("VR Park session end validation failed: {Errors}", string.Join(", ", errors));
                 return BadRequest(new { message = "Μη έγκυρα δεδομένα", errors });
+            }
+
+            // Validate EyetrackingSequence if provided
+            if (!string.IsNullOrEmpty(request.EyetrackingSequence))
+            {
+                if (request.EyetrackingSequence.Length > 2000)
+                    return BadRequest(new { message = "EyetrackingSequence too long (max 2000 characters)" });
+
+                if (!System.Text.RegularExpressions.Regex.IsMatch(request.EyetrackingSequence, @"^[01]+$"))
+                    return BadRequest(new { message = "EyetrackingSequence must contain only 0 and 1 characters" });
             }
 
             // Find the session and verify it belongs to the user

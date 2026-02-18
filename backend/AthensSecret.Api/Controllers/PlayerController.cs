@@ -8,6 +8,7 @@ namespace AthensSecret.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[EnableRateLimiting("ApiPolicy")]
 public class PlayerController : ControllerBase
 {
     private readonly ApiDbContext _context;
@@ -23,7 +24,6 @@ public class PlayerController : ControllerBase
     /// Register a new player with webform data (no password needed)
     /// </summary>
     [HttpPost("register")]
-    [EnableRateLimiting("ApiPolicy")]
     public async Task<IActionResult> RegisterPlayer([FromBody] PlayerRegistrationRequest request)
     {
         try
@@ -45,6 +45,7 @@ public class PlayerController : ControllerBase
             if (string.IsNullOrWhiteSpace(request.LastName))
                 return BadRequest(new { message = "Last name is required" });
             
+            // Athens Secret game requires age 18+ (adult content); VR Park uses 1-120
             if (request.Age < 18 || request.Age > 120)
                 return BadRequest(new { message = "Age must be between 18 and 120" });
             
@@ -139,14 +140,20 @@ public class PlayerController : ControllerBase
     /// Verify if a player ID exists (simple authentication replacement)
     /// </summary>
     [HttpPost("verify")]
+    [EnableRateLimiting("StrictPolicy")]
     public async Task<IActionResult> VerifyPlayer([FromBody] PlayerVerificationRequest request)
     {
         try
         {
+            if (request.PlayerId <= 0)
+                return BadRequest(new { message = "Invalid Player ID" });
+
             var player = await _context.Players.OrderBy(p => p.Id).FirstOrDefaultAsync(p => p.Id == request.PlayerId);
-            
+
             if (player == null)
             {
+                // Add random delay to prevent timing-based enumeration attacks
+                await Task.Delay(Random.Shared.Next(100, 300));
                 return Ok(new PlayerVerificationResponse
                 {
                     Exists = false,
@@ -166,7 +173,8 @@ public class PlayerController : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(500, new { message = "Internal server error", details = ex.Message });
+            _logger.LogError(ex, "Player verification error");
+            return StatusCode(500, new { message = "Internal server error" });
         }
     }
 
@@ -174,6 +182,7 @@ public class PlayerController : ControllerBase
     /// Get player details by ID
     /// </summary>
     [HttpGet("{playerId}")]
+    [EnableRateLimiting("StrictPolicy")]
     public async Task<IActionResult> GetPlayer(int playerId)
     {
         try
@@ -205,10 +214,7 @@ public class PlayerController : ControllerBase
         }
         catch (Exception ex)
         {
-            // Log the actual exception for debugging (in real app, use proper logging)
-            Console.WriteLine($"GetPlayer error: {ex.Message}");
-            
-            // Hide sensitive details in production
+            _logger.LogError(ex, "GetPlayer error for PlayerId: {PlayerId}", playerId);
             return StatusCode(500, new { message = "Internal server error" });
         }
     }

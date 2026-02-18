@@ -8,6 +8,7 @@ namespace AthensSecret.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[EnableRateLimiting("ApiPolicy")]
 public class GameController : ControllerBase
 {
     private readonly ApiDbContext _context;
@@ -21,7 +22,6 @@ public class GameController : ControllerBase
 
     // Start a new game session
     [HttpPost("start")]
-    [EnableRateLimiting("ApiPolicy")]
     public async Task<IActionResult> StartGame([FromQuery] int playerId)
     {
         try
@@ -76,19 +76,13 @@ public class GameController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to start game session for PlayerId: {PlayerId}. Error: {ErrorMessage}", 
-                playerId, ex.Message);
-            return StatusCode(500, new { 
-                message = "Failed to start game session", 
-                error = ex.Message,
-                details = ex.InnerException?.Message 
-            });
+            _logger.LogError(ex, "Failed to start game session for PlayerId: {PlayerId}", playerId);
+            return StatusCode(500, new { message = "Failed to start game session" });
         }
     }
 
     // End a game session
     [HttpPost("end")]
-    [EnableRateLimiting("ApiPolicy")]
     public async Task<IActionResult> EndGame([FromQuery] int sessionId, [FromQuery] int playerId)
     {
         var gameSession = await _context.GameSessions
@@ -113,7 +107,6 @@ public class GameController : ControllerBase
 
     // Get game session info
     [HttpGet("session/{sessionId}")]
-    [EnableRateLimiting("ApiPolicy")]
     public async Task<IActionResult> GetGameSession(int sessionId, [FromQuery] int playerId)
     {
         var gameSession = await _context.GameSessions
@@ -179,6 +172,9 @@ public class GameController : ControllerBase
     [HttpPost("mirrors/end")]
     public async Task<IActionResult> EndMirrorsTrial([FromQuery] int sessionId, [FromQuery] int playerId, [FromBody] MirrorsTrialEndRequest request)
     {
+        if (request.TotalGainedWisdom < -1000 || request.TotalGainedWisdom > 1000)
+            return BadRequest(new { message = "TotalGainedWisdom value out of valid range" });
+
         // Verify session belongs to player and is active
         var gameSession = await _context.GameSessions
             .FirstOrDefaultAsync(gs => gs.Id == sessionId && gs.PlayerId == playerId && gs.EndedAt == null);
@@ -284,6 +280,9 @@ public class GameController : ControllerBase
     [HttpPost("olivetree/end")]
     public async Task<IActionResult> EndOliveTreeTrial([FromQuery] int sessionId, [FromQuery] int playerId, [FromBody] OliveTreeTrialEndRequest request)
     {
+        if (request.TotalGainedWisdom < -1000 || request.TotalGainedWisdom > 1000)
+            return BadRequest(new { message = "TotalGainedWisdom value out of valid range" });
+
         // Verify session belongs to player and is active
         var gameSession = await _context.GameSessions
             .FirstOrDefaultAsync(gs => gs.Id == sessionId && gs.PlayerId == playerId && gs.EndedAt == null);
@@ -360,6 +359,9 @@ public class GameController : ControllerBase
     [HttpPost("path/end")]
     public async Task<IActionResult> EndPathTrial([FromQuery] int sessionId, [FromQuery] int playerId, [FromBody] PathTrialEndRequest request)
     {
+        if (request.TotalGainedWisdom < -1000 || request.TotalGainedWisdom > 1000)
+            return BadRequest(new { message = "TotalGainedWisdom value out of valid range" });
+
         // Verify session belongs to player and is active
         var gameSession = await _context.GameSessions
             .FirstOrDefaultAsync(gs => gs.Id == sessionId && gs.PlayerId == playerId && gs.EndedAt == null);
@@ -514,16 +516,19 @@ public class GameController : ControllerBase
 // Request models
 public class MirrorsTrialEndRequest
 {
+    [System.ComponentModel.DataAnnotations.Range(-1000, 1000, ErrorMessage = "TotalGainedWisdom must be between -1000 and 1000")]
     public int TotalGainedWisdom { get; set; }
 }
 
 public class OliveTreeTrialEndRequest
 {
+    [System.ComponentModel.DataAnnotations.Range(-1000, 1000, ErrorMessage = "TotalGainedWisdom must be between -1000 and 1000")]
     public int TotalGainedWisdom { get; set; }
 }
 
 public class PathTrialEndRequest
 {
+    [System.ComponentModel.DataAnnotations.Range(-1000, 1000, ErrorMessage = "TotalGainedWisdom must be between -1000 and 1000")]
     public int TotalGainedWisdom { get; set; }
     public bool SafePath { get; set; }
 }

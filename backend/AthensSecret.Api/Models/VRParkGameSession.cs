@@ -15,6 +15,7 @@ public class VRParkGameSession
     public int UserId { get; set; }
 
     [Column("eyetracking_sequence")]
+    [MaxLength(2000)]
     public string? EyetrackingSequence { get; set; }
 
     [Column("started_at")]
@@ -52,6 +53,8 @@ public class VRParkEndSessionRequest
     [Required(ErrorMessage = "Το User ID είναι υποχρεωτικό")]
     public int UserId { get; set; }
 
+    [MaxLength(2000)]
+    [RegularExpression(@"^[01]*$", ErrorMessage = "Sequence must contain only 0 and 1")]
     public string? EyetrackingSequence { get; set; }
 }
 

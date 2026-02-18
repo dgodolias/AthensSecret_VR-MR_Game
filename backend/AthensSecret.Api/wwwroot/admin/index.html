@@ -649,7 +649,7 @@
 
         function checkAuthentication() {
             // Check if admin key exists in localStorage
-            adminKey = localStorage.getItem('adminKey');
+            adminKey = sessionStorage.getItem('adminKey');
             if (adminKey) {
                 hideLoginModal();
                 loadConfiguration();
@@ -682,7 +682,7 @@
 
             // Save key and try to load configuration
             adminKey = enteredKey;
-            localStorage.setItem('adminKey', adminKey);
+            sessionStorage.setItem('adminKey', adminKey);
             hideLoginModal();
             loadConfiguration();
         }
@@ -696,7 +696,7 @@
         }
 
         function logout() {
-            localStorage.removeItem('adminKey');
+            sessionStorage.removeItem('adminKey');
             adminKey = '';
             showLoginModal();
             adminKeyInput.value = '';

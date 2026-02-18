@@ -27,7 +27,7 @@ if (connectionString?.StartsWith("postgresql://") == true)
 {
     var uri = new Uri(connectionString);
     var port = uri.Port == -1 ? 5432 : uri.Port; // Default PostgreSQL port if not specified
-    connectionString = $"Host={uri.Host};Port={port};Database={uri.AbsolutePath.Trim('/')};Username={uri.UserInfo.Split(':')[0]};Password={uri.UserInfo.Split(':')[1]};SslMode=Require;TrustServerCertificate=true";
+    connectionString = $"Host={uri.Host};Port={port};Database={uri.AbsolutePath.Trim('/')};Username={uri.UserInfo.Split(':')[0]};Password={uri.UserInfo.Split(':')[1]};SslMode=Require;TrustServerCertificate=false";
 }
 
 builder.Services.AddDbContext<ApiDbContext>(options =>
@@ -75,6 +75,14 @@ builder.Services.AddRateLimiter(options =>
         opt.QueueProcessingOrder = System.Threading.RateLimiting.QueueProcessingOrder.OldestFirst;
         opt.QueueLimit = 50; // 50 queued = 250 total capacity
     });
+
+    options.AddFixedWindowLimiter("StrictPolicy", opt =>
+    {
+        opt.PermitLimit = 20; // 20 requests per minute (stricter for verify/lookup endpoints)
+        opt.Window = TimeSpan.FromMinutes(1);
+        opt.QueueProcessingOrder = System.Threading.RateLimiting.QueueProcessingOrder.OldestFirst;
+        opt.QueueLimit = 5;
+    });
 });
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
@@ -87,10 +95,10 @@ builder.Services.AddCors(options =>
     {
         if (builder.Environment.IsDevelopment())
         {
-            // Development: Allow common dev origins
-            policy.WithOrigins("http://localhost:3000", "http://localhost:7182", "http://localhost:8080","http://localhost:5182" )
-                  .AllowAnyMethod()
-                  .AllowAnyHeader()
+            // Development: Allow common dev origins with restricted methods/headers
+            policy.WithOrigins("http://localhost:3000", "http://localhost:7182", "http://localhost:8080", "http://localhost:5182")
+                  .WithMethods("GET", "POST", "PUT", "DELETE")
+                  .WithHeaders("Content-Type", "Authorization", "X-Admin-Key")
                   .AllowCredentials();
         }
         else

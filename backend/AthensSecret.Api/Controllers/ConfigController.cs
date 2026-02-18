@@ -1,12 +1,14 @@
 using AthensSecret.Api.Data;
 using AthensSecret.Api.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 
 namespace AthensSecret.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[EnableRateLimiting("ApiPolicy")]
 public class ConfigController : ControllerBase
 {
     private readonly ApiDbContext _context;

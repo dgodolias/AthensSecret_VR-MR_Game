@@ -18,7 +18,8 @@ public class AdminAuthenticationTracker
     public AdminAuthenticationTracker(ILogger<AdminAuthenticationTracker> logger)
     {
         _logger = logger;
-        
+        _logger.LogWarning("AdminAuthenticationTracker initialized with in-memory storage. Failed attempt records will be lost on application restart.");
+
         // Start background cleanup task
         _ = Task.Run(async () => await CleanupExpiredRecordsAsync());
     }

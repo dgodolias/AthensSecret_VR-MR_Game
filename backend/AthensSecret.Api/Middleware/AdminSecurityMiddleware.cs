@@ -30,8 +30,26 @@ public class AdminSecurityMiddleware
 
     public async Task InvokeAsync(HttpContext context)
     {
-        // Check if this is an admin API endpoint
+        // Determine if this request requires admin authentication
+        bool requiresAdminAuth = false;
+
+        // Admin API endpoints always require auth
         if (context.Request.Path.StartsWithSegments("/api/admin"))
+        {
+            requiresAdminAuth = true;
+        }
+        // Config endpoints: mutating methods and /all require admin auth
+        // GET /api/config and GET /api/config/{id} stay public for game client
+        else if (context.Request.Path.StartsWithSegments("/api/config"))
+        {
+            if (context.Request.Method != "GET" ||
+                (context.Request.Path.Value?.Contains("/all", StringComparison.OrdinalIgnoreCase) == true))
+            {
+                requiresAdminAuth = true;
+            }
+        }
+
+        if (requiresAdminAuth)
         {
             var ipAddress = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
 
