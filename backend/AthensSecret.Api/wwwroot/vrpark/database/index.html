@@ -472,13 +472,8 @@
         }
 
         function checkAuthentication() {
-            adminKey = localStorage.getItem('vrparkAdminKey');
-            if (adminKey) {
-                hideLoginModal();
-                loadAllData();
-            } else {
-                showLoginModal();
-            }
+            adminKey = '';
+            showLoginModal();
         }
 
         function showLoginModal() {
@@ -505,7 +500,6 @@
             }
 
             adminKey = enteredKey;
-            localStorage.setItem('vrparkAdminKey', adminKey);
             hideLoginModal();
             loadAllData();
         }
@@ -519,7 +513,6 @@
         }
 
         function logout() {
-            localStorage.removeItem('vrparkAdminKey');
             adminKey = '';
             usersData = [];
             sessionsData = [];
@@ -633,81 +626,81 @@
 
         function renderUsersTable(users) {
             if (!users || users.length === 0) {
-                usersTableContainer.innerHTML = '<div class="no-data">Δεν υπάρχουν δεδομένα</div>';
+                usersTableContainer.replaceChildren(createMessageElement('no-data', 'Δεν υπάρχουν δεδομένα'));
                 return;
             }
 
-            const table = `
-                <table>
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>First Name</th>
-                            <th>Last Name</th>
-                            <th>Email</th>
-                            <th>Age</th>
-                            <th>Video</th>
-                            <th>Created At</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${users.map(user => `
-                            <tr>
-                                <td>${user.UserId || user.userId || ''}</td>
-                                <td>${user.FirstName || user.firstName || ''}</td>
-                                <td>${user.LastName || user.lastName || ''}</td>
-                                <td>${user.Email || user.email || '-'}</td>
-                                <td>${user.Age || user.age || ''}</td>
-                                <td>${user.Video || user.video || ''}</td>
-                                <td>${formatDate(user.CreatedAt || user.createdAt)}</td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
-            `;
-            usersTableContainer.innerHTML = table;
+            const columns = [
+                { header: 'ID', value: user => user.UserId || user.userId || '' },
+                { header: 'First Name', value: user => user.FirstName || user.firstName || '' },
+                { header: 'Last Name', value: user => user.LastName || user.lastName || '' },
+                { header: 'Email', value: user => user.Email || user.email || '-' },
+                { header: 'Age', value: user => user.Age || user.age || '' },
+                { header: 'Video', value: user => user.Video || user.video || '' },
+                { header: 'Created At', value: user => formatDate(user.CreatedAt || user.createdAt) }
+            ];
+
+            usersTableContainer.replaceChildren(createTable(columns, users));
         }
 
         function renderSessionsTable(sessions) {
             if (!sessions || sessions.length === 0) {
-                sessionsTableContainer.innerHTML = '<div class="no-data">Δεν υπάρχουν δεδομένα</div>';
+                sessionsTableContainer.replaceChildren(createMessageElement('no-data', 'Δεν υπάρχουν δεδομένα'));
                 return;
             }
 
-            const table = `
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Session ID</th>
-                            <th>User ID</th>
-                            <th>Started At</th>
-                            <th>Ended At</th>
-                            <th>Duration</th>
-                            <th>Eye Tracking (full sequence)</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${sessions.map(session => {
-                            const duration = calculateDuration(
-                                session.StartedAt || session.startedAt,
-                                session.EndedAt || session.endedAt
-                            );
+            const columns = [
+                { header: 'Session ID', value: session => session.SessionId || session.sessionId || '' },
+                { header: 'User ID', value: session => session.UserId || session.userId || '' },
+                { header: 'Started At', value: session => formatDate(session.StartedAt || session.startedAt) },
+                { header: 'Ended At', value: session => session.EndedAt || session.endedAt ? formatDate(session.EndedAt || session.endedAt) : '-' },
+                {
+                    header: 'Duration',
+                    value: session => calculateDuration(
+                        session.StartedAt || session.startedAt,
+                        session.EndedAt || session.endedAt
+                    )
+                },
+                { header: 'Eye Tracking (full sequence)', value: session => session.EyetrackingSequence || session.eyetrackingSequence || '-' }
+            ];
 
-                            return `
-                                <tr>
-                                    <td>${session.SessionId || session.sessionId || ''}</td>
-                                    <td>${session.UserId || session.userId || ''}</td>
-                                    <td>${formatDate(session.StartedAt || session.startedAt)}</td>
-                                    <td>${session.EndedAt || session.endedAt ? formatDate(session.EndedAt || session.endedAt) : '-'}</td>
-                                    <td>${duration}</td>
-                                    <td>${session.EyetrackingSequence || session.eyetrackingSequence || '-'}</td>
-                                </tr>
-                            `;
-                        }).join('')}
-                    </tbody>
-                </table>
-            `;
-            sessionsTableContainer.innerHTML = table;
+            sessionsTableContainer.replaceChildren(createTable(columns, sessions));
+        }
+
+        function createMessageElement(className, text) {
+            const element = document.createElement('div');
+            element.className = className;
+            element.textContent = text;
+            return element;
+        }
+
+        function createTable(columns, rows) {
+            const table = document.createElement('table');
+            const thead = document.createElement('thead');
+            const headerRow = document.createElement('tr');
+
+            columns.forEach(column => {
+                const th = document.createElement('th');
+                th.textContent = column.header;
+                headerRow.appendChild(th);
+            });
+
+            thead.appendChild(headerRow);
+            table.appendChild(thead);
+
+            const tbody = document.createElement('tbody');
+            rows.forEach(row => {
+                const tr = document.createElement('tr');
+                columns.forEach(column => {
+                    const td = document.createElement('td');
+                    td.textContent = String(column.value(row) ?? '');
+                    tr.appendChild(td);
+                });
+                tbody.appendChild(tr);
+            });
+
+            table.appendChild(tbody);
+            return table;
         }
 
         function formatDate(dateString) {
